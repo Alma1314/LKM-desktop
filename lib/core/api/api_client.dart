@@ -225,44 +225,89 @@ class ApiClient {
   Future<Object?> get(
     String path, {
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
-  }) => _request('GET', path, query: query, cancelToken: cancelToken);
+  }) => _request(
+    'GET',
+    path,
+    query: query,
+    headers: headers,
+    cancelToken: cancelToken,
+  );
 
   Future<Object?> post(
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
-  }) => _request('POST', path, body: body, query: query, cancelToken: cancelToken);
+  }) => _request(
+    'POST',
+    path,
+    body: body,
+    query: query,
+    headers: headers,
+    cancelToken: cancelToken,
+  );
 
   Future<Object?> put(
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
-  }) => _request('PUT', path, body: body, query: query, cancelToken: cancelToken);
+  }) => _request(
+    'PUT',
+    path,
+    body: body,
+    query: query,
+    headers: headers,
+    cancelToken: cancelToken,
+  );
 
   Future<Object?> patch(
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
-  }) => _request('PATCH', path, body: body, query: query, cancelToken: cancelToken);
+  }) => _request(
+    'PATCH',
+    path,
+    body: body,
+    query: query,
+    headers: headers,
+    cancelToken: cancelToken,
+  );
 
   Future<Object?> delete(
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
-  }) => _request('DELETE', path, body: body, query: query, cancelToken: cancelToken);
+  }) => _request(
+    'DELETE',
+    path,
+    body: body,
+    query: query,
+    headers: headers,
+    cancelToken: cancelToken,
+  );
 
   /// GET returning a JSON object, or an empty map when `data` is null.
   Future<Map<String, dynamic>> getObject(
     String path, {
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
   }) async {
-    final data = await get(path, query: query, cancelToken: cancelToken);
+    final data = await get(
+      path,
+      query: query,
+      headers: headers,
+      cancelToken: cancelToken,
+    );
     if (data == null) return <String, dynamic>{};
     if (data is Map) return Map<String, dynamic>.from(data);
     throw _shapeError('GET', path, '期望对象，收到 ${data.runtimeType}');
@@ -272,12 +317,14 @@ class ApiClient {
   Future<List<T>> getList<T>(
     String path, {
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     required T Function(Map<String, dynamic>) parseItem,
     CancelToken? cancelToken,
   }) async {
     final page = await getPage(
       path,
       query: query,
+      headers: headers,
       parseItem: parseItem,
       cancelToken: cancelToken,
     );
@@ -288,6 +335,7 @@ class ApiClient {
   Future<ApiPage<T>> getPage<T>(
     String path, {
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     required T Function(Map<String, dynamic>) parseItem,
     CancelToken? cancelToken,
   }) async {
@@ -295,6 +343,7 @@ class ApiClient {
       'GET',
       path,
       query: query,
+      headers: headers,
       cancelToken: cancelToken,
     );
     final data = _unwrap(response, 'GET', path);
@@ -338,6 +387,7 @@ class ApiClient {
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
   }) async {
     final response = await _send(
@@ -345,6 +395,7 @@ class ApiClient {
       path,
       body: body,
       query: query,
+      headers: headers,
       cancelToken: cancelToken,
     );
     return _unwrap(response, method, path);
@@ -355,6 +406,7 @@ class ApiClient {
     String path, {
     Object? body,
     Map<String, dynamic>? query,
+    Map<String, String>? headers,
     CancelToken? cancelToken,
   }) async {
     try {
@@ -363,7 +415,11 @@ class ApiClient {
         data: body,
         queryParameters: query,
         cancelToken: cancelToken,
-        options: Options(method: method, validateStatus: (_) => true),
+        options: Options(
+          method: method,
+          validateStatus: (_) => true,
+          headers: headers,
+        ),
       );
     } on DioException catch (error) {
       if (error.type == DioExceptionType.cancel) rethrow;

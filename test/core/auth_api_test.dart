@@ -62,9 +62,9 @@ void main() {
     final request = adapter.requests.single;
     expect(request.method, 'POST');
     expect(request.uri.path, '/api/v1/auth/challenge');
+    expect(request.headers['X-Device-Id'], 'device-a');
     expect(request.data, {
       'account': 'alma',
-      'device_id': 'device-a',
       'primary_factor': 'password',
     });
     expect(challenge.id, 'c-1');
@@ -101,7 +101,8 @@ void main() {
     final request = adapter.requests.single;
     expect(request.method, 'GET');
     expect(request.uri.path, '/api/v1/auth/challenge/c-1');
-    expect(request.uri.queryParameters['device_id'], 'device-a');
+    expect(request.headers['X-Device-Id'], 'device-a');
+    expect(request.uri.queryParameters.containsKey('device_id'), isFalse);
   });
 
   test('submitting a factor returns the completed tokens', () async {
@@ -123,11 +124,8 @@ void main() {
 
     final request = adapter.requests.single;
     expect(request.uri.path, '/api/v1/auth/challenge/c-1/factor');
-    expect(request.data, {
-      'device_id': 'device-a',
-      'kind': 'password',
-      'password': 'secret',
-    });
+    expect(request.headers['X-Device-Id'], 'device-a');
+    expect(request.data, {'kind': 'password', 'password': 'secret'});
     expect(step.isComplete, isTrue);
     expect(step.tokens?.accessToken, 'access-1');
   });
@@ -157,7 +155,7 @@ void main() {
     expect(adapter.requests.single.data.containsKey('code'), isFalse);
   });
 
-  test('request and cancel keep device_id in the query', () async {
+  test('request and cancel carry the device header', () async {
     final adapter = _Adapter((_) => _ok({'message': 'ok'}));
     final api = _api(adapter);
 
@@ -165,9 +163,9 @@ void main() {
     await api.cancelChallenge('c-1', 'device-a');
 
     expect(adapter.requests.first.uri.path, '/api/v1/auth/challenge/c-1/request');
-    expect(adapter.requests.first.uri.queryParameters['device_id'], 'device-a');
+    expect(adapter.requests.first.headers['X-Device-Id'], 'device-a');
     expect(adapter.requests.last.uri.path, '/api/v1/auth/challenge/c-1/cancel');
-    expect(adapter.requests.last.uri.queryParameters['device_id'], 'device-a');
+    expect(adapter.requests.last.headers['X-Device-Id'], 'device-a');
   });
 
   test('email registration stays outside the challenge flow', () async {
@@ -220,7 +218,8 @@ void main() {
       adapter.requests.single.uri.path,
       '/api/v1/auth/challenge/c-1/passkey/start',
     );
-    expect(adapter.requests.single.data, {'device_id': 'device-a'});
+    expect(adapter.requests.single.headers['X-Device-Id'], 'device-a');
+    expect(adapter.requests.single.data, isNull);
     expect(options.challengeId, 'wac-1');
     expect(options.challenge, 'abc123');
     expect(options.rpId, 'lkm-ahz.ltd');

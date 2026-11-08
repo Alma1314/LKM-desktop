@@ -205,13 +205,17 @@ class LkmPasskeyAssertion {
 /// Challenge-factor authentication endpoints, plus the few flows that are not
 /// challenge-based (email registration).
 ///
-/// Query vs body matters: the challenge reads/cancel/request take `device_id`
-/// as a **query** parameter (FastAPI binds plain `str` parameters there), while
-/// create/factor take a JSON body.
+/// The device identifier travels in the `X-Device-Id` header on every challenge
+/// call: one place for all six of them, instead of a body/query split where a
+/// wrong guess surfaces as "challenge not found" rather than as a bad request.
 class AuthApi {
   const AuthApi(this._client);
 
   final ApiClient _client;
+
+  static Map<String, String> _device(String deviceId) => {
+    'X-Device-Id': deviceId,
+  };
 
   /// `POST /auth/challenge` — body `{account, device_id, primary_factor}`.
   Future<LkmChallenge> createChallenge({
@@ -221,11 +225,8 @@ class AuthApi {
   }) async {
     final data = await _client.post(
       '/auth/challenge',
-      body: {
-        'account': account,
-        'device_id': deviceId,
-        'primary_factor': primaryFactor,
-      },
+      body: {'account': account, 'primary_factor': primaryFactor},
+      headers: _device(deviceId),
     );
     return LkmChallenge.fromJson(_asMap(data));
   }
@@ -234,7 +235,7 @@ class AuthApi {
   Future<LkmChallenge> getChallenge(String id, String deviceId) async {
     final data = await _client.get(
       '/auth/challenge/$id',
-      query: {'device_id': deviceId},
+      headers: _device(deviceId),
     );
     return LkmChallenge.fromJson(_asMap(data));
   }
@@ -251,12 +252,12 @@ class AuthApi {
     final data = await _client.post(
       '/auth/challenge/$id/factor',
       body: {
-        'device_id': deviceId,
         'kind': kind,
         'password': ?password,
         'code': ?code,
         'recovery_code': ?recoveryCode,
       },
+      headers: _device(deviceId),
     );
     return LkmAuthStep.fromJson(_asMap(data));
   }
@@ -264,13 +265,13 @@ class AuthApi {
   /// `POST /auth/challenge/{id}/request?device_id=…` — sends the code factor.
   Future<void> requestFactorCode(String id, String deviceId) => _client.post(
     '/auth/challenge/$id/request',
-    query: {'device_id': deviceId},
+    headers: _device(deviceId),
   );
 
   /// `POST /auth/challenge/{id}/cancel?device_id=…`
   Future<void> cancelChallenge(String id, String deviceId) => _client.post(
     '/auth/challenge/$id/cancel',
-    query: {'device_id': deviceId},
+    headers: _device(deviceId),
   );
 
   /// `POST /auth/reg/email` — body `{email}`; not part of the challenge flow.
@@ -303,7 +304,7 @@ class AuthApi {
   ) async {
     final data = await _client.post(
       '/auth/challenge/$challengeId/passkey/start',
-      body: {'device_id': deviceId},
+      headers: _device(deviceId),
     );
     final map = _asMap(data);
     final publicKey = map['public_key'];
@@ -328,8 +329,8 @@ class AuthApi {
   }) async {
     final data = await _client.post(
       '/auth/challenge/$challengeId/passkey/complete',
+      headers: _device(deviceId),
       body: {
-        'device_id': deviceId,
         'challenge_id': webauthnChallengeId,
         'rawId': assertion.rawId,
         'type': 'public-key',

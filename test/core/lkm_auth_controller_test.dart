@@ -123,7 +123,7 @@ void main() {
     final request = setup.adapter.requests.single;
     expect(request.uri.path, '/api/v1/auth/challenge');
     expect(request.data['primary_factor'], 'password');
-    expect(request.data['device_id'], 'device-test');
+    expect(request.headers['X-Device-Id'], 'device-test');
   });
 
   test('the last factor lands the session', () async {
