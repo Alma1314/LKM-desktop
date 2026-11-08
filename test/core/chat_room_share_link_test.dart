@@ -6,11 +6,11 @@ void main() {
     test('builds the web share URL', () {
       expect(
         buildChatRoomShareUrl(scope: 'alice', slug: 'lounge').toString(),
-        'https://solian.app/chat/alice/lounge',
+        'https://lkm-ahz.ltd/chat/alice/lounge',
       );
       expect(
         buildChatRoomShareUrl(scope: 'solsynth', slug: 'general').toString(),
-        'https://solian.app/chat/solsynth/general',
+        'https://lkm-ahz.ltd/chat/solsynth/general',
       );
     });
   });
@@ -18,7 +18,7 @@ void main() {
   group('parseChatRoomShareLink', () {
     test('accepts the web URL', () {
       final link = parseChatRoomShareLink(
-        'https://solian.app/chat/alice/lounge',
+        'https://lkm-ahz.ltd/chat/alice/lounge',
       );
       expect(link, isNotNull);
       expect(link!.scope, 'alice');
@@ -27,7 +27,7 @@ void main() {
 
     test('accepts subdomain hosts and trailing slashes and query params', () {
       final link = parseChatRoomShareLink(
-        'https://www.solian.app/chat/alice/lounge/?utm=qr',
+        'https://www.lkm-ahz.ltd/chat/alice/lounge/?utm=qr',
       );
       expect(link, isNotNull);
       expect(link!.scope, 'alice');
@@ -41,31 +41,31 @@ void main() {
       expect(link.slug, 'room-slug');
     });
 
-    test('accepts the solian custom scheme', () {
-      final link = parseChatRoomShareLink('solian://chat/alice/lounge');
+    test('accepts the LKM custom scheme', () {
+      final link = parseChatRoomShareLink('lkm://chat/alice/lounge');
       expect(link, isNotNull);
       expect(link!.scope, 'alice');
       expect(link.slug, 'lounge');
     });
 
-    test('rejects non-Solian hosts', () {
+    test('rejects non-LKM hosts', () {
       expect(
         parseChatRoomShareLink('https://evil.example/chat/alice/lounge'),
         isNull,
       );
     });
 
-    test('rejects other Solian routes', () {
-      expect(parseChatRoomShareLink('https://solian.app/accounts/alice'), isNull);
-      expect(parseChatRoomShareLink('https://solian.app/chat/alice'), isNull);
+    test('rejects other LKM routes', () {
+      expect(parseChatRoomShareLink('https://lkm-ahz.ltd/accounts/alice'), isNull);
+      expect(parseChatRoomShareLink('https://lkm-ahz.ltd/chat/alice'), isNull);
       expect(
-        parseChatRoomShareLink('https://solian.app/chat/alice/lounge/extra'),
+        parseChatRoomShareLink('https://lkm-ahz.ltd/chat/alice/lounge/extra'),
         isNull,
       );
     });
 
     test('rejects empty segments and unrelated text', () {
-      expect(parseChatRoomShareLink('https://solian.app/chat//lounge'), isNull);
+      expect(parseChatRoomShareLink('https://lkm-ahz.ltd/chat//lounge'), isNull);
       expect(parseChatRoomShareLink('hello world'), isNull);
       expect(parseChatRoomShareLink(''), isNull);
     });

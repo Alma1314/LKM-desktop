@@ -16,6 +16,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:island/core/database.dart';
 import 'package:island/data/database.dart';
 import 'package:island/core/network.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/network/relay.dart';
 import 'package:island/core/widgets/content/network_status_sheet.dart';
 import 'package:island/accounts/account_pod.dart';
@@ -80,6 +81,8 @@ class SettingsScreen extends HookConsumerWidget {
     final serverUrl = ref.watch(serverUrlProvider);
     final prefs = ref.watch(sharedPreferencesProvider);
     final controller = TextEditingController(text: serverUrl);
+    final lkmServerUrl = ref.watch(lkmServerUrlProvider);
+    final lkmController = TextEditingController(text: lkmServerUrl);
     final settings = ref.watch(appSettingsProvider);
     final isDesktop =
         !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
@@ -1432,6 +1435,62 @@ class SettingsScreen extends HookConsumerWidget {
                     showSnackBar('settingsApplied'.tr());
                   }
                 },
+              ),
+            ),
+          ),
+          ListTile(
+            isThreeLine: true,
+            minLeadingWidth: 48,
+            title: Text('settingsLkmServerUrl'.tr()),
+            contentPadding: _kSettingsTilePadding,
+            leading: const Icon(Symbols.cloud),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: lkmController,
+                    decoration: InputDecoration(
+                      hintText: kLkmServerDefault,
+                      helperText: 'settingsLkmServerUrlHelper'.tr(),
+                      suffixIcon: IconButton(
+                        tooltip: 'settingsLkmServerTest'.tr(),
+                        icon: const Icon(Symbols.network_check),
+                        onPressed: () {
+                          ref
+                              .read(lkmServerProbeRequestedProvider.notifier)
+                              .request();
+                          ref.invalidate(lkmServerProbeProvider);
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      isDense: true,
+                    ),
+                    onSubmitted: (value) {
+                      final error = ref
+                          .read(lkmServerUrlProvider.notifier)
+                          .setServer(value);
+                      if (error != null) {
+                        showSnackBar(error);
+                        return;
+                      }
+                      ref
+                          .read(lkmServerProbeRequestedProvider.notifier)
+                          .request();
+                      ref.invalidate(lkmServerProbeProvider);
+                      showSnackBar('settingsApplied'.tr());
+                    },
+                  ),
+                  if (ref.watch(lkmServerProbeRequestedProvider)) ...[
+                    const SizedBox(height: 6),
+                    _LkmServerProbeLine(
+                      probe: ref.watch(lkmServerProbeProvider),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -4121,6 +4180,47 @@ class _DesktopRpcServerPreview extends HookConsumerWidget {
             ),
         ],
       ],
+    );
+  }
+}
+
+/// One-line verdict from [lkmServerProbeProvider], shown under the address
+/// field so a wrong host is diagnosable without leaving the settings screen.
+class _LkmServerProbeLine extends StatelessWidget {
+  const _LkmServerProbeLine({required this.probe});
+
+  final AsyncValue<LkmServerProbe> probe;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final (label, color) = switch (probe) {
+      AsyncData(:final value) when value.isHealthy => (
+        'settingsLkmServerHealthy'.tr(),
+        scheme.primary,
+      ),
+      AsyncData(:final value) when value.isLkmService => (
+        'settingsLkmServerDegraded'.tr(),
+        scheme.tertiary,
+      ),
+      AsyncData(:final value) when value.reachable => (
+        'settingsLkmServerNotLkm'.tr(),
+        scheme.error,
+      ),
+      AsyncData(:final value) => (
+        'settingsLkmServerUnreachable'.tr(args: [value.message ?? '']),
+        scheme.error,
+      ),
+      AsyncError() => (
+        'settingsLkmServerUnreachable'.tr(args: ['']),
+        scheme.error,
+      ),
+      _ => ('settingsLkmServerTesting'.tr(), scheme.onSurfaceVariant),
+    };
+    return Text(
+      label,
+      style: theme.textTheme.bodySmall?.copyWith(color: color),
     );
   }
 }

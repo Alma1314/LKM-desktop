@@ -123,8 +123,24 @@ class LkmServerProbe {
   }
 }
 
-/// Probes the configured server. Invalidate to re-run (settings "test
-/// connection" button).
+/// Whether the settings screen should show a probe result.
+///
+/// The probe is a real outbound request, so it stays off until the user asks
+/// for it (test button or after saving an address) instead of firing every
+/// time the settings tab is opened.
+class LkmServerProbeRequested extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void request() => state = true;
+}
+
+final lkmServerProbeRequestedProvider =
+    NotifierProvider<LkmServerProbeRequested, bool>(
+      LkmServerProbeRequested.new,
+    );
+
+/// Probes the configured server. Invalidate to re-run.
 final lkmServerProbeProvider = FutureProvider<LkmServerProbe>((ref) async {
   final serverUrl = ref.watch(lkmServerUrlProvider);
   return LkmServerProbe.check(serverUrl);
