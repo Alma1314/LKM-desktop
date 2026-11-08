@@ -27,6 +27,14 @@ const kTokenPairStoreKey = 'dyn_user_tk';
 const kNetworkServerDefault = 'https://api.solian.app';
 const kNetworkServerStoreKey = 'app_server_url';
 
+/// LKM-service 后端地址。
+///
+/// 与上面的 Solian 地址分开存放，因为两套后端在本仓库里共存到迁移收口
+/// （见 `docs/桌面端接入后端方案.md` P4）：共用同一个 key 会让任一侧改地址时
+/// 把另一侧也指到错的服务器上。用户只填域名，`/api/v1` 由 `ApiClient` 补。
+const kLkmServerDefault = 'https://lkm-ahz.ltd';
+const kLkmServerStoreKey = 'lkm_api_server_url';
+
 /// Product multi-tenant id for Solian (Island).
 ///
 /// Used for both Ring notification `app` / `app_id` filtering and the Blade
