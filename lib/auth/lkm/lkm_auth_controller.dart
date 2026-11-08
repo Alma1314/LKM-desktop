@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_session.dart';
+import 'package:island/auth/lkm/lkm_passkey.dart';
 import 'package:island/core/api/auth_api.dart';
 
 /// Resolves an i18n key for the controller.
@@ -18,7 +19,7 @@ final lkmTranslatorProvider = Provider<LkmTranslator>((ref) {
 });
 
 /// How the user chose to prove identity for the first factor.
-enum LkmAuthMethod { password, code }
+enum LkmAuthMethod { password, code, passkey }
 
 /// Snapshot of the login screen.
 ///
@@ -156,6 +157,63 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     );
     if (!created) return;
     await resendCode();
+  }
+
+  /// Step 1 of the passkey path: open a challenge whose first factor is a
+  /// passkey. The account is only used to scope `allowCredentials`.
+  Future<void> beginPasskey(String account) async {
+    if (account.trim().isEmpty) {
+      state = state.copyWith(error: _t('lkmErrEmptyAccount'));
+      return;
+    }
+    await _createChallenge(
+      account: account.trim(),
+      primaryFactor: 'passkey',
+      method: LkmAuthMethod.passkey,
+    );
+  }
+
+  /// Runs the platform ceremony for the current passkey factor and submits the
+  /// assertion.
+  Future<void> authenticateWithPasskey() async {
+    final challenge = state.challenge;
+    if (challenge == null) return;
+    state = state.copyWith(busy: true, clearMessages: true);
+    try {
+      final deviceId = await _deviceId();
+      final options = await _api.startPasskeyFactor(challenge.id, deviceId);
+      final assertion = await ref.read(lkmPasskeyCeremonyProvider)(options);
+      final step = await _api.completePasskeyFactor(
+        challenge.id,
+        deviceId: deviceId,
+        webauthnChallengeId: options.challengeId,
+        assertion: assertion,
+      );
+      if (step.isComplete) {
+        await _finish(step.tokens!);
+        return;
+      }
+      state = state.copyWith(
+        challenge: step.challenge,
+        busy: false,
+        codeSent: false,
+        recoveryMode: false,
+      );
+    } on ApiException catch (error) {
+      final dead =
+          error.code == ApiCode.authChallengeExpired ||
+          error.code == ApiCode.authChallengeConsumed ||
+          error.code == ApiCode.authChallengeNotFound;
+      state = state.copyWith(
+        busy: false,
+        clearChallenge: dead,
+        error: dead ? _t('lkmErrChallengeExpired') : _describe(error),
+      );
+    } catch (error) {
+      // 用户取消系统弹窗、设备不支持、凭据不匹配都落到这里：不该清挑战，
+      // 让他还能改用密码登录。
+      state = state.copyWith(busy: false, error: _t('lkmPasskeyFailed'));
+    }
   }
 
   Future<void> submitPassword(String password) async {

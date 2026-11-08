@@ -12,7 +12,7 @@ import 'package:island/shared/widgets/alert.dart';
 /// `register` is deliberately outside [LkmAuthMethod]: registration is not a
 /// challenge (the server returns tokens straight from `/auth/reg/email/verify`),
 /// and stargate kept it separate for the same reason.
-enum _LoginMode { password, code, register }
+enum _LoginMode { password, code, passkey, register }
 
 /// Login for LKM-service, driven by the server's challenge: the screen renders
 /// whatever factor the challenge names next, so a new factor (passkey, device
@@ -141,6 +141,10 @@ class _LkmLoginContentState extends ConsumerState<LkmLoginContent> {
           label: Text('lkmMethodCode'.tr()),
         ),
         ButtonSegment(
+          value: _LoginMode.passkey,
+          label: Text('lkmMethodPasskey'.tr()),
+        ),
+        ButtonSegment(
           value: _LoginMode.register,
           label: Text('lkmMethodRegister'.tr()),
         ),
@@ -185,6 +189,28 @@ class _LkmLoginContentState extends ConsumerState<LkmLoginContent> {
             busy: state.busy,
             label: 'lkmContinue'.tr(),
             onPressed: () => controller.beginCode(_account.text),
+          ),
+        ];
+      case _LoginMode.passkey:
+        return [
+          _field(
+            controller: _account,
+            label: 'lkmAccountLabel'.tr(),
+            icon: Icons.person_outline,
+            onSubmitted: () => controller.beginPasskey(_account.text),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'lkmPasskeyHint'.tr(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmContinue'.tr(),
+            onPressed: () => controller.beginPasskey(_account.text),
           ),
         ];
       case _LoginMode.register:
@@ -318,6 +344,24 @@ class _LkmLoginContentState extends ConsumerState<LkmLoginContent> {
             child: Text(
               recovery ? 'lkmTotpLabel'.tr() : 'lkmRecoveryCodeLabel'.tr(),
             ),
+          ),
+        ];
+      case 'passkey':
+        return [
+          Text(
+            factor.hint == null
+                ? 'lkmPasskeyHint'.tr()
+                : 'lkmCodeSentTo'.tr(args: [factor.hint!]),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmPasskeyAction'.tr(),
+            onPressed: controller.authenticateWithPasskey,
           ),
         ];
       default:

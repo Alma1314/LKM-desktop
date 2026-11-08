@@ -162,6 +162,46 @@ class LkmAuthStep {
   }
 }
 
+/// WebAuthn request options for the passkey factor.
+class LkmPasskeyOptions {
+  const LkmPasskeyOptions({required this.challengeId, required this.publicKey});
+
+  /// Server-side WebAuthn challenge row id (not the challenge-factor id).
+  final String challengeId;
+
+  /// `PublicKeyCredentialRequestOptions` as the server serialized it.
+  final Map<String, dynamic> publicKey;
+
+  String get challenge => '${publicKey['challenge'] ?? ''}';
+  String get rpId => '${publicKey['rpId'] ?? ''}';
+
+  List<Map<String, dynamic>> get allowCredentials {
+    final raw = publicKey['allowCredentials'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList(growable: false);
+  }
+}
+
+/// The assertion produced by the platform authenticator.
+class LkmPasskeyAssertion {
+  const LkmPasskeyAssertion({
+    required this.rawId,
+    required this.clientDataJson,
+    required this.authenticatorData,
+    required this.signature,
+    this.userHandle,
+  });
+
+  final String rawId;
+  final String clientDataJson;
+  final String authenticatorData;
+  final String signature;
+  final String? userHandle;
+}
+
 /// Challenge-factor authentication endpoints, plus the few flows that are not
 /// challenge-based (email registration).
 ///
@@ -254,6 +294,54 @@ class AuthApi {
   Future<LkmAccount> me() async {
     final data = await _client.getObject('/auth/me');
     return LkmAccount.fromJson(data);
+  }
+
+  /// `POST /auth/challenge/{id}/passkey/start` — assertion options.
+  Future<LkmPasskeyOptions> startPasskeyFactor(
+    String challengeId,
+    String deviceId,
+  ) async {
+    final data = await _client.post(
+      '/auth/challenge/$challengeId/passkey/start',
+      body: {'device_id': deviceId},
+    );
+    final map = _asMap(data);
+    final publicKey = map['public_key'];
+    if (publicKey is! Map) {
+      throw ApiException(
+        code: ApiCode.internalError,
+        message: '通行密钥选项格式异常',
+      );
+    }
+    return LkmPasskeyOptions(
+      challengeId: '${map['challenge_id'] ?? ''}',
+      publicKey: Map<String, dynamic>.from(publicKey),
+    );
+  }
+
+  /// `POST /auth/challenge/{id}/passkey/complete` — verifies the assertion.
+  Future<LkmAuthStep> completePasskeyFactor(
+    String challengeId, {
+    required String deviceId,
+    required String webauthnChallengeId,
+    required LkmPasskeyAssertion assertion,
+  }) async {
+    final data = await _client.post(
+      '/auth/challenge/$challengeId/passkey/complete',
+      body: {
+        'device_id': deviceId,
+        'challenge_id': webauthnChallengeId,
+        'rawId': assertion.rawId,
+        'type': 'public-key',
+        'response': {
+          'clientDataJSON': assertion.clientDataJson,
+          'authenticatorData': assertion.authenticatorData,
+          'signature': assertion.signature,
+          'userHandle': ?assertion.userHandle,
+        },
+      },
+    );
+    return LkmAuthStep.fromJson(_asMap(data));
   }
 
   static Map<String, dynamic> _asMap(Object? data) {

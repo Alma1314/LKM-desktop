@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:island/auth/lkm/lkm_login_content.dart';
+import 'package:island/auth/lkm/lkm_passkey.dart';
 import 'package:island/core/api/api_providers.dart';
+import 'package:island/core/api/auth_api.dart';
 import 'package:island/core/api/api_session.dart';
 import 'package:island/core/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -67,8 +69,9 @@ const _me = {
 
 Future<void> _mount(
   WidgetTester tester,
-  ResponseBody Function(RequestOptions options) handle,
-) async {
+  ResponseBody Function(RequestOptions options) handle, {
+  LkmPasskeyCeremony? ceremony,
+}) async {
   await tester.binding.setSurfaceSize(const Size(600, 1100));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   SharedPreferences.setMockInitialValues({});
@@ -87,6 +90,8 @@ Future<void> _mount(
       sharedPreferencesProvider.overrideWithValue(prefs),
       lkmApiSessionProvider.overrideWithValue(session),
       lkmDeviceIdProvider.overrideWith((ref) async => 'device-test'),
+      if (ceremony != null)
+        lkmPasskeyCeremonyProvider.overrideWithValue(ceremony),
     ],
     child: EasyLocalization(
       supportedLocales: const [Locale('en', 'US')],
@@ -203,5 +208,58 @@ void main() {
     expect(find.text('Authenticator code'), findsOneWidget);
     expect(find.text('Verify'), findsOneWidget);
     expect(find.text('Signed in as Alma'), findsNothing);
+  });
+  testWidgets('passkey is offered as a sign-in method', (tester) async {
+    await _mount(tester, (_) => _envelope(_challenge));
+
+    expect(find.text('Passkey'), findsOneWidget);
+    await tester.tap(find.text('Passkey'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Sign in with a passkey'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+  });
+
+  testWidgets('the passkey factor completes the sign-in', (tester) async {
+    await _mount(
+      tester,
+      (options) {
+        if (options.path.contains('/auth/me')) return _envelope(_me);
+        if (options.path.contains('/passkey/start')) {
+          return _envelope({
+            'challenge_id': 'wac-1',
+            'public_key': {'challenge': 'abc', 'rpId': 'lkm-ahz.ltd'},
+          });
+        }
+        if (options.path.contains('/passkey/complete')) {
+          return _envelope(_complete);
+        }
+        return _envelope({
+          ..._challenge,
+          'factors': [
+            {'kind': 'passkey', 'hint': null},
+          ],
+        });
+      },
+      ceremony: (_) async => const LkmPasskeyAssertion(
+        rawId: 'cred-1',
+        clientDataJson: 'cdj',
+        authenticatorData: 'ad',
+        signature: 'sig',
+      ),
+    );
+
+    await tester.tap(find.text('Passkey'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Username or email'),
+      'alma',
+    );
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use a passkey'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Signed in as Alma'), findsOneWidget);
   });
 }

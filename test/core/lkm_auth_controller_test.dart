@@ -5,7 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:island/auth/lkm/lkm_auth_controller.dart';
+import 'package:island/auth/lkm/lkm_passkey.dart';
 import 'package:island/core/api/api_providers.dart';
+import 'package:island/core/api/auth_api.dart';
 import 'package:island/core/api/api_session.dart';
 import 'package:island/core/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -77,8 +79,9 @@ const _pendingTotp = {
 };
 
 Future<({ProviderContainer container, _Adapter adapter})> _setup(
-  ResponseBody Function(RequestOptions options) handle,
-) async {
+  ResponseBody Function(RequestOptions options) handle, {
+  LkmPasskeyCeremony? ceremony,
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final adapter = _Adapter(handle);
@@ -96,6 +99,8 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
       lkmDeviceIdProvider.overrideWith((ref) async => 'device-test'),
       // Identity translator: assertions compare keys, not rendered copy.
       lkmTranslatorProvider.overrideWithValue((key, args) => key),
+      if (ceremony != null)
+        lkmPasskeyCeremonyProvider.overrideWithValue(ceremony),
     ],
   );
   addTearDown(container.dispose);
@@ -301,5 +306,97 @@ void main() {
           .getString(kLkmTokenPairStoreKey),
       isNull,
     );
+  });
+  test('the passkey path yields a passkey factor', () async {
+    final setup = await _setup(
+      (_) => _envelope({
+        ..._challenge,
+        'factors': [
+          {'kind': 'passkey', 'hint': 'a***@example.com'},
+        ],
+      }),
+    );
+    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+
+    await controller.beginPasskey('alma');
+
+    final state = setup.container.read(lkmAuthControllerProvider);
+    expect(state.method, LkmAuthMethod.passkey);
+    expect(state.currentFactor?.kind, 'passkey');
+    expect(setup.adapter.requests.single.data['primary_factor'], 'passkey');
+  });
+
+  test('the passkey ceremony lands the session', () async {
+    var ceremonyCalls = 0;
+    final setup = await _setup(
+      (options) {
+        if (options.path.contains('/auth/me')) return _envelope(_me);
+        if (options.path.contains('/passkey/start')) {
+          return _envelope({
+            'challenge_id': 'wac-1',
+            'public_key': {
+              'challenge': 'abc',
+              'rpId': 'lkm-ahz.ltd',
+              'allowCredentials': const [],
+            },
+          });
+        }
+        if (options.path.contains('/passkey/complete')) return _envelope(_complete);
+        return _envelope({
+          ..._challenge,
+          'factors': [
+            {'kind': 'passkey', 'hint': null},
+          ],
+        });
+      },
+      ceremony: (options) async {
+        ceremonyCalls += 1;
+        expect(options.challengeId, 'wac-1');
+        return const LkmPasskeyAssertion(
+          rawId: 'cred-1',
+          clientDataJson: 'cdj',
+          authenticatorData: 'ad',
+          signature: 'sig',
+        );
+      },
+    );
+    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+
+    await controller.beginPasskey('alma');
+    await controller.authenticateWithPasskey();
+
+    expect(ceremonyCalls, 1);
+    final state = setup.container.read(lkmAuthControllerProvider);
+    expect(state.account?.username, 'alma');
+    expect(setup.container.read(lkmApiSessionProvider).isSignedIn, isTrue);
+  });
+
+  test('a cancelled ceremony keeps the challenge open', () async {
+    final setup = await _setup(
+      (options) {
+        if (options.path.contains('/passkey/start')) {
+          return _envelope({
+            'challenge_id': 'wac-1',
+            'public_key': {'challenge': 'abc', 'rpId': 'lkm-ahz.ltd'},
+          });
+        }
+        return _envelope({
+          ..._challenge,
+          'factors': [
+            {'kind': 'passkey', 'hint': null},
+          ],
+        });
+      },
+      ceremony: (_) async => throw Exception('user cancelled'),
+    );
+    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+
+    await controller.beginPasskey('alma');
+    await controller.authenticateWithPasskey();
+
+    final state = setup.container.read(lkmAuthControllerProvider);
+    expect(state.error, 'lkmPasskeyFailed');
+    expect(state.hasChallenge, isTrue);
+    expect(state.busy, isFalse);
   });
 }
