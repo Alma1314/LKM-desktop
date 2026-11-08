@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_session.dart';
 import 'package:island/core/config.dart';
+import 'package:island/core/services/udid.dart';
 
 /// The LKM-service host the app talks to, as the user entered it (no `/api/v1`).
 class LkmServerUrlNotifier extends Notifier<String> {
@@ -43,6 +44,12 @@ class LkmServerUrlNotifier extends Notifier<String> {
 final lkmServerUrlProvider = NotifierProvider<LkmServerUrlNotifier, String>(
   LkmServerUrlNotifier.new,
 );
+
+/// Stable device identifier used to bind challenges.
+///
+/// Overridable so tests (and any platform without the device-info plugin) can
+/// supply a deterministic value instead of hitting a method channel.
+final lkmDeviceIdProvider = FutureProvider<String>((ref) => getUdid());
 
 /// The app's single LKM-service session: owns the token pair and the
 /// authenticated HTTP client.

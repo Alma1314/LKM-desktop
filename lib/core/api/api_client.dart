@@ -41,6 +41,13 @@ abstract final class ApiCode {
   static const int authVerificationCodeInvalid = (1 << 16) | 6;
   static const int authVerificationCodeExpired = (1 << 16) | 7;
 
+  // NS_AUTH 32–38: 挑战-因子轮转（LKM-service auth/challenge.py）。
+  static const int authChallengeNotFound = (1 << 16) | 32;
+  static const int authChallengeExpired = (1 << 16) | 33;
+  static const int authChallengeConsumed = (1 << 16) | 34;
+  static const int authChallengeDeviceMismatch = (1 << 16) | 35;
+  static const int authChallengeStepInvalid = (1 << 16) | 36;
+
   /// Whether [code] means "the caller is not authenticated" in any spelling
   /// the service uses: the common code or one of the auth token codes.
   static bool isUnauthenticated(int code) =>

@@ -35,6 +35,15 @@ const kNetworkServerStoreKey = 'app_server_url';
 const kLkmServerDefault = 'https://lkm-ahz.ltd';
 const kLkmServerStoreKey = 'lkm_api_server_url';
 
+/// 是否把 LKM-service 作为应用后端。
+///
+/// 编译期开关：`flutter run --dart-define=LKM_BACKEND=true`。关闭时应用照旧走
+/// Solian；等 P1 的时间线落地后再把默认值翻过来，P4 删除 Solian 时连开关一起删。
+const bool kLkmBackendEnabled = bool.fromEnvironment(
+  'LKM_BACKEND',
+  defaultValue: false,
+);
+
 /// Product multi-tenant id for Solian (Island).
 ///
 /// Used for both Ring notification `app` / `app_id` filtering and the Blade
