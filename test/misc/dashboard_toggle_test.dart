@@ -167,9 +167,9 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(DashboardGrid), findsOneWidget);
     expect(find.byType(ExploreScreen), findsNothing);
-    // The dashboard is one of the nine navigation destinations.
+    // The dashboard is one of the ten navigation destinations.
     final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-    expect(rail.destinations.length, 9);
+    expect(rail.destinations.length, 10);
 
     await _teardown(tester);
   });
@@ -185,7 +185,7 @@ void main() {
     expect(_router.currentPath, '/explore');
     // One fewer navigation destination: the dashboard is not reachable.
     final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-    expect(rail.destinations.length, 8);
+    expect(rail.destinations.length, 9);
 
     await _teardown(tester);
   });
@@ -292,7 +292,7 @@ void main() {
 
     // Expanded: the whole reachable set, in rail order with the rest behind.
     expect(rail().extended, isTrue);
-    expect(rail().destinations.length, 8);
+    expect(rail().destinations.length, 9);
     expect(find.byType(Drawer), findsNothing);
 
     // A destination only the expanded rail offers is selectable, and picking
@@ -308,7 +308,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(_router.currentPath, '/wallet');
     expect(rail().extended, isTrue);
-    expect(rail().destinations.length, 8);
+    expect(rail().destinations.length, 9);
 
     await _teardown(tester);
     debugDefaultTargetPlatformOverride = null;
@@ -393,7 +393,7 @@ void main() {
     final tabs = _router.innerRouterOf<TabsRouter>(TabsRoute.name)!;
 
     // Explore is carried, so it is the selection.
-    tabs.setActiveIndex(1);
+    tabs.setActiveIndex(2);
     await tester.pumpAndSettle();
     expect(
       tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
@@ -403,7 +403,7 @@ void main() {
     // Wallet is not carried. Selecting the first entry instead would paint
     // Explore as the current page while the wallet is open — and that first
     // entry is what a tap on the false selection navigates to.
-    tabs.setActiveIndex(6);
+    tabs.setActiveIndex(7);
     await tester.pumpAndSettle();
     expect(_router.currentPath, '/wallet');
     expect(
@@ -481,7 +481,7 @@ void main() {
       final tabs = _router.innerRouterOf<TabsRouter>(TabsRoute.name)!;
 
       // Carried by the default bottom bar: the glass bar paints it.
-      tabs.setActiveIndex(3);
+      tabs.setActiveIndex(4);
       await tester.pumpAndSettle();
       final chatBar = tester.widget<NativeGlassNavBar>(
         find.byType(NativeGlassNavBar),
@@ -492,7 +492,7 @@ void main() {
       // `UITabBarController` that echoes the index it is given back through
       // `onTap`, so handing it a fallback index 0 does not mean "nothing
       // selected" — it means Dashboard, and the echo sent the shell there.
-      tabs.setActiveIndex(8);
+      tabs.setActiveIndex(9);
       await tester.pumpAndSettle();
       expect(_router.currentPath, '/thoughts');
       expect(

@@ -34,6 +34,8 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: AuthorizeRoute.page, path: '/auth/authorize'),
 
     // Other standalone routes
+    AutoRoute(page: ContentDetailRoute.page, path: '/content/:id'),
+    AutoRoute(page: UserProfileRoute.page, path: '/community/users/:id'),
     AutoRoute(page: SettingsRoute.page, path: '/settings'),
     AutoRoute(page: AiConsoleRoute.page, path: '/thoughts/console'),
     AutoRoute(
@@ -83,6 +85,13 @@ class AppRouter extends RootStackRouter {
           page: DashboardRoute.page,
           path: '',
           initial: true,
+          maintainState: false,
+        ),
+
+        // Community tab (LKM-service timeline)
+        AutoRoute(
+          page: CommunityFeedRoute.page,
+          path: 'community',
           maintainState: false,
         ),
 

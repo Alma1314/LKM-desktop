@@ -41,6 +41,9 @@ import 'package:island/chat/widgets/chat_room_form.dart' as _i36;
 import 'package:island/chat/widgets/chat_room_screen.dart' as _i23;
 import 'package:island/chat/widgets/chat_room_storage_screen.dart' as _i24;
 import 'package:island/chat/widgets/chat_search_screen.dart' as _i58;
+import 'package:island/community/community_feed_screen.dart' as _i77;
+import 'package:island/community/content_detail_screen.dart' as _i78;
+import 'package:island/community/user_profile_screen.dart' as _i79;
 import 'package:island/creators/screens/domains/domain_manage.dart' as _i26;
 import 'package:island/creators/screens/hub.dart' as _i27;
 import 'package:island/creators/screens/posts/post_collections_manage.dart'
@@ -1074,6 +1077,73 @@ class ChatRoute extends _i72.PageRouteInfo<void> {
       return const _i22.ChatScreen();
     },
   );
+}
+
+/// generated route for
+/// [_i77.CommunityFeedScreen]
+class CommunityFeedRoute extends _i72.PageRouteInfo<void> {
+  const CommunityFeedRoute({List<_i72.PageRouteInfo>? children})
+    : super(CommunityFeedRoute.name, initialChildren: children);
+
+  static const String name = 'CommunityFeedRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i77.CommunityFeedScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i78.ContentDetailScreen]
+class ContentDetailRoute extends _i72.PageRouteInfo<ContentDetailRouteArgs> {
+  ContentDetailRoute({
+    _i76.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         ContentDetailRoute.name,
+         args: ContentDetailRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'ContentDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<ContentDetailRouteArgs>(
+        orElse: () => ContentDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i78.ContentDetailScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class ContentDetailRouteArgs {
+  const ContentDetailRouteArgs({this.key, required this.id});
+
+  final _i76.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'ContentDetailRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ContentDetailRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
 }
 
 /// generated route for
@@ -2972,6 +3042,57 @@ class WalletOrderDetailRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ orderId.hashCode;
+}
+
+/// generated route for
+/// [_i79.UserProfileScreen]
+class UserProfileRoute extends _i72.PageRouteInfo<UserProfileRouteArgs> {
+  UserProfileRoute({
+    _i76.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         UserProfileRoute.name,
+         args: UserProfileRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'UserProfileRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<UserProfileRouteArgs>(
+        orElse: () => UserProfileRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i79.UserProfileScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class UserProfileRouteArgs {
+  const UserProfileRouteArgs({this.key, required this.id});
+
+  final _i76.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'UserProfileRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! UserProfileRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
 }
 
 /// generated route for

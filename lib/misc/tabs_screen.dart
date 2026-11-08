@@ -69,6 +69,7 @@ class TabsScreen extends StatelessWidget {
     return AutoTabsRouter(
       routes: [
         DashboardRoute(),
+        CommunityFeedRoute(),
         ExploreRoute(),
         UniversalSearchRoute(),
         ChatRoute(),

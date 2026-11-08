@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>A peaceful social network</b>
+  <b>一个宁静的社交网络</b>
 </p>
 
 <p align="center">
@@ -15,113 +15,84 @@
 
 ---
 
-Solian (also known as Solar Network) is a social networking platform, designed to help you express yourself freely and connect with others. We're not aiming to replace any major platform—just providing another peaceful community for you to be part of.
+Solian（又名 Solar Network）是一个社交平台，旨在帮助你自由表达自我并与他人建立联系。我们并不打算取代任何主流平台——只是为你提供另一个宁静和谐的社区选择。
 
-Note: Fediverse support is currently experimental and limited.
+注意：联邦宇宙（Fediverse）支持目前处于实验阶段，功能有限。
 
-> If you read Chinese, visit our documentation: [Suki - Solar Network](https://kb.solsynth.dev/zh/solar-network) | [中文 README](./README_CN.md)
+提示：中文版本的 README 信息可能更新不及时，请以英文版本的为准。
 
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [For Users](#for-users)
-  - [For Developers](#for-developers)
-- [Packages](#packages)
-- [Server](#server)
-- [Tech Stack](#tech-stack)
-- [Contributing](#contributing)
+> 中文文档：[Suki - Solar Network](https://kb.solsynth.dev/zh/solar-network) | [English README](./README.md)
 
 ---
 
-## Features
+## 目录
 
-### Available Now
-
-| Feature | Status | Description |
-| --------- | -------- | ------------- |
-| Timeline | Done | Chronological feed of posts |
-| Posts, Articles & Blog | Done | Multiple content types for different needs |
-| Post Chaining | Done | Chain related posts into a thread |
-| Instant Messaging | Done | Real-time chat with groups, voice messages, reactions and read receipts |
-| End-to-End Encryption | Done | MLS-encrypted messages |
-| Realms | Done | Communities organized by shared interests |
-| OAuth Integration | Done | Secure third-party authentication |
-| Passkeys | Done | Passwordless sign-in with WebAuthn passkeys |
-| Check-in | Done | Location and status sharing |
-| Countdown | Done | Track special dates and festivals |
-| Event Calendar | Done | Plan and share events with your community |
-| Weather | Done | Weather forecast on your dashboard |
-| Wallet | Done | Credits, exchange, orders and billing |
-| Stickers | Done | Express yourself with custom stickers |
-| Rich Text Editor | Done | Markdown-based with extended syntax |
-| Social Features | Done | Friends, blocklist and mute management |
-| File Management | Done | Upload and organize files |
-| Tickets | Done | Support tickets and issue tracking |
-| Board | Done | Custom widgets on your profile |
-| Workspaces | Done | Shared spaces for collaboration |
-| Progressions | Done | Make your move on Solar Network memorizable |
-| Fediverse | Beta | Interact with other fediverse instances |
-
-### Relay Route
-
-Traffic can be routed through a nearby **relay node** instead of dialing the
-server directly. Relays are L4: they read the SNI from the TLS ClientHello and
-copy bytes to the origin without terminating TLS, so the certificate, `Host`
-header, and end-to-end encryption are unchanged — only the socket moves.
-
-Pick one under **Settings → Connection → Relay Route**, or leave it on
-*Direct*. The list comes from the server's `GET /relays` catalog (loaded over a
-direct connection so a broken relay can never hide its own picker). Selecting a
-route applies immediately: HTTP clients are rebuilt and the realtime channel is
-re-dialed; the selection persists across launches.
-
-Opening the picker also measures every announced relay — one TLS handshake
-through each node, the same dial real traffic makes, so a relay that cannot
-carry the server's SNI fails it — and shows the round trip beside the node.
-**Auto (fastest)** takes the lowest measured round trip and stores that route;
-it picks once, it does not keep re-picking on its own.
-
-The reusable pieces — catalog client, models, the connection factory, and the
-latency probe — live in
-[`solar_network_foundation`](packages/solar_network_foundation) so other
-Solar Network clients can route through the same relays.
-
-Not routed through a relay: native transports that never touch Dart's HTTP
-stack (media playback, WebRTC, in-app webviews, platform notification/native
-plugins), and the web build, which dials with the browser's own stack.
+- [功能特性](#功能特性)
+- [开始使用](#开始使用)
+  - [普通用户](#普通用户)
+  - [开发者](#开发者)
+- [软件包](#软件包)
+- [服务端](#服务端)
+- [技术栈](#技术栈)
+- [参与贡献](#参与贡献)
 
 ---
 
-## Getting Started
+## 功能特性
 
-### For Users
+### 已上线功能
 
-1. **Download the App**
-   - Visit [Solar Network product page](https://solsynth.dev/products/solar-network) to download the latest version for your platform
-   - **Rolling updates:** Solian uses rolling releases — we don't use API versioning, so breaking changes can land at any time. Keep the app up to date for the best experience.
+| 功能 | 状态 | 描述 |
+|---------|--------|-------------|
+| 时间线 | 已完成 | 按时间顺序展示动态 |
+| 帖子、文章与博客 | 已完成 | 多种内容类型满足不同需求 |
+| 帖子链 | 已完成 | 将相关帖子串联成线程 |
+| 即时通讯 | 已完成 | 实时聊天，支持群组、语音消息、表情回应与已读回执 |
+| 端到端加密 | 已完成 | 基于 MLS 的加密消息 |
+| 领域 | 已完成 | 按共同兴趣组织的社区 |
+| OAuth 集成 | 已完成 | 安全的第三方认证 |
+| 通行密钥 | 已完成 | 使用 WebAuthn 通行密钥免密登录 |
+| 签到 | 已完成 | 位置和状态分享 |
+| 倒计时 | 已完成 | 追踪特殊日期和节日 |
+| 活动日历 | 已完成 | 与社区一起规划和分享活动 |
+| 天气 | 已完成 | 仪表盘上的天气预报 |
+| 钱包 | 已完成 | 积分、兑换、订单与账单 |
+| 贴纸 | 已完成 | 用自定义贴纸表达自我 |
+| 富文本编辑器 | 已完成 | 基于 Markdown，支持扩展语法 |
+| 社交功能 | 已完成 | 好友、黑名单与屏蔽管理 |
+| 文件管理 | 已完成 | 上传和管理文件 |
+| 工单 | 已完成 | 客服工单与问题追踪 |
+| 主页面板 | 已完成 | 个人主页上的自定义小组件 |
+| 工作区 | 已完成 | 共享协作空间 |
+| 成就与进度 | 已完成 | 记录你在 Solar Network 的一点一滴 |
+| 联邦网络 | 测试版 | 与其他联邦实例互动 |
 
-2. **Create an Account**
-   - Sign up on the Solar Network
-   - Verify your email address
-   - Start exploring!
+---
 
-### For Developers
+## 开始使用
 
-#### Prerequisites
+### 普通用户
 
-- [Flutter SDK](https://flutter.dev) installed
-- For Windows development, install [NASM](https://www.nasm.us) (required by `webcrypto` native assets):
+1. **下载应用**
+   - 访问 [Solar Network 产品页](https://solsynth.dev/products/solar-network) 下载适合你平台的最新版本
+   - **滚动更新：** Solian 采用滚动发布模式——我们不做 API 版本控制，破坏性更新随时可能出现。请保持应用更新以获得最佳体验。
 
+2. **创建账号**
+   - 在 Solar Network 上注册账号
+   - 验证你的邮箱地址
+   - 开始探索吧！
+
+### 开发者
+
+#### 前置要求
+
+- 安装 [Flutter SDK](https://flutter.dev)
+- Windows 开发需要安装 [NASM](https://www.nasm.us)（`webcrypto` 原生资源需要）：
   ```powershell
   winget install NASM.NASM
   ```
-
-- For macOS development, keep the Rust `stable` toolchain current (`rustup update stable`). Archiving from Xcode fails with `E0463: can't find crate for proc_macro_error_attr` when `stable` is older than 1.98 — Xcode's `MACOSX_DEPLOYMENT_TARGET` (13.5) makes the linker emit chained-fixups proc-macro dylibs that older rustc cannot read.
-- For Linux development, install additional dependencies:
-- For web, the preferred build params is: `flutter build web --wasm`
+- macOS 开发请保持 Rust `stable` 工具链为最新（`rustup update stable`）。当 `stable` 低于 1.98 时，从 Xcode 归档会报 `E0463: can't find crate for proc_macro_error_attr`——Xcode 的 `MACOSX_DEPLOYMENT_TARGET`（13.5）会使链接器生成旧版 rustc 无法读取的 chained-fixups proc-macro dylib。
+- Linux 开发需要安装额外依赖：
 
 ```bash
 sudo apt-get update -y
@@ -138,87 +109,83 @@ sudo apt-get install -y \
   gstreamer-1.0
 ```
 
-#### Running the App
+#### 运行应用
 
 ```bash
-# Install dependencies
+# 安装依赖
 flutter pub get
 
-# Run in debug mode
+# 以调试模式运行
 flutter run
 
-# Build release version
+# 构建发布版本
 flutter build <platform>
 ```
 
-See the [Flutter documentation](https://docs.flutter.dev) for more build options.
+更多构建选项请查看 [Flutter 官方文档](https://docs.flutter.dev)。
 
 ---
 
-## Packages
+## 软件包
 
-Shared Solsynth packages are vendored in [`packages/`](packages/README.md) in this repository (imported from Socommon `2f3b2b4`).
+共享的 Solsynth 软件包已内嵌到本仓库的 [`packages/`](packages/README.md)（来源 Socommon `2f3b2b4`）。
 
-Want to build with Solar Network? Check out:
+想要基于 Solar Network 进行开发？查看以下资源：
 
-- [Documentation](https://kb.solsynth.dev)
-- [API Reference](https://api.solsynth.dev)
-- [`solar_network_sdk`](./packages/solar_network_sdk) - Official Dart SDK
+- [开发文档](https://kb.solsynth.dev)
+- [API 文档](https://api.solsynth.dev)
+- [`solar_network_sdk`](./packages/solar_network_sdk) - 官方 Dart SDK
 
 ---
 
-## Server
+## 服务端
 
-The backend powering Solar Network is available at:
+Solar Network 的后端服务位于：
 **[Solsynth/DysonNetwork](https://github.com/Solsynth/DysonNetwork)**
 
 ---
 
-## Tech Stack
+## 技术栈
 
-| Layer | Technology |
-| ------- | ------------ |
-| **Frontend** | Flutter - Cross-platform UI framework |
-| **Backend** | .NET with PostgreSQL database |
-| **Protocols** | ActivityPub (Fediverse), WebSockets, REST API |
+| 层级 | 技术 |
+|-------|------------|
+| **前端** | Flutter - 跨平台 UI 框架 |
+| **后端** | .NET + PostgreSQL 数据库 |
+| **协议** | ActivityPub (联邦宇宙)、WebSockets、REST API |
 
 ---
 
-## Contributing
+## 参与贡献
 
-We welcome contributions! Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) before participating.
+我们欢迎各种形式的贡献！参与前请阅读我们的[行为准则](./CODE_OF_CONDUCT.md)。
 
-- [Report bugs](https://github.com/Solsynth/HyperNet.Surface/issues)
-- [Suggest features](https://github.com/Solsynth/HyperNet.Surface/discussions)
+- [报告 Bug](https://github.com/Solsynth/HyperNet.Surface/issues)
+- [建议新功能](https://github.com/Solsynth/HyperNet.Surface/discussions)
 
-## Licensing
+## 许可协议
 
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+本项目采用 GNU Affero 通用公共许可证 v3.0（AGPL-3.0）授权。
+如果您部署 DysonNetwork 实例、分支 Island 项目，或重新分发本软件的修改版本，则必须遵守 AGPL-3.0 许可条款，包括：
 
-If you deploy an instance of DysonNetwork, fork the Island project, or redistribute modified versions of this software, you must comply with the AGPL-3.0 license terms, including:
+- 包含原始许可协议的副本
+- 保留现有的版权声明和署名
+- 明确说明您所做的任何修改
+- 向通过网络与服务交互的用户提供相应的源代码（包括提供 API）
 
-- Including a copy of the original license
-- Preserving existing copyright notices and attribution
-- Clearly stating any modifications you made
-- Providing corresponding source code to users interacting with the service over a network
+在适用情况下，必须保留归属于 LittleSheep、Solsynth 以及本仓库贡献者的原始作者身份和版权归属。
 
-Original authorship and copyright attribution to LittleSheep, Solsynth, and this repository’s contributors must be retained where applicable.
+请注意，AGPL-3.0 许可仅适用于软件源代码。某些资产、徽标、图标、品牌材料和商标可能单独授权，并不自动受相同条款约束。
 
-Please note that the AGPL-3.0 license applies to the software source code only. Certain assets, logos, icons, branding materials, and trademarks may be licensed separately and are not automatically covered under the same terms.
+第三方部署、分支及衍生服务不得冒充或自称是 Solsynth 运营的官方 Solar Network 服务。
+未经 Solsynth 事先许可，不得将“Solar Network”、“Solian”名称、相关徽标及相关品牌标识用于推广、宣传或标识第三方部署。
+出于描述或兼容性目的，允许提及底层的 DysonNetwork 软件或 Island 项目。
 
-Third-party deployments, forks, and derivative services must not impersonate or present themselves as the official Solar Network service operated by Solsynth.
+同时，如果你的分支项目的目的是第三方 Solar Network 客户端，请阅读并同意 [Solar Network 开发者协议](https://solsynth.dev/zh/legal/solar-network-dev/)
 
-The names “Solar Network”, “Solian”, related logos, and associated branding may not be used to market, advertise, or identify third-party deployments without prior permission from Solsynth.
-
-References to the underlying DysonNetwork software or the Island project for descriptive or compatibility purposes are permitted.
-
-Besides, if your fork project is an 3rd party client of the Solar Network,
-make sure you've read and understand the [Solar Network Developer Agreement](https://solsynth.dev/en/legal/solar-network-dev/)
-
-See:
+参见：
 
 - [LICENSE.txt](./LICENSE.txt)
-- [assets/LICENSE.md](./assets/icons/LICENSE.md) (if applicable)
+- [assets/LICENSE.md](./assets/icons/LICENSE.md)（如适用）
 
 ---
 
