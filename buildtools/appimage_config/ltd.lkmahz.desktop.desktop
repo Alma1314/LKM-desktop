@@ -1,0 +1,19 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Phientist
+Name[zh_CN]=理科迷
+GenericName=Community App
+Comment=理科迷（Phientist）社区客户端
+
+Exec=phientist %U
+Icon=icon-padded
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+StartupNotify=true
+StartupWMClass=ltd.lkmahz.desktop
+
+# Helps with search in application menus
+Keywords=phientist;lkm;理科迷;social;chat;community;network;
+
+MimeType=x-scheme-handler/lkm;

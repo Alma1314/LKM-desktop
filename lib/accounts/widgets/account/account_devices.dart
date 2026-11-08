@@ -1170,7 +1170,7 @@ class _LocationBand extends StatelessWidget {
                   retinaMode: true,
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName:
-                      'LKM/1.0 (+https://lkm-ahz.ltd)',
+                      'Phientist/1.0 (+https://lkm-ahz.ltd)',
                 ),
                 RichAttributionWidget(
                   popupInitialDisplayDuration: const Duration(seconds: 0),

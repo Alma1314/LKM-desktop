@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────
-# Build a Flatpak of LKM desktop.
+# Build a Flatpak of Phientist (理科迷) desktop.
 #
 # Uses flatpak build-init / build / build-finish to assemble the
 # Flatpak manually. Missing system libraries (libmpv, libayatana,
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 APP_ID="ltd.lkmahz.desktop"
-BINARY="island"
+BINARY="phientist"
 RUNTIME="org.freedesktop.Platform"
 RUNTIME_VER="24.08"
 SDK="org.freedesktop.Sdk"
@@ -63,8 +63,8 @@ echo "=== Installing app files ==="
 flatpak build "$BUILDDIR" mkdir -p /app/bin
 flatpak build "$BUILDDIR" cp -r "$FLUTTER_BUNDLE"/* /app/bin/
 flatpak build "$BUILDDIR" install -Dm644 \
-  "$HERE/$APP_ID.desktop" \
-  /app/share/applications/"$APP_ID".desktop
+  "$HERE/$APP_ID.desktop.desktop" \
+  /app/share/applications/"$APP_ID".desktop.desktop
 flatpak build "$BUILDDIR" install -Dm644 \
   "$HERE/$APP_ID.metainfo.xml" \
   /app/share/metainfo/"$APP_ID".metainfo.xml
@@ -86,7 +86,7 @@ flatpak build "$BUILDDIR" bash << 'SCRIPT'
 
   for iteration in 1 2 3 4 5; do
     echo "  Iteration $iteration" >&2
-    for f in /app/bin/island /app/bin/lib/*.so "$TARGET"/*.so; do
+    for f in /app/bin/phientist /app/bin/lib/*.so "$TARGET"/*.so; do
       [ -f "$f" ] || continue
       ldd "$f" 2>/dev/null | while IFS= read -r line; do
         lib=$(echo "$line" | grep "not found" | awk '{print $1}')
@@ -153,7 +153,7 @@ fi
 echo "=== Finalizing ==="
 flatpak build-finish \
   "$BUILDDIR" \
-  --command=island \
+  --command=phientist \
   --socket=wayland \
   --socket=fallback-x11 \
   --device=dri \

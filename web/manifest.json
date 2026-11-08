@@ -1,11 +1,11 @@
 {
     "name": "理科迷",
-    "short_name": "LKM",
+    "short_name": "Phientist",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#4b53c0",
-    "description": "理科迷桌面客户端",
+    "description": "理科迷（Phientist）桌面客户端",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

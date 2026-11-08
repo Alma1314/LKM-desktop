@@ -4,7 +4,7 @@
 set -e
 
 # --- CONFIGURATION ---
-APP_NAME="Solian"
+APP_NAME="Phientist"
 CASK_NAME="solian"
 RCLONE_REMOTE="r2" # Name of your rclone remote
 
@@ -32,7 +32,9 @@ if [ -z "$DEVELOPER_ID" ] || [ -z "$APPLE_ID" ] || [ -z "$TEAM_ID" ] || [ -z "$A
   exit 1
 fi
 
-# Paths (Assumes homebrew-solian is cloned in the same parent directory)
+# Paths (Assumes the Homebrew tap repo is cloned in the same parent directory.
+# NOTE: TAP_DIR / S3_BUCKET / DOWNLOAD_URL below are still Solsynth upstream
+# infrastructure placeholders; point them at the LKM runtime before releasing.)
 FLUTTER_PROJECT_DIR=$(pwd)
 TAP_DIR="../homebrew-solian"
 CASK_FILE="$TAP_DIR/Casks/$CASK_NAME.rb"

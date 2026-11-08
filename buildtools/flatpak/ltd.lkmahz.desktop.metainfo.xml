@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>ltd.lkmahz.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0</project_license>
+  <name>Phientist</name>
+  <name xml:lang="zh_CN">理科迷</name>
+  <summary>理科迷（Phientist）社区客户端</summary>
+  <summary xml:lang="en">Phientist community client</summary>
+
+  <description>
+    <p>理科迷（Phientist）是理科迷社区的桌面客户端。</p>
+    <p xml:lang="en">Phientist is the desktop client of the Phientist community.</p>
+  </description>
+
+  <launchable type="desktop-id">ltd.lkmahz.desktop</launchable>
+
+  <url type="homepage">https://lkm-ahz.ltd</url>
+
+  <developer id="ltd.lkmahz">
+    <name>LKM-AHZ</name>
+  </developer>
+
+  <provides>
+    <binary>phientist</binary>
+  </provides>
+
+  <releases>
+    <release version="3.9.0" date="2026-01-01" />
+  </releases>
+</component>

@@ -1,8 +1,8 @@
-id: dev.solsynth.solian
+id: ltd.lkmahz.desktop
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
-command: island
+command: phientist
 
 finish-args:
   - --socket=wayland
@@ -141,22 +141,22 @@ modules:
       - /lib/pkgconfig
       - /share
 
-  # ── Solian app ────────────────────────────────────────────────
-  - name: solian
+  # ── Phientist app ────────────────────────────────────────────────
+  - name: phientist
     buildsystem: simple
     build-commands:
       - mkdir -p /app/bin
       - cp -r bundle/* /app/bin/
-      - install -Dm644 dev.solsynth.solian.desktop /app/share/applications/dev.solsynth.solian.desktop
-      - install -Dm644 dev.solsynth.solian.metainfo.xml /app/share/metainfo/dev.solsynth.solian.metainfo.xml
-      - install -Dm644 dev.solsynth.solian.png /app/share/icons/hicolor/256x256/apps/dev.solsynth.solian.png
+      - install -Dm644 ltd.lkmahz.desktop.desktop /app/share/applications/ltd.lkmahz.desktop.desktop
+      - install -Dm644 ltd.lkmahz.desktop.metainfo.xml /app/share/metainfo/ltd.lkmahz.desktop.metainfo.xml
+      - install -Dm644 ltd.lkmahz.desktop.png /app/share/icons/hicolor/256x256/apps/ltd.lkmahz.desktop.png
     sources:
       - type: dir
         path: ../../build/linux/x64/release/bundle
         dest: bundle
       - type: file
-        path: dev.solsynth.solian.desktop
+        path: ltd.lkmahz.desktop.desktop
       - type: file
-        path: dev.solsynth.solian.metainfo.xml
+        path: ltd.lkmahz.desktop.metainfo.xml
       - type: file
-        path: dev.solsynth.solian.png
+        path: ltd.lkmahz.desktop.png

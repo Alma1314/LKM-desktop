@@ -2,11 +2,11 @@ version: 1
 AppDir:
   path: AppDir
   app_info:
-    id: dev.solsynth.solian
-    name: Solian
+    id: ltd.lkmahz.desktop
+    name: Phientist
     icon: icon-padded.png
     version: 1.0
-    exec: island
+    exec: phientist
     exec_args: "$@"
   files:
     include:

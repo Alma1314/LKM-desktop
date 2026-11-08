@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# LKM desktop development bootstrap.
+# Phientist (理科迷) desktop development bootstrap.
 #
 # Checks the Flutter toolchain, runs `flutter pub get` (the shared Solsynth
 # packages are vendored in `packages/`, so there is no submodule to check out),
