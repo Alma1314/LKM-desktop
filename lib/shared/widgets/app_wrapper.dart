@@ -46,7 +46,7 @@ import 'package:island/core/audio.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/network.dart';
 import 'package:island/core/websocket.dart';
-import 'package:island/auth/login_content.dart';
+import 'package:island/auth/stargate_post_login.dart';
 import 'package:island/misc/tray_manager.dart';
 import 'package:island/core/services/notify.dart';
 import 'package:island/core/services/sharing_intent.dart';

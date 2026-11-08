@@ -6,13 +6,13 @@ import 'package:passkeys/types.dart';
 import 'package:island/core/api/auth_api.dart';
 
 /// Runs the platform WebAuthn ceremony and returns the assertion to post back.
-typedef LkmPasskeyCeremony =
+typedef PasskeyCeremony =
     Future<LkmPasskeyAssertion> Function(LkmPasskeyOptions options);
 
 /// The ceremony is a platform call (Touch ID / Windows Hello / security key),
 /// so it is injected rather than called inline: tests replace it with a canned
 /// assertion instead of depending on a real authenticator.
-final lkmPasskeyCeremonyProvider = Provider<LkmPasskeyCeremony>(
+final passkeyCeremonyProvider = Provider<PasskeyCeremony>(
   (ref) => runPasskeyCeremony,
 );
 

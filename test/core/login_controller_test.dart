@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:island/auth/lkm/lkm_auth_controller.dart';
-import 'package:island/auth/lkm/lkm_passkey.dart';
+import 'package:island/auth/login_controller.dart';
+import 'package:island/auth/passkey.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/auth_api.dart';
 import 'package:island/core/api/api_session.dart';
@@ -80,7 +80,7 @@ const _pendingTotp = {
 
 Future<({ProviderContainer container, _Adapter adapter})> _setup(
   ResponseBody Function(RequestOptions options) handle, {
-  LkmPasskeyCeremony? ceremony,
+  PasskeyCeremony? ceremony,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -98,9 +98,9 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
       lkmApiSessionProvider.overrideWithValue(session),
       lkmDeviceIdProvider.overrideWith((ref) async => 'device-test'),
       // Identity translator: assertions compare keys, not rendered copy.
-      lkmTranslatorProvider.overrideWithValue((key, args) => key),
+      authTranslatorProvider.overrideWithValue((key, args) => key),
       if (ceremony != null)
-        lkmPasskeyCeremonyProvider.overrideWithValue(ceremony),
+        passkeyCeremonyProvider.overrideWithValue(ceremony),
     ],
   );
   addTearDown(container.dispose);
@@ -113,11 +113,11 @@ void main() {
 
   test('opening a password challenge shows the password factor', () async {
     final setup = await _setup((_) => _envelope(_challenge));
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.hasChallenge, isTrue);
     expect(state.currentFactor?.kind, 'password');
     final request = setup.adapter.requests.single;
@@ -132,12 +132,12 @@ void main() {
       if (options.path.contains('/factor')) return _envelope(_complete);
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.submitPassword('secret');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.account?.username, 'alma');
     expect(state.challenge, isNull);
     final session = setup.container.read(lkmApiSessionProvider);
@@ -150,12 +150,12 @@ void main() {
       if (options.path.contains('/factor')) return _envelope(_pendingTotp);
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.submitPassword('secret');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.account, isNull);
     expect(state.currentFactor?.kind, 'totp');
     // 未签入前不得落令牌。
@@ -172,13 +172,13 @@ void main() {
       }
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.submitPassword('secret');
     await controller.submitTotp('123456');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.account?.username, 'alma');
     final factorBodies = setup.adapter.requests
         .where((r) => r.path.contains('/factor'))
@@ -195,12 +195,12 @@ void main() {
       }
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.submitPassword('wrong');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.error, '用户名或密码错误');
     expect(state.hasChallenge, isTrue);
     expect(state.currentFactor?.kind, 'password');
@@ -214,12 +214,12 @@ void main() {
       }
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.submitPassword('secret');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.hasChallenge, isFalse);
     expect(state.error, 'lkmErrChallengeExpired');
   });
@@ -236,11 +236,11 @@ void main() {
         ],
       });
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginCode('alma@example.com');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.currentFactor?.kind, 'code');
     expect(state.codeSent, isTrue);
     expect(state.info, 'lkmCodeSentTo');
@@ -253,12 +253,12 @@ void main() {
       if (options.path.contains('/cancel')) return _envelope({'message': 'ok'});
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPassword('alma');
     await controller.cancel();
 
-    expect(setup.container.read(lkmAuthControllerProvider).hasChallenge, isFalse);
+    expect(setup.container.read(loginControllerProvider).hasChallenge, isFalse);
     expect(
       setup.adapter.requests.map((r) => r.uri.path),
       contains('/api/v1/auth/challenge/c-1/cancel'),
@@ -271,10 +271,10 @@ void main() {
       if (options.path.contains('/reg/email/verify')) return _envelope(_complete);
       return _envelope({'message': 'sent'});
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.requestRegisterCode('alma@example.com');
-    expect(setup.container.read(lkmAuthControllerProvider).info, 'lkmCodeSentTo');
+    expect(setup.container.read(loginControllerProvider).info, 'lkmCodeSentTo');
 
     await controller.verifyRegistration(
       email: 'alma@example.com',
@@ -282,7 +282,7 @@ void main() {
     );
 
     expect(
-      setup.container.read(lkmAuthControllerProvider).account?.username,
+      setup.container.read(loginControllerProvider).account?.username,
       'alma',
     );
   });
@@ -293,13 +293,13 @@ void main() {
       if (options.path.contains('/factor')) return _envelope(_complete);
       return _envelope(_challenge);
     });
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
     await controller.beginPassword('alma');
     await controller.submitPassword('secret');
 
     await controller.signOut();
 
-    expect(setup.container.read(lkmAuthControllerProvider).account, isNull);
+    expect(setup.container.read(loginControllerProvider).account, isNull);
     expect(
       setup.container
           .read(sharedPreferencesProvider)
@@ -316,12 +316,12 @@ void main() {
         ],
       }),
     );
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPasskey('alma');
 
-    final state = setup.container.read(lkmAuthControllerProvider);
-    expect(state.method, LkmAuthMethod.passkey);
+    final state = setup.container.read(loginControllerProvider);
+    expect(state.method, LoginMethod.passkey);
     expect(state.currentFactor?.kind, 'passkey');
     expect(setup.adapter.requests.single.data['primary_factor'], 'passkey');
   });
@@ -360,13 +360,13 @@ void main() {
         );
       },
     );
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPasskey('alma');
     await controller.authenticateWithPasskey();
 
     expect(ceremonyCalls, 1);
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.account?.username, 'alma');
     expect(setup.container.read(lkmApiSessionProvider).isSignedIn, isTrue);
   });
@@ -389,12 +389,12 @@ void main() {
       },
       ceremony: (_) async => throw Exception('user cancelled'),
     );
-    final controller = setup.container.read(lkmAuthControllerProvider.notifier);
+    final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPasskey('alma');
     await controller.authenticateWithPasskey();
 
-    final state = setup.container.read(lkmAuthControllerProvider);
+    final state = setup.container.read(loginControllerProvider);
     expect(state.error, 'lkmPasskeyFailed');
     expect(state.hasChallenge, isTrue);
     expect(state.busy, isFalse);

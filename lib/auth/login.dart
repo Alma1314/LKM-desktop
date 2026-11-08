@@ -5,10 +5,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:island/accounts/account_pod.dart';
 import 'package:island/shared/widgets/app_scaffold.dart' hide PageBackButton;
-import 'package:island/core/config.dart';
 import 'package:island/core/services/deeplink_service.dart';
 
-import 'lkm/lkm_login_content.dart';
 import 'login_content.dart';
 
 @RoutePage()
@@ -44,7 +42,7 @@ class LoginScreen extends HookConsumerWidget {
         leading: const AutoLeadingButton(),
         title: Text('login').tr(),
       ),
-      body: kLkmBackendEnabled ? const LkmLoginContent() : LoginContent(),
+      body: const LoginContent(),
     );
   }
 }

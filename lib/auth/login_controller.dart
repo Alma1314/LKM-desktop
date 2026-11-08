@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_session.dart';
-import 'package:island/auth/lkm/lkm_passkey.dart';
+import 'package:island/auth/passkey.dart';
 import 'package:island/core/api/auth_api.dart';
 
 /// Resolves an i18n key for the controller.
@@ -12,29 +12,29 @@ import 'package:island/core/api/auth_api.dart';
 /// The controller runs outside the widget tree, so it cannot call `.tr()`
 /// directly; tests override this with an identity function instead of booting
 /// EasyLocalization.
-typedef LkmTranslator = String Function(String key, List<String>? args);
+typedef AuthTranslator = String Function(String key, List<String>? args);
 
-final lkmTranslatorProvider = Provider<LkmTranslator>((ref) {
+final authTranslatorProvider = Provider<AuthTranslator>((ref) {
   return (key, args) => args == null ? key.tr() : key.tr(args: args);
 });
 
 /// How the user chose to prove identity for the first factor.
-enum LkmAuthMethod { password, code, passkey }
+enum LoginMethod { password, code, passkey }
 
 /// Snapshot of the login screen.
 ///
 /// [challenge] is the server's state: whatever is in `factors` is what the UI
 /// renders next. The client never decides on its own which factor comes after
 /// which — that is the whole point of rotating factors server-side.
-class LkmAuthState {
-  const LkmAuthState({
+class LoginState {
+  const LoginState({
     this.account,
     this.challenge,
     this.busy = false,
     this.error,
     this.info,
     this.codeSent = false,
-    this.method = LkmAuthMethod.password,
+    this.method = LoginMethod.password,
     this.recoveryMode = false,
   });
 
@@ -52,7 +52,7 @@ class LkmAuthState {
   final bool codeSent;
 
   /// Which primary factor the *next* "continue" should create a challenge with.
-  final LkmAuthMethod method;
+  final LoginMethod method;
 
   /// Whether the TOTP step is being answered with a recovery code instead.
   final bool recoveryMode;
@@ -61,19 +61,19 @@ class LkmAuthState {
   bool get hasChallenge => challenge != null;
   LkmChallengeFactor? get currentFactor => challenge?.current;
 
-  LkmAuthState copyWith({
+  LoginState copyWith({
     LkmAccount? account,
     LkmChallenge? challenge,
     bool? busy,
     String? error,
     String? info,
     bool? codeSent,
-    LkmAuthMethod? method,
+    LoginMethod? method,
     bool? recoveryMode,
     bool clearAccount = false,
     bool clearChallenge = false,
     bool clearMessages = false,
-  }) => LkmAuthState(
+  }) => LoginState(
     account: clearAccount ? null : (account ?? this.account),
     challenge: clearChallenge ? null : (challenge ?? this.challenge),
     busy: busy ?? this.busy,
@@ -91,20 +91,20 @@ class LkmAuthState {
 /// The token pair is adopted in exactly one place ([_finish]), and only for a
 /// step the server marked complete — so a half-finished challenge can never
 /// leave a partial session behind.
-class LkmAuthController extends Notifier<LkmAuthState> {
+class LoginController extends Notifier<LoginState> {
   @override
-  LkmAuthState build() {
+  LoginState build() {
     final session = ref.watch(lkmApiSessionProvider);
     if (session.isSignedIn) {
       Future.microtask(_restore);
     }
-    return const LkmAuthState();
+    return const LoginState();
   }
 
   AuthApi get _api => AuthApi(ref.read(lkmApiSessionProvider).client);
 
   String _t(String key, [List<String>? args]) =>
-      ref.read(lkmTranslatorProvider)(key, args);
+      ref.read(authTranslatorProvider)(key, args);
 
   Future<String> _deviceId() => ref.read(lkmDeviceIdProvider.future);
 
@@ -124,7 +124,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     }
   }
 
-  void selectMethod(LkmAuthMethod method) {
+  void selectMethod(LoginMethod method) {
     if (state.hasChallenge || state.busy) return;
     state = state.copyWith(method: method, clearMessages: true);
   }
@@ -139,7 +139,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     await _createChallenge(
       account: account.trim(),
       primaryFactor: 'password',
-      method: LkmAuthMethod.password,
+      method: LoginMethod.password,
     );
   }
 
@@ -153,7 +153,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     final created = await _createChallenge(
       account: contact.trim(),
       primaryFactor: 'code',
-      method: LkmAuthMethod.code,
+      method: LoginMethod.code,
     );
     if (!created) return;
     await resendCode();
@@ -169,7 +169,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     await _createChallenge(
       account: account.trim(),
       primaryFactor: 'passkey',
-      method: LkmAuthMethod.passkey,
+      method: LoginMethod.passkey,
     );
   }
 
@@ -182,7 +182,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     try {
       final deviceId = await _deviceId();
       final options = await _api.startPasskeyFactor(challenge.id, deviceId);
-      final assertion = await ref.read(lkmPasskeyCeremonyProvider)(options);
+      final assertion = await ref.read(passkeyCeremonyProvider)(options);
       final step = await _api.completePasskeyFactor(
         challenge.id,
         deviceId: deviceId,
@@ -281,7 +281,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
     } catch (_) {
       // Local reset must not depend on the server being reachable.
     }
-    state = LkmAuthState(method: state.method);
+    state = LoginState(method: state.method);
   }
 
   Future<void> requestRegisterCode(String email) async {
@@ -325,13 +325,13 @@ class LkmAuthController extends Notifier<LkmAuthState> {
   Future<void> signOut() async {
     state = state.copyWith(busy: true, clearMessages: true);
     await ref.read(lkmApiSessionProvider).signOut();
-    state = const LkmAuthState();
+    state = const LoginState();
   }
 
   Future<bool> _createChallenge({
     required String account,
     required String primaryFactor,
-    required LkmAuthMethod method,
+    required LoginMethod method,
   }) async {
     state = state.copyWith(busy: true, clearMessages: true, method: method);
     try {
@@ -414,7 +414,7 @@ class LkmAuthController extends Notifier<LkmAuthState> {
       ),
     );
     final account = await _api.me();
-    state = LkmAuthState(account: account);
+    state = LoginState(account: account);
   }
 
   String _describe(Object error) {
@@ -431,5 +431,5 @@ class LkmAuthController extends Notifier<LkmAuthState> {
   }
 }
 
-final lkmAuthControllerProvider =
-    NotifierProvider<LkmAuthController, LkmAuthState>(LkmAuthController.new);
+final loginControllerProvider =
+    NotifierProvider<LoginController, LoginState>(LoginController.new);

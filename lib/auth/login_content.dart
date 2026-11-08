@@ -1,1462 +1,502 @@
-import 'dart:async';
-
-import 'package:animations/animations.dart';
-import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:gap/gap.dart';
+import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:solar_network_foundation/solar_network_foundation.dart';
-import 'package:island/accounts/screens/punishment_user_sheet.dart';
-import 'package:island/core/config.dart';
-import 'package:island/core/network.dart';
-import 'package:island/accounts/account_pod.dart';
-import 'package:island/core/websocket.dart';
-import 'package:island/core/services/nfc_scan_service.dart';
-import 'package:island/core/services/notify.dart';
-import 'package:island/core/services/udid.dart';
+
+import 'package:island/auth/login_controller.dart';
+import 'package:island/core/api/api_providers.dart';
+import 'package:island/core/api/auth_api.dart';
 import 'package:island/shared/widgets/alert.dart';
-import 'package:island/shared/widgets/layouts/sheet_scaffold.dart';
-import 'package:material_symbols_icons/symbols.dart';
-import 'package:passkeys/authenticator.dart';
-import 'package:passkeys/types.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher_string.dart';
-import 'package:solar_network_sdk/solar_network_sdk.dart';
 
-import 'captcha.dart';
-import 'web_sign_in.dart';
-
-/// Performs post-login tasks including fetching user info, subscribing to push
-/// notifications, connecting websocket, and closing the login dialog.
-Future<void> performPostLogin(BuildContext context, WidgetRef ref) async {
-  final userNotifier = ref.read(userInfoProvider.notifier);
-  await userNotifier.fetchUser();
-  if (!context.mounted) return;
-  final client = ref.read(solarNetworkClientProvider);
-  final wsNotifier = ref.read(websocketStateProvider.notifier);
-  await subscribePushNotification(client.dio, context: context);
-  wsNotifier.connect();
-  if (context.mounted && Navigator.canPop(context)) {
-    Navigator.pop(context, true);
-  }
-}
-
-int _currentPlatformCode() {
-  if (kIsWeb) return 1;
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.iOS => 2,
-    TargetPlatform.android => 3,
-    TargetPlatform.macOS => 4,
-    TargetPlatform.windows => 5,
-    TargetPlatform.linux => 6,
-    _ => 0,
-  };
-}
-
-/// NFC physical passport login is only available on mobile (iOS / Android).
-bool get _supportsPhysicalPassportLogin {
-  if (kIsWeb) return false;
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.iOS || TargetPlatform.android => true,
-    _ => false,
-  };
-}
-
-/// Drops factors that cannot / should not be completed via the factor picker.
+/// Entry mode of the login screen.
 ///
-/// Stargate starts a password login with the password factor alone and
-/// returns the remaining factors only after it is verified. This client reads
-/// the list again after every step, so TOTP, NFC and email appear on later
-/// steps.
-///
-/// - In-app notification (2): replaced by the push + poll cross-device
-///   approval flow, so it is no longer offered as a selectable factor.
-/// - Physical passport (6): NFC only on mobile.
-/// - Passkey (7): a one-tap sign-in capability with its own dedicated
-///   endpoint, never a challenge step.
-List<SnAuthFactor> _filterLoginFactors(Iterable<SnAuthFactor> factors) {
-  return factors.where((factor) {
-    if (factor.type == 2) {
-      return false; // in-app notification — replaced by push + poll approval
-    }
-    if (factor.type == 7) {
-      return false; // passkey — dedicated one-tap endpoint, not a step
-    }
-    if (factor.type == 6) {
-      return _supportsPhysicalPassportLogin;
-    }
-    return true;
-  }).toList();
-}
+/// `register` is deliberately outside [LoginMethod]: registration is not a
+/// challenge (the server returns tokens straight from `/auth/reg/email/verify`).
+enum _LoginMode { password, code, passkey, register }
 
-/// Factors whose code is issued by the server before the person can submit
-/// it. Stargate only emails a code when the caller picks the email factor;
-/// TOTP, NFC, passwords and passkeys need no request.
-bool _factorNeedsCodeRequest(SnAuthFactor factor) => factor.type == 1;
-
-class _QrLoginChallenge {
-  final String qrChallengeId;
-  final String authChallengeId;
-  final String qrData;
-  final DateTime expiresAt;
-
-  const _QrLoginChallenge({
-    required this.qrChallengeId,
-    required this.authChallengeId,
-    required this.qrData,
-    required this.expiresAt,
-  });
-
-  factory _QrLoginChallenge.fromJson(Map<String, dynamic> json) {
-    return _QrLoginChallenge(
-      qrChallengeId: json['qr_challenge_id'] as String,
-      authChallengeId: json['auth_challenge_id'] as String,
-      qrData: json['qr_data'] as String,
-      expiresAt: DateTime.parse(json['expires_at'] as String),
-    );
-  }
-}
-
-class _QrLoginStatusSnapshot {
-  final String qrChallengeId;
-  final String authChallengeId;
-  final int status;
-  final DateTime expiresAt;
-
-  const _QrLoginStatusSnapshot({
-    required this.qrChallengeId,
-    required this.authChallengeId,
-    required this.status,
-    required this.expiresAt,
-  });
-
-  factory _QrLoginStatusSnapshot.fromJson(Map<String, dynamic> json) {
-    return _QrLoginStatusSnapshot(
-      qrChallengeId: json['qr_challenge_id'] as String,
-      authChallengeId: json['auth_challenge_id'] as String,
-      status: (json['status'] as num?)?.toInt() ?? 0,
-      expiresAt: DateTime.parse(json['expires_at'] as String),
-    );
-  }
-}
-
-Future<void> exchangeAuthCodeForToken(
-  BuildContext context,
-  WidgetRef ref, {
-  required String code,
-}) async {
-  final client = ref.watch(apiClientProvider);
-  final tokenResp = await client.post(
-    '/stargate/auth/token',
-    data: {'grant_type': 'authorization_code', 'code': code},
-  );
-  final token = tokenResp.data['token'];
-  setToken(
-    ref.watch(sharedPreferencesProvider),
-    token,
-    refreshToken: tokenResp.data['refresh_token'] as String?,
-    expiresIn: (tokenResp.data['expires_in'] as num?)?.toInt(),
-    refreshExpiresIn: (tokenResp.data['refresh_expires_in'] as num?)?.toInt(),
-  );
-  ref.invalidate(tokenProvider);
-  if (!context.mounted) return;
-  await performPostLogin(context, ref);
-}
-
-Future<void> handleLockedError(
-  BuildContext context,
-  WidgetRef ref,
-  dynamic error,
-  String username,
-) async {
-  if (error is DioException && error.response?.statusCode == 423) {
-    final client = ref.watch(solarNetworkClientProvider);
-    try {
-      final response = await client.dio.get(
-        '/stargate/accounts/$username/punishments/overview',
-      );
-      final overview = response.data != null
-          ? SnAccountPunishment.fromJson(response.data)
-          : null;
-      if (!context.mounted) return;
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        builder: (context) =>
-            UserPunishmentsSheet(username: username, initialOverview: overview),
-      );
-    } catch (e) {
-      // ignore
-    }
-  }
-}
-
-/// Waits for the resolved user agent before the first auth request of a login
-/// attempt.
-///
-/// Stargate binds the challenge factor surface to the user agent that created
-/// the challenge, and the network interceptor can only forward the header once
-/// [userAgentProvider] has resolved. Without this wait a challenge created on a
-/// cold start is recorded with the HTTP client's default user agent and its
-/// factor read then looks like a missing challenge. A provider failure is
-/// swallowed so the interceptor keeps its current behaviour.
-Future<void> _resolveUserAgent(WidgetRef ref) async {
-  try {
-    await ref.read(userAgentProvider.future);
-  } catch (_) {
-    // The interceptor falls back to whatever the HTTP client sends.
-  }
-}
-
-/// Creates a login challenge for [account] through Stargate.
-Future<SnAuthChallenge> _createAuthChallenge(Dio dio, String account) async {
-  final resp = await dio.post(
-    '/stargate/auth/challenge',
-    data: {
-      'account': account,
-      'device_id': await getUdid(),
-      'device_name': await getDeviceName(),
-      'platform': _currentPlatformCode(),
-    },
-  );
-  return SnAuthChallenge.fromJson(resp.data);
-}
-
-/// Reads the factors a login picker can offer for [challengeId].
-Future<List<SnAuthFactor>> _fetchLoginFactors(
-  Dio dio,
-  String challengeId,
-) async {
-  final resp = await dio.get('/stargate/auth/challenge/$challengeId/factors');
-  return _filterLoginFactors(
-    (resp.data as List).map((ele) => SnAuthFactor.fromJson(ele)),
-  );
-}
-
-/// Reads the factors of [challenge], recreating the challenge once on a 404.
-///
-/// `GET /auth/challenge/{id}/factors` is bound to the client IP and user agent
-/// recorded when the challenge was created, and a mismatch answers 404 — the
-/// same status as a missing challenge. A challenge created before the user
-/// agent resolved, or one whose read crossed a network change, is therefore
-/// indistinguishable from a missing one here. [recreate] obtains a challenge
-/// bound to the current caller; the read is then retried against it exactly
-/// once, so the recovery can never loop. Any other failure — and a second 404 —
-/// propagates to the caller's existing error handling.
-Future<(SnAuthChallenge, List<SnAuthFactor>)> _readChallengeFactors(
-  Dio dio,
-  SnAuthChallenge challenge, {
-  required Future<SnAuthChallenge> Function() recreate,
-}) async {
-  try {
-    return (challenge, await _fetchLoginFactors(dio, challenge.id));
-  } on DioException catch (err) {
-    if (err.response?.statusCode != 404) rethrow;
-    final retried = await recreate();
-    return (retried, await _fetchLoginFactors(dio, retried.id));
-  }
-}
-
-class _LoginCheckScreen extends HookConsumerWidget {
-  final SnAuthChallenge? challenge;
-  final SnAuthFactor? factor;
-  final Function(SnAuthChallenge?) onChallenge;
-  final Function(List<SnAuthFactor>) onFactors;
-  final VoidCallback onNext;
-  final Function(bool) onBusy;
-
-  const _LoginCheckScreen({
-    super.key,
-    required this.challenge,
-    required this.factor,
-    required this.onChallenge,
-    required this.onFactors,
-    required this.onNext,
-    required this.onBusy,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isBusy = useState(false);
-    final passwordController = useTextEditingController();
-    final isScanning = useState(false);
-    final scanError = useState<String?>(null);
-
-    useEffect(() {
-      onBusy.call(isBusy.value);
-      return null;
-    }, [isBusy]);
-
-    Future<void> getToken({String? code}) async {
-      await exchangeAuthCodeForToken(context, ref, code: code ?? challenge!.id);
-    }
-
-    /// Stargate only returns the remaining factors after the password step.
-    /// Re-read the picker every time a step settles so TOTP/NFC/passkey/email
-    /// appear (and the used factor disappears) without a reload.
-    Future<void> refreshFactors(String challengeId) async {
-      try {
-        final client = ref.read(solarNetworkClientProvider);
-        onFactors(await _fetchLoginFactors(client.dio, challengeId));
-      } catch (_) {
-        // Best-effort: a failed refresh must not abort a verified step; the
-        // picker keeps the previous list and the poll can retry.
-      }
-    }
-
-    useEffect(() {
-      if (challenge != null && challenge?.stepRemain == 0) {
-        Future(() {
-          if (isBusy.value) return;
-          isBusy.value = true;
-          getToken().catchError((err) {
-            showErrorAlert(err);
-            isBusy.value = false;
-          });
-        });
-      }
-      return null;
-    }, [challenge]);
-
-    if (factor == null) {
-      return AuthFormColumn(
-        children: [
-          AuthFormHeader(icon: Symbols.asterisk, title: 'loginInProgress'.tr()),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: CircularProgressIndicator(),
-          ),
-        ],
-      );
-    }
-
-    Future<void> performCheckTicket() async {
-      final pwd = passwordController.value.text;
-      if (pwd.isEmpty) return;
-      isBusy.value = true;
-      try {
-        final client = ref.watch(solarNetworkClientProvider);
-        final resp = await client.dio.patch(
-          '/stargate/auth/challenge/${challenge!.id}',
-          data: {'factor_id': factor!.id, 'password': pwd},
-        );
-        final result = SnAuthChallenge.fromJson(resp.data);
-        onChallenge(result);
-        if (result.stepRemain > 0) {
-          await refreshFactors(result.id);
-          onNext();
-          return;
-        }
-
-        await getToken(code: result.id);
-      } catch (err) {
-        showErrorAlert(err);
-        return;
-      } finally {
-        isBusy.value = false;
-      }
-    }
-
-    Future<void> scanNfcTag() async {
-      if (factor?.type != 6 || !_supportsPhysicalPassportLogin) return;
-
-      isScanning.value = true;
-      scanError.value = null;
-
-      NFCTag? tag;
-      try {
-        final availability = await NfcScanService().checkAvailability();
-        if (availability != NFCAvailability.available) {
-          scanError.value = 'nfcNotAvailable'.tr();
-          isScanning.value = false;
-          return;
-        }
-
-        tag = await NfcScanService().scanTag();
-        final records = await NfcScanService().readNdefRecords(tag);
-
-        // Use parseDeepLinkUri to properly extract URI from records
-        final uri = NfcScanService().parseDeepLinkUri(records);
-        if (uri == null) {
-          scanError.value = 'nfcTagInvalid'.tr();
-          isScanning.value = false;
-          return;
-        }
-
-        // Login uses the raw NFC payload, not the resolved passport record id.
-        // Plain tags send the path id; encrypted SUN tags send the full URL.
-        final payload = uri.host == 'phpass' && uri.pathSegments.isNotEmpty
-            ? uri.pathSegments.first
-            : uri.toString();
-
-        if (payload.isEmpty) {
-          scanError.value = 'nfcTagInvalid'.tr();
-          isScanning.value = false;
-          return;
-        }
-
-        passwordController.text = '${tag.id}:$payload';
-        isScanning.value = false;
-        performCheckTicket();
-      } catch (e) {
-        scanError.value = e.toString();
-        isScanning.value = false;
-      } finally {
-        // Always finish NFC session to prevent iOS session leak
-        await NfcScanService().finish();
-      }
-    }
-
-    Future<void> performPasskeyAuth() async {
-      if (factor?.type != 7) return;
-
-      isBusy.value = true;
-      try {
-        final passkeyAuthenticator = PasskeyAuthenticator(
-          debugMode: kDebugMode,
-        );
-        final challenge = this.challenge;
-        if (challenge == null) return;
-
-        final client = ref.watch(solarNetworkClientProvider);
-        final options = await client.auth.startPasskeyAuthentication(
-          challengeId: challenge.id,
-        );
-
-        final request = AuthenticateRequestType(
-          challenge: options['challenge'] as String,
-          relyingPartyId: options['rp_id'] as String,
-          allowCredentials:
-              (options['allow_credentials'] as List<dynamic>? ?? [])
-                  .map(
-                    (e) => CredentialType(
-                      type: e['type'] as String,
-                      id: e['id'] as String,
-                      transports: List<String>.from(
-                        e['transports'] as List<dynamic>? ?? const <String>[],
-                      ),
-                    ),
-                  )
-                  .toList(),
-          userVerification: 'preferred',
-          mediation: MediationType.Optional,
-          preferImmediatelyAvailableCredentials: false,
-        );
-
-        final credential = await passkeyAuthenticator.authenticate(request);
-
-        final result = await client.auth.completePasskeyAuthentication(
-          challengeId: challenge.id,
-          credentialId: credential.id,
-          clientDataJson: credential.clientDataJSON,
-          authenticatorData: credential.authenticatorData,
-          signature: credential.signature,
-          userHandle: credential.userHandle.isEmpty
-              ? null
-              : credential.userHandle,
-        );
-        onChallenge(result);
-        if (result.stepRemain > 0) {
-          await refreshFactors(result.id);
-          onNext();
-          return;
-        }
-
-        await getToken(code: result.id);
-      } catch (err) {
-        showErrorAlert(err);
-        return;
-      } finally {
-        isBusy.value = false;
-      }
-    }
-
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final Widget credentialInput;
-    if (factor!.type == 6) {
-      credentialInput = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: kAuthGap,
-        children: [
-          FilledButton.tonalIcon(
-            onPressed: isBusy.value || isScanning.value ? null : scanNfcTag,
-            icon: isScanning.value
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: scheme.onSecondaryContainer,
-                    ),
-                  )
-                : const Icon(Symbols.nfc),
-            label: Text(
-              isScanning.value
-                  ? 'scanning'.tr()
-                  : 'physicalPassportScanToAuthenticate'.tr(),
-            ),
-          ),
-          if (scanError.value != null)
-            AuthErrorBanner(message: scanError.value!),
-        ],
-      );
-    } else if (factor!.type == 7) {
-      credentialInput = FilledButton.icon(
-        onPressed: isBusy.value ? null : () => performPasskeyAuth(),
-        icon: isBusy.value
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: scheme.onPrimary,
-                ),
-              )
-            : const Icon(Symbols.fingerprint),
-        label: Text('passkeyAuthenticate'.tr()),
-      );
-    } else if ([0].contains(factor!.type)) {
-      credentialInput = AuthFactorTextInput(
-        controller: passwordController,
-        label: 'password'.tr(),
-        obscureText: true,
-        onSubmitted: isBusy.value ? null : (_) => performCheckTicket(),
-      );
-    } else {
-      credentialInput = AuthFactorCodeInput(
-        onSubmitted: (value) {
-          passwordController.text = value;
-          performCheckTicket();
-        },
-        onChanged: (value) => passwordController.text = value,
-      );
-    }
-
-    return AuthFormColumn(
-      children: [
-        AuthFormHeader(
-          icon: Symbols.asterisk,
-          title: 'loginEnterPassword'.tr(),
-        ),
-        credentialInput,
-        AuthSectionCard(
-          children: [
-            ListTile(
-              leading: Icon(
-                kFactorTypes[factor!.type]?.$3 ?? Symbols.question_mark,
-                color: scheme.primary,
-              ),
-              title: Text(kFactorTypes[factor!.type]?.$1 ?? 'unknown').tr(),
-              subtitle: Text(kFactorTypes[factor!.type]?.$2 ?? 'unknown').tr(),
-            ),
-          ],
-        ),
-        if (factor!.type != 6 && factor!.type != 7)
-          AuthFormActions(isBusy: isBusy.value, onNext: performCheckTicket),
-      ],
-    );
-  }
-}
-
-class LoginContent extends HookConsumerWidget {
+/// Login for LKM-service, driven by the server's challenge: the screen renders
+/// whatever factor the challenge names next, so a new factor (device trust,
+/// whatever comes after passkey) needs no client change.
+class LoginContent extends ConsumerStatefulWidget {
   const LoginContent({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isBusy = useState(false);
-
-    final period = useState(0);
-    final currentTicket = useState<SnAuthChallenge?>(null);
-    final factors = useState<List<SnAuthFactor>>([]);
-    final factorPicked = useState<SnAuthFactor?>(null);
-
-    // Device A always polls the active challenge, so an approval performed on
-    // another device (which is asked via push on that device) is observed here
-    // regardless of which factor the user is completing. Completion is handed
-    // off to the completion effect in _LoginCheckScreen, which exchanges the
-    // auth code; polling then stops. A decline refreshes the factor list and
-    // drops back to the picker so the user can retry.
-    final challengePollDone = useRef(false);
-    useEffect(() {
-      final ticket = currentTicket.value;
-      if (ticket == null) return null;
-
-      challengePollDone.value = ticket.stepRemain <= 0;
-      if (challengePollDone.value) return null;
-
-      Future<void> pollChallenge() async {
-        if (challengePollDone.value) return;
-        final current = currentTicket.value;
-        if (current == null) return;
-
-        if (current.expiredAt != null &&
-            current.expiredAt!.isBefore(DateTime.now())) {
-          challengePollDone.value = true;
-          if (context.mounted) showSnackBar('challengeExpired'.tr());
-          return;
-        }
-
-        try {
-          final client = ref.read(solarNetworkClientProvider);
-          final resp = await client.dio.get(
-            '/stargate/auth/challenge/${current.id}',
-          );
-          final updated = SnAuthChallenge.fromJson(resp.data);
-          final newlyDeclined =
-              updated.declinedAt != null &&
-              updated.stepRemain > 0 &&
-              (current.declinedAt == null ||
-                  !current.declinedAt!.isAtSameMomentAs(updated.declinedAt!));
-
-          currentTicket.value = updated;
-
-          if (updated.stepRemain <= 0) {
-            challengePollDone.value = true;
-            return;
-          }
-
-          if (newlyDeclined) {
-            if (!context.mounted) return;
-            showSnackBar('challengeDeclinedEscalated'.tr());
-            try {
-              final factorResp = await client.dio.get(
-                '/stargate/auth/challenge/${updated.id}/factors',
-              );
-              factors.value = _filterLoginFactors(
-                (factorResp.data as List).map(
-                  (ele) => SnAuthFactor.fromJson(ele),
-                ),
-              );
-            } catch (_) {
-              // Best-effort refill; the picker also re-fetches on rebuild.
-            }
-            period.value = 1;
-          }
-        } catch (_) {
-          // Best-effort polling; the next tick retries.
-        }
-      }
-
-      final timer = Timer.periodic(
-        const Duration(seconds: 2),
-        (_) => pollChallenge(),
-      );
-      return timer.cancel;
-    }, [currentTicket.value?.id]);
-
-    final stepProgress = currentTicket.value == null
-        ? null
-        : 1 -
-              (currentTicket.value!.stepRemain /
-                  currentTicket.value!.stepTotal);
-
-    return Column(
-      children: [
-        if (isBusy.value)
-          const LinearProgressIndicator(minHeight: 4)
-        else if (stepProgress != null)
-          LinearProgressIndicator(minHeight: 4, value: stepProgress)
-        else
-          const SizedBox(height: 4),
-        Expanded(
-          child: AuthFormShell(
-            child: PageTransitionSwitcher(
-              transitionBuilder:
-                  (
-                    Widget child,
-                    Animation<double> primaryAnimation,
-                    Animation<double> secondaryAnimation,
-                  ) {
-                    return SharedAxisTransition(
-                      animation: primaryAnimation,
-                      secondaryAnimation: secondaryAnimation,
-                      transitionType: SharedAxisTransitionType.horizontal,
-                      fillColor: Colors.transparent,
-                      child: child,
-                    );
-                  },
-              child: switch (period.value % 3) {
-                1 => _LoginPickerScreen(
-                  key: const ValueKey(1),
-                  challenge: currentTicket.value,
-                  factors: factors.value,
-                  onChallenge: (SnAuthChallenge? p0) =>
-                      currentTicket.value = p0,
-                  onPickFactor: (SnAuthFactor p0) => factorPicked.value = p0,
-                  onNext: () => period.value++,
-                  onBusy: (value) => isBusy.value = value,
-                ),
-                2 => _LoginCheckScreen(
-                  key: const ValueKey(2),
-                  challenge: currentTicket.value,
-                  factor: factorPicked.value,
-                  onChallenge: (SnAuthChallenge? p0) =>
-                      currentTicket.value = p0,
-                  onFactors: (p0) => factors.value = p0,
-                  onNext: () => period.value = 1,
-                  onBusy: (value) => isBusy.value = value,
-                ),
-                _ => _LoginLookupScreen(
-                  key: const ValueKey(0),
-                  ticket: currentTicket.value,
-                  onChallenge: (SnAuthChallenge? p0) =>
-                      currentTicket.value = p0,
-                  onFactor: (List<SnAuthFactor>? p0) =>
-                      factors.value = p0 ?? [],
-                  onNext: () => period.value++,
-                  onBusy: (value) => isBusy.value = value,
-                ),
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  ConsumerState<LoginContent> createState() => _LoginContentState();
 }
 
-class _LoginPickerScreen extends HookConsumerWidget {
-  final SnAuthChallenge? challenge;
-  final List<SnAuthFactor>? factors;
-  final Function(SnAuthChallenge?) onChallenge;
-  final Function(SnAuthFactor) onPickFactor;
-  final VoidCallback onNext;
-  final Function(bool) onBusy;
+class _LoginContentState extends ConsumerState<LoginContent> {
+  var _mode = _LoginMode.password;
 
-  const _LoginPickerScreen({
-    super.key,
-    required this.challenge,
-    required this.factors,
-    required this.onChallenge,
-    required this.onPickFactor,
-    required this.onNext,
-    required this.onBusy,
-  });
+  final _account = TextEditingController();
+  final _password = TextEditingController();
+  final _code = TextEditingController();
+  final _email = TextEditingController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isBusy = useState(false);
-    final factorPicked = useState<SnAuthFactor?>(null);
+  void dispose() {
+    _account.dispose();
+    _password.dispose();
+    _code.dispose();
+    _email.dispose();
+    super.dispose();
+  }
 
-    useEffect(() {
-      onBusy.call(isBusy.value);
-      return null;
-    }, [isBusy]);
-
-    useEffect(() {
-      if (challenge != null && challenge?.stepRemain == 0) {
-        Future(() {
-          onNext();
-        });
-      }
-      return null;
-    }, [challenge]);
-
-    void performGetFactorCode() async {
-      final picked = factorPicked.value;
-      if (picked == null) return;
-
-      // Stargate issues a code only for the email factor; TOTP, NFC, passkeys
-      // and the password need no request (and reject one). Go straight to
-      // the credential screen in those cases.
-      if (!_factorNeedsCodeRequest(picked)) {
-        onPickFactor(picked);
-        onNext();
-        return;
-      }
-
-      isBusy.value = true;
-      final client = ref.watch(solarNetworkClientProvider);
-
-      try {
-        await client.dio.post(
-          '/stargate/auth/challenge/${challenge!.id}/factors/${picked.id}',
-        );
-        onPickFactor(picked);
-        onNext();
-      } catch (err) {
-        if (err is DioException && err.response?.statusCode == 400) {
-          onPickFactor(factors!.where((x) => x == factorPicked.value).first);
-          onNext();
-          if (context.mounted) {
-            showSnackBar(err.response!.data.toString());
-          }
-          return;
-        }
-        showErrorAlert(err);
-        return;
-      } finally {
-        isBusy.value = false;
-      }
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(loginControllerProvider);
+    final account = state.account;
+    if (account != null) {
+      return _SignedInCard(
+        account: account,
+        busy: state.busy,
+        error: state.error,
+        onSignOut: ref.read(loginControllerProvider.notifier).signOut,
+      );
     }
 
-    return AuthFormColumn(
-      columnKey: const ValueKey<int>(1),
-      children: [
-        AuthFormHeader(
-          icon: Symbols.lock,
-          title: 'loginPickFactor'.tr(),
-          subtitle: 'loginMultiFactor'.plural(challenge!.stepRemain),
-        ),
-        AuthFactorRadioList(
-          factors: _filterLoginFactors(factors ?? const []),
-          selected: factorPicked.value,
-          blacklistedIds: challenge!.blacklistFactors,
-          onSelected: (value) => factorPicked.value = value,
-        ),
-        AuthFormActions(
-          isBusy: isBusy.value || factorPicked.value == null,
-          onNext: performGetFactorCode,
-        ),
-      ],
-    );
-  }
-}
-
-class _LoginLookupScreen extends HookConsumerWidget {
-  final SnAuthChallenge? ticket;
-  final Function(SnAuthChallenge?) onChallenge;
-  final Function(List<SnAuthFactor>?) onFactor;
-  final VoidCallback onNext;
-  final Function(bool) onBusy;
-
-  const _LoginLookupScreen({
-    super.key,
-    required this.ticket,
-    required this.onChallenge,
-    required this.onFactor,
-    required this.onNext,
-    required this.onBusy,
-  });
-
-  Future<void> _showRecoveryCodeDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => HookBuilder(
-        builder: (context) {
-          final accountController = useTextEditingController();
-          final codeController = useTextEditingController();
-          final isRecovering = useState(false);
-
-          return AlertDialog(
-            title: Text('useRecoveryCode'.tr()),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+    final theme = Theme.of(context);
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'lkmLoginTitle'.tr(),
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'lkmLoginSubtitle'.tr(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              if (!state.hasChallenge) ...[
+                _modeSelector(state.busy),
+                const SizedBox(height: 20),
+                ..._entryFields(state),
+              ] else
+                ..._factorFields(state),
+              const SizedBox(height: 16),
+              if (state.hasChallenge)
+                TextButton(
+                  onPressed: state.busy
+                      ? null
+                      : () => ref.read(loginControllerProvider.notifier).cancel(),
+                  child: Text('lkmCancel'.tr()),
+                ),
+              if (state.info != null) ...[
+                const SizedBox(height: 8),
                 Text(
-                  'recoveryCodeHint'.tr(),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: accountController,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(labelText: 'username'.tr()),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: codeController,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(labelText: 'recoveryCode'.tr()),
+                  state.info!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: Text('cancel'.tr()),
-              ),
-              FilledButton(
-                onPressed: isRecovering.value
-                    ? null
-                    : () async {
-                        if (accountController.text.isEmpty ||
-                            codeController.text.isEmpty) {
-                          return;
-                        }
-                        isRecovering.value = true;
-                        try {
-                          final captchaTk = await CaptchaScreen.show(context);
-                          if (captchaTk == null) {
-                            isRecovering.value = false;
-                            return;
-                          }
-                          final client = ref.read(solarNetworkClientProvider);
-                          final resp = await client.dio.post(
-                            '/stargate/auth/recover',
-                            data: {
-                              'account': accountController.text,
-                              'recovery_code': codeController.text,
-                              'captcha_token': captchaTk,
-                              'device_id': await getUdid(),
-                              'device_name': await getDeviceName(),
-                              'platform': kIsWeb
-                                  ? 1
-                                  : switch (defaultTargetPlatform) {
-                                      TargetPlatform.iOS => 2,
-                                      TargetPlatform.android => 3,
-                                      TargetPlatform.macOS => 4,
-                                      TargetPlatform.windows => 5,
-                                      TargetPlatform.linux => 6,
-                                      _ => 0,
-                                    },
-                            },
-                          );
-                          if (!context.mounted) return;
-                          final token = resp.data['token'];
-                          setToken(
-                            ref.watch(sharedPreferencesProvider),
-                            token,
-                            refreshToken: resp.data['refresh_token'] as String?,
-                            expiresIn: (resp.data['expires_in'] as num?)
-                                ?.toInt(),
-                            refreshExpiresIn:
-                                (resp.data['refresh_expires_in'] as num?)
-                                    ?.toInt(),
-                          );
-                          ref.invalidate(tokenProvider);
-                          if (!context.mounted) return;
-                          await performPostLogin(context, ref);
-                          if (!context.mounted) return;
-                          Navigator.of(dialogContext).pop(true);
-                        } catch (err) {
-                          showErrorAlert(err);
-                        } finally {
-                          isRecovering.value = false;
-                        }
-                      },
-                child: Text('recover'.tr()),
+              if (state.error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  state.error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 20),
+              Text(
+                'lkmServerHint'.tr(args: [ref.watch(lkmServerUrlProvider)]),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
-    if (confirmed == true && context.mounted) {
-      Navigator.of(context).pop(true);
+  }
+
+  Widget _modeSelector(bool busy) {
+    return SegmentedButton<_LoginMode>(
+      segments: [
+        ButtonSegment(
+          value: _LoginMode.password,
+          label: Text('lkmMethodPassword'.tr()),
+        ),
+        ButtonSegment(
+          value: _LoginMode.code,
+          label: Text('lkmMethodCode'.tr()),
+        ),
+        ButtonSegment(
+          value: _LoginMode.passkey,
+          label: Text('lkmMethodPasskey'.tr()),
+        ),
+        ButtonSegment(
+          value: _LoginMode.register,
+          label: Text('lkmMethodRegister'.tr()),
+        ),
+      ],
+      selected: {_mode},
+      showSelectedIcon: false,
+      onSelectionChanged: busy
+          ? null
+          : (selection) => setState(() => _mode = selection.first),
+    );
+  }
+
+  /// Nothing has been sent to the server yet: collect the identifier.
+  List<Widget> _entryFields(LoginState state) {
+    final controller = ref.read(loginControllerProvider.notifier);
+    switch (_mode) {
+      case _LoginMode.password:
+        return [
+          _field(
+            controller: _account,
+            label: 'lkmAccountLabel'.tr(),
+            icon: Icons.person_outline,
+            onSubmitted: () => controller.beginPassword(_account.text),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmContinue'.tr(),
+            onPressed: () => controller.beginPassword(_account.text),
+          ),
+        ];
+      case _LoginMode.code:
+        return [
+          _field(
+            controller: _account,
+            label: 'lkmContactLabel'.tr(),
+            icon: Icons.alternate_email,
+            onSubmitted: () => controller.beginCode(_account.text),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmContinue'.tr(),
+            onPressed: () => controller.beginCode(_account.text),
+          ),
+        ];
+      case _LoginMode.passkey:
+        return [
+          _field(
+            controller: _account,
+            label: 'lkmAccountLabel'.tr(),
+            icon: Icons.person_outline,
+            onSubmitted: () => controller.beginPasskey(_account.text),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'lkmPasskeyHint'.tr(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmContinue'.tr(),
+            onPressed: () => controller.beginPasskey(_account.text),
+          ),
+        ];
+      case _LoginMode.register:
+        return [
+          _field(
+            controller: _email,
+            label: 'lkmEmailLabel'.tr(),
+            icon: Icons.alternate_email,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _field(
+                  controller: _code,
+                  label: 'lkmCodeLabel'.tr(),
+                  icon: Icons.pin_outlined,
+                  onSubmitted: () => controller.verifyRegistration(
+                    email: _email.text,
+                    code: _code.text,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: state.busy
+                    ? null
+                    : () => controller.requestRegisterCode(_email.text),
+                child: Text('lkmSendCode'.tr()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'lkmRegisterHint'.tr(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmRegisterAction'.tr(),
+            onPressed: () => controller.verifyRegistration(
+              email: _email.text,
+              code: _code.text,
+            ),
+          ),
+        ];
     }
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isBusy = useState(false);
-    final usernameController = useTextEditingController();
-
-    useEffect(() {
-      onBusy.call(isBusy.value);
-      return null;
-    }, [isBusy]);
-
-    Future<void> requestResetPassword() async {
-      final uname = usernameController.value.text;
-      if (uname.isEmpty) {
-        showErrorAlert('loginResetPasswordHint'.tr());
-        return;
-      }
-      final captchaTk = await CaptchaScreen.show(context);
-      if (captchaTk == null) return;
-      isBusy.value = true;
-      try {
-        final client = ref.watch(solarNetworkClientProvider);
-        await client.dio.post(
-          '/stargate/accounts/recovery/password',
-          data: {'account': uname, 'captcha_token': captchaTk},
-        );
-        showInfoAlert('loginResetPasswordSent'.tr(), 'done'.tr());
-      } catch (err) {
-        showErrorAlert(err);
-      } finally {
-        isBusy.value = false;
-      }
-    }
-
-    Future<void> performNewTicket() async {
-      final uname = usernameController.value.text;
-      if (uname.isEmpty) return;
-      isBusy.value = true;
-      try {
-        await _resolveUserAgent(ref);
-        final client = ref.watch(solarNetworkClientProvider);
-        final initial = await _createAuthChallenge(client.dio, uname);
-        final (challenge, factors) = await _readChallengeFactors(
-          client.dio,
-          initial,
-          recreate: () => _createAuthChallenge(client.dio, uname),
-        );
-        onChallenge(challenge);
-        onFactor(factors);
-        onNext();
-      } catch (err) {
-        if (!context.mounted) return;
-        await handleLockedError(context, ref, err, uname);
-        if (!context.mounted) return;
-        // RATE_LIMITED: too many failed sign-in attempts (429).
-        if (err is DioException && err.response?.statusCode == 429) {
-          showSnackBar('rateLimitedMessage'.tr());
-          return;
-        }
-        showErrorAlert(err);
-        return;
-      } finally {
-        isBusy.value = false;
-      }
-    }
-
-    /// Signs in through the identity console.
-    ///
-    /// Every social provider now lives there, so this app asks the console for
-    /// one authorization code instead of greeting each provider itself. On a
-    /// native build the code comes back on a loopback listener and is exchanged
-    /// with PKCE; on the web the tab leaves for the console and the shared
-    /// cookie signs this app in when it returns, so nothing is handed back here.
-    Future<void> signInOverWebPressed() async {
-      isBusy.value = true;
-      if (kWebSignInReturnsToApp) showLoadingModal(context);
-      try {
-        final tokens = await signInOverWeb(
-          serverUrl: ref.read(serverUrlProvider),
-        );
-        if (tokens == null) return; // The web leaves the page; nothing to do.
-
-        await setToken(
-          ref.read(sharedPreferencesProvider),
-          tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresIn: tokens.expiresIn,
-        );
-        ref.invalidate(tokenProvider);
-        if (!context.mounted) return;
-        await performPostLogin(context, ref);
-      } catch (err) {
-        if (!context.mounted) return;
-        showErrorAlert(err);
-      } finally {
-        isBusy.value = false;
-        if (context.mounted) hideLoadingModal(context);
-      }
-    }
-
-    Future<void> performDiscoverablePasskeyLogin() async {
-      isBusy.value = true;
-      try {
-        final client = ref.read(solarNetworkClientProvider);
-        final options = await client.auth
-            .startDiscoverablePasskeyAuthentication(
-              deviceId: await getUdid(),
-              deviceName: await getDeviceName(),
-              platform: _currentPlatformCode(),
-            );
-        final authenticator = PasskeyAuthenticator(debugMode: kDebugMode);
-        final credential = await authenticator.authenticate(
-          AuthenticateRequestType(
-            challenge: options['challenge'] as String,
-            relyingPartyId: options['rp_id'] as String,
-            allowCredentials: const [],
-            userVerification:
-                options['user_verification'] as String? ?? 'preferred',
-            mediation: MediationType.Optional,
-            preferImmediatelyAvailableCredentials: false,
+  /// A challenge is open: render whatever factor it names next.
+  List<Widget> _factorFields(LoginState state) {
+    final controller = ref.read(loginControllerProvider.notifier);
+    final factor = state.currentFactor;
+    if (factor == null) {
+      return [
+        Text(
+          'lkmErrChallengeExpired'.tr(),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.error,
           ),
-        );
-        final challenge = await client.auth
-            .completeDiscoverablePasskeyAuthentication(
-              challengeId: options['auth_challenge_id'] as String,
-              credentialId: credential.id,
-              clientDataJson: credential.clientDataJSON,
-              authenticatorData: credential.authenticatorData,
-              signature: credential.signature,
-              userHandle: credential.userHandle.isEmpty
-                  ? null
-                  : credential.userHandle,
-            );
-        if (!context.mounted) return;
-        await exchangeAuthCodeForToken(context, ref, code: challenge.id);
-      } catch (err) {
-        showErrorAlert(err);
-      } finally {
-        isBusy.value = false;
-      }
-    }
-
-    final scheme = Theme.of(context).colorScheme;
-    final methodIconColor = scheme.onSecondaryContainer;
-
-    return AuthFormColumn(
-      children: [
-        AuthFormHeader(icon: Symbols.login, title: 'loginGreeting'.tr()),
-        TextField(
-          autocorrect: false,
-          enableSuggestions: false,
-          controller: usernameController,
-          autofillHints: const [AutofillHints.username],
-          decoration: InputDecoration(
-            labelText: 'username'.tr(),
-            helperText: 'usernameLookupHint'.tr(),
-          ),
-          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-          onSubmitted: isBusy.value ? null : (_) => performNewTicket(),
+          textAlign: TextAlign.center,
         ),
-        AuthAltMethodsRow(
-          label: 'loginOr'.tr(),
-          showDivider: !kIsWeb,
-          children: [
-            AuthMethodIconButton(
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                useRootNavigator: true,
-                showDragHandle: true,
-                builder: (sheetContext) => _QrLoginSheet(
-                  onLoginSuccess: () {
-                    if (Navigator.canPop(sheetContext)) {
-                      Navigator.pop(sheetContext, true);
-                    }
-                  },
+      ];
+    }
+
+    switch (factor.kind) {
+      case 'password':
+        return [
+          _field(
+            controller: _password,
+            label: 'lkmPasswordLabel'.tr(),
+            icon: Icons.lock_outline,
+            obscure: true,
+            onSubmitted: () => controller.submitPassword(_password.text),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmSignInAction'.tr(),
+            onPressed: () => controller.submitPassword(_password.text),
+          ),
+        ];
+      case 'code':
+        return [
+          Row(
+            children: [
+              Expanded(
+                child: _field(
+                  controller: _code,
+                  label: 'lkmCodeLabel'.tr(),
+                  icon: Icons.pin_outlined,
+                  onSubmitted: () => controller.submitCode(_code.text),
                 ),
               ),
-              icon: Icon(Symbols.qr_code_2, size: 18, color: methodIconColor),
-              tooltip: 'qrCode'.tr(),
-            ),
-            AuthMethodIconButton(
-              onPressed: isBusy.value ? null : performDiscoverablePasskeyLogin,
-              icon: Icon(Symbols.fingerprint, size: 18, color: methodIconColor),
-              tooltip: 'authFactorPasskey'.tr(),
-            ),
-          ],
-        ),
-        // Every identity provider now lives on the console, so this is the one
-        // option that reaches them: a native build gets a PKCE code back on
-        // loopback, the web build lands back here with the shared cookie.
-        OutlinedButton.icon(
-          onPressed: isBusy.value ? null : signInOverWebPressed,
-          icon: const Icon(Symbols.travel_explore, size: 18),
-          label: Text('signInOverWeb'.tr()),
-        ),
-        AuthFormActions(isBusy: isBusy.value, onNext: performNewTicket),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: kAuthGapSm,
-          children: [
-            AuthSecondaryAction(
-              enabled: !isBusy.value,
-              onPressed: requestResetPassword,
-              label: 'forgotPassword'.tr(),
-              icon: Symbols.key_off,
-            ),
-            AuthSecondaryAction(
-              enabled: !isBusy.value,
-              onPressed: () => _showRecoveryCodeDialog(context, ref),
-              label: 'useRecoveryCode'.tr(),
-              icon: Symbols.key,
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  spacing: kAuthGapSm,
-                  children: [
-                    Text(
-                      'termAcceptNextWithAgree'.tr(),
-                      textAlign: TextAlign.end,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        launchUrlString('https://solsynth.dev/terms');
-                      },
-                      icon: const Icon(Symbols.launch, size: 16),
-                      label: Text('termAcceptLink'.tr()),
-                      iconAlignment: IconAlignment.end,
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: state.busy ? null : controller.resendCode,
+                child: Text(
+                  state.codeSent ? 'lkmResendCode'.tr() : 'lkmSendCode'.tr(),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmSignInAction'.tr(),
+            onPressed: () => controller.submitCode(_code.text),
+          ),
+        ];
+      case 'totp':
+        final recovery = state.recoveryMode;
+        return [
+          _field(
+            controller: _code,
+            label: recovery ? 'lkmRecoveryCodeLabel'.tr() : 'lkmTotpLabel'.tr(),
+            icon: Icons.shield_outlined,
+            onSubmitted: () => controller.submitTotp(_code.text),
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmVerifyAction'.tr(),
+            onPressed: () => controller.submitTotp(_code.text),
+          ),
+          TextButton(
+            onPressed: state.busy ? null : controller.toggleRecoveryMode,
+            child: Text(
+              recovery ? 'lkmTotpLabel'.tr() : 'lkmRecoveryCodeLabel'.tr(),
             ),
-          ],
-        ),
-      ],
+          ),
+        ];
+      case 'passkey':
+        return [
+          Text(
+            factor.hint == null
+                ? 'lkmPasskeyHint'.tr()
+                : 'lkmCodeSentTo'.tr(args: [factor.hint!]),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmPasskeyAction'.tr(),
+            onPressed: controller.authenticateWithPasskey,
+          ),
+        ];
+      default:
+        return [
+          Text(
+            'lkmErrUnsupportedFactor'.tr(args: [factor.kind]),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ];
+    }
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscure = false,
+    VoidCallback? onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      autocorrect: false,
+      enableSuggestions: !obscure,
+      textInputAction: onSubmitted == null
+          ? TextInputAction.next
+          : TextInputAction.done,
+      onSubmitted: onSubmitted == null ? null : (_) => onSubmitted(),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+    );
+  }
+
+  Widget _primaryButton({
+    required bool busy,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return FilledButton(
+      onPressed: busy ? null : onPressed,
+      child: busy
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(label),
     );
   }
 }
 
-class _QrLoginSheet extends HookConsumerWidget {
-  final VoidCallback? onLoginSuccess;
-  const _QrLoginSheet({this.onLoginSuccess});
+class _SignedInCard extends StatelessWidget {
+  const _SignedInCard({
+    required this.account,
+    required this.busy,
+    required this.error,
+    required this.onSignOut,
+  });
 
-  Color _statusBackground(BuildContext context, int status) {
-    final scheme = Theme.of(context).colorScheme;
-    return switch (status) {
-      1 => scheme.tertiaryContainer, // Scanned
-      2 => scheme.primaryContainer, // Approved
-      3 => scheme.errorContainer, // Declined
-      _ => scheme.surfaceContainerHighest,
-    };
-  }
-
-  Color _statusForeground(BuildContext context, int status) {
-    final scheme = Theme.of(context).colorScheme;
-    return switch (status) {
-      1 => scheme.onTertiaryContainer, // Scanned
-      2 => scheme.onPrimaryContainer, // Approved
-      3 => scheme.onErrorContainer, // Declined
-      _ => scheme.onSurfaceVariant,
-    };
-  }
-
-  String _statusLabel(int status) {
-    return switch (status) {
-      1 => 'loginQrCodeStatusScanned'.tr(),
-      2 => 'loginQrCodeStatusApproved'.tr(),
-      3 => 'loginQrCodeStatusDeclined'.tr(),
-      _ => 'loginQrCodeStatusPending'.tr(),
-    };
-  }
+  final LkmAccount account;
+  final bool busy;
+  final String? error;
+  final Future<void> Function() onSignOut;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final challenge = useState<_QrLoginChallenge?>(null);
-    final status = useState(0); // QrLoginStatus.pending
-    final remainingSeconds = useState<int?>(null);
-    final isLoading = useState(false);
-    final isExchanging = useState(false);
-
-    Future<void> exchangeApprovedCode(String code) async {
-      if (isExchanging.value) return;
-      isExchanging.value = true;
-      try {
-        await exchangeAuthCodeForToken(context, ref, code: code);
-        onLoginSuccess?.call(); // ponytail: also close parent sheet
-      } catch (err) {
-        showErrorAlert(err);
-      } finally {
-        isExchanging.value = false;
-      }
-    }
-
-    Future<void> refreshQrStatus() async {
-      final current = challenge.value;
-      if (current == null) return;
-
-      try {
-        final client = ref.read(solarNetworkClientProvider);
-        final resp = await client.dio.get(
-          '/stargate/auth/qr/${current.qrChallengeId}',
-        );
-        final snapshot = _QrLoginStatusSnapshot.fromJson(
-          Map<String, dynamic>.from(resp.data as Map),
-        );
-        status.value = snapshot.status;
-        if (snapshot.status == 2) {
-          // Approved
-          await exchangeApprovedCode(snapshot.authChallengeId);
-        }
-      } catch (_) {
-        // Best-effort surveying. WebSocket remains the primary update path.
-      }
-    }
-
-    Future<void> generateQrChallenge() async {
-      isLoading.value = true;
-      try {
-        final client = ref.read(solarNetworkClientProvider);
-        final resp = await client.dio.post(
-          '/stargate/auth/qr/generate',
-          data: {
-            'device_id': await getUdid(),
-            'device_name': await getDeviceName(),
-            'platform': _currentPlatformCode(),
-            'audiences': const <String>[],
-            'scopes': const <String>[],
-          },
-        );
-        challenge.value = _QrLoginChallenge.fromJson(
-          Map<String, dynamic>.from(resp.data as Map),
-        );
-        status.value = 0; // Pending
-      } catch (err) {
-        showErrorAlert(err);
-      } finally {
-        isLoading.value = false;
-      }
-    }
-
-    useEffect(() {
-      Future.microtask(generateQrChallenge);
-      return null;
-    }, const []);
-
-    useEffect(() {
-      final current = challenge.value;
-      if (current == null) {
-        remainingSeconds.value = null;
-        return null;
-      }
-
-      void syncRemaining() {
-        final diff = current.expiresAt.difference(DateTime.now()).inSeconds;
-        remainingSeconds.value = diff > 0 ? diff : 0;
-      }
-
-      syncRemaining();
-      final timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        syncRemaining();
-      });
-      return timer.cancel;
-    }, [challenge.value?.qrChallengeId]);
-
-    final isExpired =
-        remainingSeconds.value != null && remainingSeconds.value! <= 0;
-
-    useEffect(() {
-      final current = challenge.value;
-      if (current == null || isExpired || status.value == 2) {
-        // Approved
-        return null;
-      }
-
-      final timer = Timer.periodic(const Duration(seconds: 2), (_) {
-        refreshQrStatus();
-      });
-      return timer.cancel;
-    }, [challenge.value?.qrChallengeId, status.value, isExpired]);
-
-    return SheetScaffold(
-      titleText: 'loginWithQrCodeTitle'.tr(),
+    final initial = account.displayName.isEmpty
+        ? '?'
+        : account.displayName.characters.first;
+    return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'loginWithQrCodeDescription'.tr(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CircleAvatar(
+                radius: 32,
+                child: Text(initial, style: theme.textTheme.headlineSmall),
               ),
-            ),
-            const Gap(24),
-            Center(
-              child: Material(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(28),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: SizedBox(
-                    width: 240,
-                    height: 240,
-                    child: switch ((challenge.value, isLoading.value)) {
-                      (null, true) => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      (final current?, _) => ColoredBox(
-                        color: theme.colorScheme.surface,
-                        child: QrImageView(
-                          data: current.qrData,
-                          version: QrVersions.auto,
-                          size: 240,
-                          errorCorrectionLevel: QrErrorCorrectLevel.H,
-                          eyeStyle: QrEyeStyle(
-                            eyeShape: QrEyeShape.circle,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          dataModuleStyle: QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.circle,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          backgroundColor: theme.colorScheme.surface,
-                        ),
-                      ),
-                      _ => Icon(
-                        Symbols.qr_code_2,
-                        size: 48,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    },
-                  ),
-                ),
+              const SizedBox(height: 16),
+              Text(
+                'lkmSignedInAs'.tr(args: [account.displayName]),
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
               ),
-            ),
-            const Gap(20),
-            Row(
-              children: [
-                Chip(
-                  avatar: Icon(
-                    switch (status.value) {
-                      1 => Symbols.qr_code_scanner,
-                      2 => Symbols.check_circle,
-                      3 => Symbols.cancel,
-                      _ => Symbols.hourglass_empty,
-                    },
-                    size: 18,
-                    color: _statusForeground(context, status.value),
-                  ),
-                  label: Text(_statusLabel(status.value)),
-                  backgroundColor: _statusBackground(context, status.value),
-                  labelStyle: theme.textTheme.labelMedium?.copyWith(
-                    color: _statusForeground(context, status.value),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  side: BorderSide.none,
-                  visualDensity: VisualDensity.compact,
-                ),
-                const Spacer(),
+              if (account.email != null) ...[
+                const SizedBox(height: 4),
                 Text(
-                  isExpired
-                      ? 'loginQrCodeExpired'.tr()
-                      : 'loginQrCodeExpiresIn'.tr(
-                          args: ['${remainingSeconds.value ?? 0}'],
-                        ),
+                  account.email!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isExpired
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
-            ),
-            const Gap(20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: isLoading.value || isExchanging.value
-                    ? null
-                    : generateQrChallenge,
-                icon: isLoading.value
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
-                      )
-                    : const Icon(Symbols.refresh),
-                label: Text('loginQrCodeRefresh'.tr()),
+              const SizedBox(height: 20),
+              Text(
+                'lkmHomePending'.tr(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              if (error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 20),
+              OutlinedButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        await onSignOut();
+                        if (context.mounted) {
+                          showSnackBar('lkmSignedOut'.tr());
+                        }
+                      },
+                child: Text('lkmSignOutAction'.tr()),
+              ),
+            ],
+          ),
         ),
       ),
     );

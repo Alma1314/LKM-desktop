@@ -6,8 +6,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:island/auth/lkm/lkm_login_content.dart';
-import 'package:island/auth/lkm/lkm_passkey.dart';
+import 'package:island/auth/login_content.dart';
+import 'package:island/auth/passkey.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/auth_api.dart';
 import 'package:island/core/api/api_session.dart';
@@ -70,7 +70,7 @@ const _me = {
 Future<void> _mount(
   WidgetTester tester,
   ResponseBody Function(RequestOptions options) handle, {
-  LkmPasskeyCeremony? ceremony,
+  PasskeyCeremony? ceremony,
 }) async {
   await tester.binding.setSurfaceSize(const Size(600, 1100));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -91,7 +91,7 @@ Future<void> _mount(
       lkmApiSessionProvider.overrideWithValue(session),
       lkmDeviceIdProvider.overrideWith((ref) async => 'device-test'),
       if (ceremony != null)
-        lkmPasskeyCeremonyProvider.overrideWithValue(ceremony),
+        passkeyCeremonyProvider.overrideWithValue(ceremony),
     ],
     child: EasyLocalization(
       supportedLocales: const [Locale('en', 'US')],
@@ -102,7 +102,7 @@ Future<void> _mount(
           locale: const Locale('en', 'US'),
           supportedLocales: const [Locale('en', 'US')],
           localizationsDelegates: context.localizationDelegates,
-          home: const Scaffold(body: LkmLoginContent()),
+          home: const Scaffold(body: LoginContent()),
         ),
       ),
     ),
