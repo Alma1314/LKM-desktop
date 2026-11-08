@@ -2,9 +2,9 @@
 #
 # LKM desktop development bootstrap.
 #
-# Checks the Flutter toolchain, checks out the git submodules that the pubspec
-# resolves through `path:` dependencies, then runs `flutter pub get` and reports
-# the system packages a Linux desktop build still needs.
+# Checks the Flutter toolchain, checks out the quickjs bridge submodule, runs
+# `flutter pub get` (the shared Solsynth packages are vendored in `packages/`),
+# and reports the system packages a Linux desktop build still needs.
 #
 # Usage: ./buildtools/setup-dev.sh
 #
@@ -52,11 +52,10 @@ log "Flutter $(flutter --version 2>/dev/null | head -n 1)"
 log "Expected Flutter ${REQUIRED_FLUTTER} or newer (pubspec.lock pins Dart >= ${MIN_DART})"
 
 # --- Submodules --------------------------------------------------------------
-# socommon supplies every `path: socommon/packages/...` dependency; the quickjs
+# The shared Solsynth packages are vendored under `packages/`; the quickjs
 # bridge is a Linux-only plugin submodule used by the release bundle.
 log "Checking out submodules"
 git submodule update --init --recursive \
-    socommon \
     linux/third_party/quickjs_c_bridge
 
 # --- Dart/Flutter packages ---------------------------------------------------
