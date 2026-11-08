@@ -3,4 +3,4 @@
 	url = https://github.com/Texas0295/quickjs-c-bridge.git
 [submodule "socommon"]
 	path = socommon
-	url = https://src.solsynth.dev/SoSYS/Socommon.git
+	url = https://github.com/LKM-AHZ/LKM-socommon.git
