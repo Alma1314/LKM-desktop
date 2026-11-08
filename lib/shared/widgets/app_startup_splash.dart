@@ -15,7 +15,6 @@ import 'package:island/core/network.dart';
 import 'package:island/core/services/notify.dart';
 import 'package:island/core/services/responsive.dart';
 import 'package:island/core/websocket.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:island/shared/widgets/app_startup_progress.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -121,15 +120,6 @@ class StartupSplashScreen extends HookConsumerWidget {
           action: () async {
             if (kIsWeb || (!Platform.isIOS && !Platform.isMacOS)) return;
             await ref.read(audioSessionProvider.future);
-          },
-        ),
-        _BootstrapStage(
-          label: 'Loading plugins',
-          isCritical: false,
-          action: () async {
-            final manager = PluginManager();
-            await manager.initialize();
-            await manager.loadAllAtStartup();
           },
         ),
         if (kStuckStartupForPreview && kDebugMode)

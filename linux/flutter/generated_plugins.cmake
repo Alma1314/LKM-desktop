@@ -8,7 +8,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   disk_space_2
   file_saver
   file_selector_linux
-  flutter_js
   flutter_secure_storage_linux
   flutter_timezone
   flutter_webrtc

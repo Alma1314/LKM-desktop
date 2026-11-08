@@ -13,7 +13,6 @@ so the tree must stay together.
 | `solar_network_sdk` | Solar Network API SDK — networking, auth, cloud file services |
 | `solar_network_foundation` | Presentation primitives, cloud drive service, step-up (sudo) flow |
 | `island_ui_foundation` | Desktop window frame, overlay systems, responsive helpers |
-| `island_plugin_foundation` | JavaScript plugin runtime — discovery, lifecycle, sandbox, host hooks |
 | `island_desktop_presence` | Desktop idle presence and local RPC transport (Linux/macOS/Windows) |
 | `solsynth_express` | Solsynth Express marketplace / release / artifact client |
 | `flutter_app_update` | Vendored fork of `azhon/flutter_app_update` |

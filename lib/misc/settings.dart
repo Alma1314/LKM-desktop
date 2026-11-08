@@ -43,7 +43,6 @@ import 'package:styled_widget/styled_widget.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/theme.dart';
 import 'package:island/drive/screens/file_pool.dart';
-import 'package:island/plugins/screens/plugin_manager_screen.dart';
 import 'package:island/route.gr.dart';
 
 const EdgeInsets _kSettingsTilePadding = EdgeInsets.only(
@@ -2303,49 +2302,6 @@ class SettingsScreen extends HookConsumerWidget {
                 cleaned == 0
                     ? 'settingsCleanPreviousUpdatesNone'.tr()
                     : 'settingsCleanPreviousUpdatesDone'.tr(args: ['$cleaned']),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-
-    categories.add(
-      _SettingCategory(
-        icon: Symbols.extension,
-        title: 'Plugins',
-        localizedTitleKey: 'settingsCategoryPlugins',
-        searchTerms: [
-          'plugins',
-          'javascript',
-          'scripts',
-          'extensions',
-          'automation',
-          'hooks',
-          'commands',
-          'events',
-          'settingsManagePlugins',
-        ],
-        embedInWide: isWide,
-        wideContent: (context) => const PluginManagerContent(),
-        children: [
-          ListTile(
-            minLeadingWidth: 48,
-            title: Text('settingsManagePlugins').tr(),
-            subtitle: Text('settingsManagePluginsDescription').tr(),
-            contentPadding: _kSettingsTilePadding,
-            leading: const Icon(Symbols.extension),
-            trailing: const Icon(Symbols.chevron_right),
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                useSafeArea: true,
-                builder: (_) => SheetScaffold(
-                  titleText: 'Plugins',
-                  heightFactor: 0.85,
-                  child: const PluginManagerContent(),
-                ),
               );
             },
           ),

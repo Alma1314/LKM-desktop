@@ -62,7 +62,6 @@ Solian（又名 Solar Network）是一个社交平台，旨在帮助你自由表
 | 社交功能 | 已完成 | 好友、黑名单与屏蔽管理 |
 | 文件管理 | 已完成 | 上传和管理文件 |
 | 工单 | 已完成 | 客服工单与问题追踪 |
-| 插件 | 已完成 | 用社区插件扩展应用 |
 | 主页面板 | 已完成 | 个人主页上的自定义小组件 |
 | 工作区 | 已完成 | 共享协作空间 |
 | 成就与进度 | 已完成 | 记录你在 Solar Network 的一点一滴 |
@@ -113,9 +112,6 @@ sudo apt-get install -y \
 #### 运行应用
 
 ```bash
-# 拉取 quickjs 桥接子模块（仅 Linux 发布构建需要）
-git submodule update --init linux/third_party/quickjs_c_bridge
-
 # 安装依赖
 flutter pub get
 

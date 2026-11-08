@@ -2,8 +2,8 @@
 #
 # LKM desktop development bootstrap.
 #
-# Checks the Flutter toolchain, checks out the quickjs bridge submodule, runs
-# `flutter pub get` (the shared Solsynth packages are vendored in `packages/`),
+# Checks the Flutter toolchain, runs `flutter pub get` (the shared Solsynth
+# packages are vendored in `packages/`, so there is no submodule to check out),
 # and reports the system packages a Linux desktop build still needs.
 #
 # Usage: ./buildtools/setup-dev.sh
@@ -51,13 +51,6 @@ fi
 log "Flutter $(flutter --version 2>/dev/null | head -n 1)"
 log "Expected Flutter ${REQUIRED_FLUTTER} or newer (pubspec.lock pins Dart >= ${MIN_DART})"
 
-# --- Submodules --------------------------------------------------------------
-# The shared Solsynth packages are vendored under `packages/`; the quickjs
-# bridge is a Linux-only plugin submodule used by the release bundle.
-log "Checking out submodules"
-git submodule update --init --recursive \
-    linux/third_party/quickjs_c_bridge
-
 # --- Dart/Flutter packages ---------------------------------------------------
 log "Resolving packages (flutter pub get)"
 flutter pub get
@@ -77,10 +70,6 @@ if [ "$(uname -s)" = "Linux" ] && command -v dpkg >/dev/null 2>&1; then
     else
         log "Linux build dependencies present"
     fi
-
-    log "Note: release Linux bundles need the quickjs bridge plugin:"
-    log "  cmake -B build_qjs -S linux/third_party/quickjs_c_bridge/linux/ -DCMAKE_BUILD_TYPE=Release"
-    log "  cp build_qjs/libquickjs_c_bridge_plugin.so build/linux/x64/release/bundle/lib/"
 fi
 
 log "Done. Next: flutter run -d linux (or flutter build linux)"

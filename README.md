@@ -60,7 +60,6 @@ Note: Fediverse support is currently experimental and limited.
 | Social Features | Done | Friends, blocklist and mute management |
 | File Management | Done | Upload and organize files |
 | Tickets | Done | Support tickets and issue tracking |
-| Plugins | Done | Extend the app with community plugins |
 | Board | Done | Custom widgets on your profile |
 | Workspaces | Done | Shared spaces for collaboration |
 | Progressions | Done | Make your move on Solar Network memorizable |
@@ -142,9 +141,6 @@ sudo apt-get install -y \
 #### Running the App
 
 ```bash
-# Fetch the quickjs bridge submodule (Linux release builds only)
-git submodule update --init linux/third_party/quickjs_c_bridge
-
 # Install dependencies
 flutter pub get
 

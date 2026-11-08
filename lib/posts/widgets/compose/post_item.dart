@@ -1,6 +1,5 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:dismissible_page/dismissible_page.dart';
-import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
@@ -36,7 +35,6 @@ import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/content/markdown.dart';
 import 'package:island/sharing/share_sheet.dart';
 import 'package:island/shared/widgets/layouts/sheet_scaffold.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:super_context_menu/super_context_menu.dart';
@@ -594,38 +592,7 @@ class PostItem extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Display hooks execute JavaScript and serialize the post payload. Keep the
-    // result while unrelated provider updates rebuild this row, but recompute
-    // immediately if the active plugin set changes.
-    final pluginRevision = useState(0);
-    useEffect(() {
-      void invalidatePluginTransform() => pluginRevision.value += 1;
-
-      final pluginManager = PluginManager();
-      pluginManager.addListener(invalidatePluginTransform);
-      return () => pluginManager.removeListener(invalidatePluginTransform);
-    }, []);
-    final displayResult = useMemoized(() {
-      final hookResult = developer.Timeline.timeSync(
-        'plugin.beforePostDisplay',
-        () => PluginHooks().runBeforePostDisplay(this.item.toJson()),
-        arguments: {'postId': this.item.id},
-      );
-      if (hookResult.cancelled) {
-        return (item: this.item, cancelled: true);
-      }
-
-      try {
-        final postData = this.item.toJson()..addAll(hookResult.data!);
-        return (item: SnPost.fromJson(postData), cancelled: false);
-      } catch (_) {
-        // Invalid plugin output must not prevent the original post rendering.
-        return (item: this.item, cancelled: false);
-      }
-    }, [this.item, pluginRevision.value]);
-    if (displayResult.cancelled) return const SizedBox.shrink();
-
-    final item = displayResult.item;
+    final item = this.item;
     final renderingPadding =
         padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
 

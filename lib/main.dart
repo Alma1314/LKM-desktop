@@ -42,7 +42,6 @@ import 'package:island/core/services/timezone.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
 import 'package:island/core/services/notify.dart';
 import 'package:island_ui_foundation/island_ui_foundation.dart';
-import 'package:island/plugins/plugin.dart';
 import 'package:logging/logging.dart';
 import 'package:relative_time/relative_time.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -273,55 +272,6 @@ void main(List<String> args) async {
         "[LocationSearch] Failed to initialize LocationSearch service...",
         err,
       );
-    }
-
-    try {
-      Logger.root.info("[Plugin] Initializing plugin system...");
-      // Clear stale state from previous hot restart
-      PluginController.resetInstance();
-      PluginManager().dispose();
-
-      final controller = PluginController.instance;
-      // Foundation APIs
-      controller.registerApi('hooks', HooksApi());
-      controller.registerApi('events', EventsApi());
-      controller.registerApi('commands', CommandsApi());
-      UiApi.onOpenPane = (title, descriptor, pluginId) {
-        final host = PluginPaneHost.instance;
-        final pluginManager = PluginManager();
-        final plugin = pluginManager.plugins[pluginId];
-        final pluginName = plugin?.manifest.name ?? pluginId;
-        final type = descriptor['type'] as String? ?? 'text';
-        descriptor.remove('type');
-        final descObj = PluginUiDescriptor(type: type, data: descriptor);
-        host.addPane(
-          descriptor: descObj,
-          pluginId: pluginId,
-          pluginName: pluginName,
-          title: title,
-        );
-      };
-      controller.registerApi('ui', UiApi());
-      controller.registerApi('tasks', BackgroundTaskApi());
-      // Host-specific APIs (dashboard, Solar Network, notify UI, icons)
-      controller.registerApi('notify', NotifyApi());
-      controller.registerApi('icons', IconsApi());
-      controller.registerApi('dashboard', DashboardApi());
-      final pluginNetworkScope = ProviderContainer(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      );
-      controller.registerApi(
-        'network',
-        PluginNetworkApi(prefs, pluginNetworkScope.read(apiClientProvider)),
-      );
-      controller.registerApi('ws', PluginWebsocketApi());
-      await controller.initialize();
-      PluginEventBridge().activate();
-      Logger.root.info(
-        "[Plugin] Plugin system ready with ${controller.plugins.length} plugins",
-      );
-    } catch (err) {
-      Logger.root.severe("[Plugin] Failed to initialize plugin system...", err);
     }
 
     HttpOverrides.global = createAppHttpOverridesFromPrefs(prefs);

@@ -7,9 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'dart:convert';
 import 'package:island/core/models/route_item.dart';
-import 'package:island/shared/widgets/alert.dart';
 import 'package:island/chat/pods/chat_room.dart';
 import 'package:island/chat/pods/chat_summary.dart';
 import 'package:island/core/config.dart';
@@ -25,10 +23,6 @@ import 'package:island/core/services/deeplink_service.dart';
 import 'package:island/core/widgets/draggable_log_overlay.dart';
 import 'package:island/discovery/search_navigation.dart';
 import 'package:island/core/debug_sheet.dart';
-import 'package:island/plugins/icons/plugin_icon_font_registry.dart';
-import 'package:island/plugins/widgets/plugin_pane_host.dart';
-import 'package:island/plugins/widgets/plugin_ui_bridge.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
 
@@ -190,47 +184,6 @@ class CommandPaletteWidget extends HookConsumerWidget {
               .take(5) // Limit to 5 results
               .toList();
 
-    // Plugin commands
-    final pluginCommandsApi = PluginManager().getApi<CommandsApi>();
-    final filteredPluginCommands = searchQuery.value.isEmpty
-        ? <SpecialAction>[]
-        : (pluginCommandsApi?.commands ?? [])
-              .where((cmd) {
-                final query = searchQuery.value.toLowerCase().replaceFirst(
-                  RegExp(r'^/'),
-                  '',
-                );
-                return cmd.name.toLowerCase().contains(query) ||
-                    cmd.description.toLowerCase().contains(query);
-              })
-              .map(
-                (cmd) => SpecialAction(
-                  name: '/${cmd.name}',
-                  description: cmd.description,
-                  icon: PluginIconFontRegistry.resolve(
-                    name: cmd.icon,
-                    pluginId: cmd.pluginId,
-                    orElse: Symbols.extension,
-                  ),
-                  searchableAliases: [cmd.name],
-                  action: () {
-                    final runtime =
-                        PluginManager().plugins[cmd.pluginId]?.runtime;
-                    if (runtime != null) {
-                      final result = pluginCommandsApi!.executeCommand(
-                        cmd,
-                        runtime,
-                      );
-                      if (result != null) {
-                        _showCommandResult(ref, result, runtime: runtime);
-                      }
-                    }
-                  },
-                ),
-              )
-              .take(5)
-              .toList();
-
     final filteredFallbacks =
         searchQuery.value.isNotEmpty &&
             filteredChats.isEmpty &&
@@ -239,12 +192,11 @@ class CommandPaletteWidget extends HookConsumerWidget {
         ? _getFallbackActions(ref, context, searchQuery.value)
         : <FallbackAction>[];
 
-    // Combine results: fallbacks first, then chats, special actions, plugin commands, routes
+    // Combine results: fallbacks first, then chats, special actions, routes
     final allResults = [
       ...filteredFallbacks,
       ...filteredChats,
       ...filteredSpecialActions,
-      ...filteredPluginCommands,
       ...filteredRoutes,
     ];
 
@@ -463,49 +415,6 @@ class CommandPaletteWidget extends HookConsumerWidget {
   void _navigateToRoute(BuildContext context, WidgetRef ref, RouteItem route) {
     onDismiss();
     ref.read(routerProvider).navigatePath(route.path);
-  }
-
-  void _showCommandResult(
-    WidgetRef ref,
-    Object result, {
-    required dynamic runtime,
-  }) {
-    final descriptor = result is String
-        ? PluginUiRenderer.parse(result)
-        : result is Map && result['type'] is String
-        ? PluginUiDescriptor(
-            type: result['type'] as String,
-            data: result.map((key, value) => MapEntry(key.toString(), value)),
-          )
-        : null;
-    if (descriptor != null) {
-      final host = PluginPaneHost.instance;
-      host.addPane(
-        descriptor: descriptor,
-        pluginId: '',
-        pluginName: 'Command',
-        title: 'Result',
-      );
-      return;
-    }
-    // Parse UI descriptor from plugin if it's a JSON string
-    String title = 'Command Result';
-    String body = result.toString();
-
-    if (result is String) {
-      try {
-        final decoded = jsonDecode(result);
-        if (decoded is Map<String, dynamic>) {
-          title = decoded['title']?.toString() ?? title;
-          body =
-              decoded['body']?.toString() ??
-              decoded['content']?.toString() ??
-              body;
-        }
-      } catch (_) {}
-    }
-
-    showInfoAlert(body, title);
   }
 
   void _executeItem(BuildContext context, WidgetRef ref, dynamic item) {

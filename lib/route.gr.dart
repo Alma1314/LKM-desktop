@@ -63,8 +63,6 @@ import 'package:island/misc/not_found.dart' as _i44;
 import 'package:island/misc/settings.dart' as _i59;
 import 'package:island/misc/tabs_screen.dart' as _i66;
 import 'package:island/payments/order_detail.dart' as _i70;
-import 'package:island/plugins/screens/plugin_editor_screen.dart' as _i45;
-import 'package:island/plugins/screens/plugin_manager_screen.dart' as _i46;
 import 'package:island/posts/compose.dart' as _i75;
 import 'package:island/posts/screens/bookmarks.dart' as _i16;
 import 'package:island/posts/screens/compose_article.dart' as _i13;
@@ -1988,38 +1986,6 @@ class PhysicalPassportRoute extends _i72.PageRouteInfo<void> {
     name,
     builder: (data) {
       return const _i7.PhysicalPassportScreen();
-    },
-  );
-}
-
-/// generated route for
-/// [_i45.PluginEditorScreen]
-class PluginEditorRoute extends _i72.PageRouteInfo<void> {
-  const PluginEditorRoute({List<_i72.PageRouteInfo>? children})
-    : super(PluginEditorRoute.name, initialChildren: children);
-
-  static const String name = 'PluginEditorRoute';
-
-  static _i72.PageInfo page = _i72.PageInfo(
-    name,
-    builder: (data) {
-      return const _i45.PluginEditorScreen();
-    },
-  );
-}
-
-/// generated route for
-/// [_i46.PluginManagerScreen]
-class PluginManagerRoute extends _i72.PageRouteInfo<void> {
-  const PluginManagerRoute({List<_i72.PageRouteInfo>? children})
-    : super(PluginManagerRoute.name, initialChildren: children);
-
-  static const String name = 'PluginManagerRoute';
-
-  static _i72.PageInfo page = _i72.PageInfo(
-    name,
-    builder: (data) {
-      return const _i46.PluginManagerScreen();
     },
   );
 }

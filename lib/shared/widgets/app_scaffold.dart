@@ -9,7 +9,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:island/command_palette/palette.dart';
 import 'package:island/core/config.dart';
-import 'package:island/plugins/widgets/plugin_pane_layer.dart';
 import 'package:island/accounts/account_pod.dart';
 import 'package:island/core/websocket.dart';
 import 'package:island/core/services/event_bus.dart';
@@ -86,7 +85,6 @@ class WindowScaffold extends HookConsumerWidget {
     final overlays = <Widget>[
       const WebSocketIndicator(),
       const SnNotificationOverlay(),
-      const PluginPaneLayer(),
     ];
 
     return Focus(

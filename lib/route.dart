@@ -35,8 +35,6 @@ class AppRouter extends RootStackRouter {
 
     // Other standalone routes
     AutoRoute(page: SettingsRoute.page, path: '/settings'),
-    AutoRoute(page: PluginManagerRoute.page, path: '/plugins'),
-    AutoRoute(page: PluginEditorRoute.page, path: '/plugins/editor'),
     AutoRoute(page: AiConsoleRoute.page, path: '/thoughts/console'),
     AutoRoute(
       page: ChatRoomStorageRoute.page,

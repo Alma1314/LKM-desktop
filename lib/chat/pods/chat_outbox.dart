@@ -13,8 +13,6 @@ import 'package:island/core/config.dart';
 import 'package:island/core/services/ios_share_suggestions.dart';
 import 'package:island/data/message.dart';
 import 'package:island/e2ee/e2ee.dart';
-import 'package:island/shared/widgets/alert.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
 import 'package:uuid/uuid.dart';
@@ -248,16 +246,10 @@ class ChatOutboxNotifier extends Notifier<Map<String, List<ChatOutboxEntry>>> {
       return SendResult.failure('Empty message');
     }
 
-    final hookResult = PluginHooks().runBeforeMessageSend(content);
-    if (hookResult.cancelled) {
-      showSnackBar('Message blocked by plugin: ${hookResult.cancelledBy}');
-      return SendResult.failure('Blocked by plugin');
-    }
-
     return _start(
       MessageSendRequest(
         roomId: roomId,
-        content: hookResult.data ?? content,
+        content: content,
         attachments: attachments,
         sender: sender,
         embeds: embeds,

@@ -30,7 +30,6 @@ import 'package:solar_network_foundation/solar_network_foundation.dart';
 import 'package:island/posts/compose_storage_db.dart';
 import 'package:island/posts/widgets/compose/quill_markdown.dart';
 import 'package:island/shared/widgets/alert.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:island/drive/screens/file_pool.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:uuid/uuid.dart';
@@ -1777,16 +1776,7 @@ class ComposeLogic {
           'collection_ids': state.collectionIds.value,
       };
 
-      // Run plugin hooks before publishing
-      final hookResult = PluginHooks().runBeforePostCreate(
-        Map<String, dynamic>.from(payload),
-      );
-      if (hookResult.cancelled) {
-        showSnackBar('Post blocked by plugin: ${hookResult.cancelledBy}');
-        state.submitting.value = false;
-        throw Exception('Post blocked by plugin');
-      }
-      final effectivePayload = hookResult.data ?? payload;
+      final effectivePayload = payload;
 
       final publisherName = state.currentPublisher.value?.name;
       if (publisherName == null || publisherName.isEmpty) {
@@ -2155,13 +2145,7 @@ class ComposeLogic {
           'published_at': DateTime.now().toUtc().toIso8601String(),
       };
 
-      final hookResult = PluginHooks().runBeforePostCreate(
-        Map<String, dynamic>.from(payload),
-      );
-      if (hookResult.cancelled) {
-        throw Exception('Post blocked by plugin: ${hookResult.cancelledBy}');
-      }
-      final effectivePayload = hookResult.data ?? payload;
+      final effectivePayload = payload;
 
       final publisherName = snapshot.publisher?.name;
       if (publisherName == null || publisherName.isEmpty) {

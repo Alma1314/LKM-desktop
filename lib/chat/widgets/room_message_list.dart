@@ -14,7 +14,6 @@ import 'package:island/chat/widgets/sticky_avatar_box.dart';
 import 'package:island/core/config.dart';
 import 'package:island/data/message.dart';
 import 'package:island/drive/widgets/cloud_files.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
 
@@ -30,57 +29,6 @@ class _DisplayMessageCacheEntry {
     required this.status,
     required this.localAttachments,
   });
-}
-
-LocalChatMessage? _transformDisplayMessage(LocalChatMessage message) {
-  final hookResult = PluginHooks().runBeforeMessageDisplay(
-    message.toRemoteMessage().toJson(),
-  );
-  if (hookResult.cancelled) return null;
-
-  try {
-    final messageData = message.toRemoteMessage().toJson()
-      ..addAll(hookResult.data!);
-    final remote = SnChatMessage.fromJson(messageData);
-    var transformed = LocalChatMessage.fromRemoteMessage(
-      remote,
-      message.status,
-      clientMessageId: message.clientMessageId,
-      nonce: message.nonce,
-    );
-    transformed.data.addAll(message.data);
-    transformed.localAttachments = message.localAttachments;
-    if (message.isDeleted != null || message.deletedAt != null) {
-      transformed = LocalChatMessage(
-        id: transformed.id,
-        roomId: transformed.roomId,
-        senderId: transformed.senderId,
-        sender: transformed.sender,
-        data: transformed.data,
-        createdAt: transformed.createdAt,
-        clientMessageId: transformed.clientMessageId,
-        nonce: transformed.nonce,
-        status: transformed.status,
-        content: transformed.content,
-        isDeleted: message.isDeleted,
-        updatedAt: transformed.updatedAt,
-        deletedAt: message.deletedAt,
-        type: transformed.type,
-        meta: transformed.meta,
-        membersMentioned: transformed.membersMentioned,
-        editedAt: transformed.editedAt,
-        attachments: transformed.attachments,
-        reactions: transformed.reactions,
-        repliedMessageId: transformed.repliedMessageId,
-        forwardedMessageId: transformed.forwardedMessageId,
-        localAttachments: message.localAttachments,
-      );
-    }
-    return transformed;
-  } catch (_) {
-    // Invalid plugin output must not prevent the original message rendering.
-    return message;
-  }
 }
 
 List<LocalChatMessage> _buildDisplayMessages(
@@ -118,7 +66,7 @@ List<LocalChatMessage> _buildDisplayMessages(
         identical(cached.localAttachments, message.localAttachments)) {
       transformed = cached.display;
     } else {
-      transformed = _transformDisplayMessage(message);
+      transformed = message;
       cache[key] = _DisplayMessageCacheEntry(
         source: message,
         display: transformed,
@@ -186,27 +134,13 @@ class RoomMessageList extends HookConsumerWidget {
     // state changes (selection, read marker, display settings) rebuild this
     // widget while the user is scrolling.
     final displayMessageCache = useRef(<String, _DisplayMessageCacheEntry>{});
-    // A plugin can be enabled, disabled, or reloaded while this screen is
-    // open. In that case transformed rows must be recomputed once using the
-    // new hook chain instead of retaining the previous plugin output.
-    final pluginRevision = useState(0);
-    useEffect(() {
-      void invalidatePluginTransforms() {
-        displayMessageCache.value.clear();
-        pluginRevision.value += 1;
-      }
-
-      final pluginManager = PluginManager();
-      pluginManager.addListener(invalidatePluginTransforms);
-      return () => pluginManager.removeListener(invalidatePluginTransforms);
-    }, []);
     final displayMessages = useMemoized(
       () => developer.Timeline.timeSync(
         'chat.buildDisplayMessages',
         () => _buildDisplayMessages(messages, displayMessageCache.value),
         arguments: {'roomId': roomId, 'messageCount': messages.length},
       ),
-      [messages, pluginRevision.value],
+      [messages],
     );
 
     final displayStyle = ref.watch(

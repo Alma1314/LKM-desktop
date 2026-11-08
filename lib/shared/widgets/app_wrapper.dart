@@ -46,7 +46,6 @@ import 'package:island/core/audio.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/network.dart';
 import 'package:island/core/websocket.dart';
-import 'package:island/plugins/plugin.dart';
 import 'package:island/auth/login_content.dart';
 import 'package:island/misc/tray_manager.dart';
 import 'package:island/core/services/notify.dart';
@@ -115,15 +114,6 @@ class AppWrapper extends HookConsumerWidget {
     final recentlyHandledInvites = useRef(<String, DateTime>{});
     final lastHandledAcceptedRoomId = useRef<String?>(null);
     final shownChallengeIds = useRef(<String>{});
-
-    // Attach the app WebSocket to the plugin host API so plugins can
-    // subscribe / send packets (see PluginWebsocketApi).
-    useEffect(() {
-      final service = ref.read(websocketProvider);
-      final wsApi = PluginController.instance.getApi<PluginWebsocketApi>();
-      wsApi?.attach(service);
-      return null;
-    }, const []);
 
     void kickCallKitMicrophone(String reason) {
       if (kIsWeb || !Platform.isIOS) return;

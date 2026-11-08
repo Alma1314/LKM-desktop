@@ -38,9 +38,6 @@ import 'package:island/misc/dashboard/dashboard_layout.dart';
 import 'package:island/misc/dashboard/weather.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/theme.dart';
-import 'package:island/plugins/apis/dashboard_api.dart';
-import 'package:island/plugins/widgets/plugin_ui_bridge.dart';
-import 'package:island_plugin_foundation/island_plugin_foundation.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
 
 // Dashboard rhythm. One spacing scale for both breakpoints: roomy page
@@ -116,10 +113,6 @@ class _DisabledDashboardRedirect extends HookConsumerWidget {
 class DashboardRenderer {
   // Map individual card IDs to widgets
   static Widget buildCard(String cardId, WidgetRef ref) {
-    final pluginItem = PluginManager().getApi<DashboardApi>()?.itemForLayoutId(
-      cardId,
-    );
-    if (pluginItem != null) return _PluginDashboardItem(item: pluginItem);
     switch (cardId) {
       case 'checkIn':
         return CheckInWidget(margin: EdgeInsets.zero);
@@ -503,49 +496,6 @@ class _DashboardGridNarrow extends HookConsumerWidget {
       spacing: _kCardGap,
       children: children,
     );
-  }
-}
-
-class _PluginDashboardItem extends StatefulWidget {
-  final PluginDashboardItem item;
-
-  const _PluginDashboardItem({required this.item});
-
-  @override
-  State<_PluginDashboardItem> createState() => _PluginDashboardItemState();
-}
-
-class _PluginDashboardItemState extends State<_PluginDashboardItem> {
-  PluginUiDescriptor? _descriptor;
-
-  @override
-  void initState() {
-    super.initState();
-    _buildItem();
-  }
-
-  void _buildItem([String? callback, String? value]) {
-    final runtime = PluginManager().plugins[widget.item.pluginId]?.runtime;
-    if (runtime == null) return;
-    final result = runtime.callFunction(
-      callback ?? widget.item.handlerName,
-      value == null ? null : [value],
-    );
-    final descriptor = switch (result) {
-      String value => PluginUiRenderer.parse(value),
-      Map value when value['type'] is String => PluginUiDescriptor(
-        type: value['type'] as String,
-        data: value.map((key, value) => MapEntry(key.toString(), value)),
-      ),
-      _ => null,
-    };
-    if (mounted) setState(() => _descriptor = descriptor);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_descriptor == null) return const SizedBox.shrink();
-    return PluginUiRenderer(descriptor: _descriptor!, onCallback: _buildItem);
   }
 }
 
