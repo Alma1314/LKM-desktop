@@ -1170,7 +1170,7 @@ class _LocationBand extends StatelessWidget {
                   retinaMode: true,
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName:
-                      'Solian/1.0 (+https://solian.app, contact: lily@solsynth.dev)',
+                      'LKM/1.0 (+https://lkm-ahz.ltd)',
                 ),
                 RichAttributionWidget(
                   popupInitialDisplayDuration: const Duration(seconds: 0),

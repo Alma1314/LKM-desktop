@@ -1,4 +1,4 @@
-package dev.solsynth.solian.network
+package ltd.lkmahz.desktop.network
 
 import android.content.Context
 import android.content.SharedPreferences

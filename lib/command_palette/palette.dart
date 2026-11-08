@@ -440,17 +440,17 @@ class CommandPaletteWidget extends HookConsumerWidget {
 
     final List<FallbackAction> actions = [];
 
-    // Check if query is a Solian deep link (custom scheme or the web app URL)
+    // Check if query is a LKM deep link (custom scheme or the web app URL)
     final Uri? uri = Uri.tryParse(query);
-    final routePath = uri == null ? null : solianLinkToRoutePath(uri);
-    final isSolianLink = routePath != null;
+    final routePath = uri == null ? null : lkmLinkToRoutePath(uri);
+    final isLKMLink = routePath != null;
     final isValidUrl =
         uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
     final isDomain = RegExp(
       r'^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$',
     ).hasMatch(query);
 
-    if (isSolianLink) {
+    if (isLKMLink) {
       actions.add(
         FallbackAction(
           name: 'Open Link',
@@ -459,13 +459,13 @@ class CommandPaletteWidget extends HookConsumerWidget {
           action: () {
             // Route through the central deep link handler so every entry
             // point shares the same resolution, loading and error behavior.
-            eventBus.fire(SolianDeepLinkEvent(uri!));
+            eventBus.fire(LkmDeepLinkEvent(uri!));
           },
         ),
       );
     }
 
-    if (!isSolianLink && (isValidUrl || isDomain)) {
+    if (!isLKMLink && (isValidUrl || isDomain)) {
       final finalUri = isDomain ? Uri.parse('https://$query') : uri!;
       actions.add(
         FallbackAction(

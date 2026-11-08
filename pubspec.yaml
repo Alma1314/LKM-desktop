@@ -1,5 +1,5 @@
 name: island
-description: "The Solar Network App"
+description: "理科迷桌面客户端"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -283,7 +283,7 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/icons/icon.png"
     background_color: "#ffffff"
-    theme_color: "#7d80ba"
+    theme_color: "#4b53c0"
   windows:
     generate: true
     image_path: "assets/icons/icon.png"
@@ -299,16 +299,16 @@ flutter_native_splash:
   color_dark: "#121212"
 
 msix_config:
-  display_name: Solian
-  publisher_display_name: Solsynth
-  publisher: CN=8B500F48-CBAA-4C83-83B2-7BB79FE401EE
-  identity_name: LittleSheep.Solian
+  display_name: 理科迷
+  publisher_display_name: LKM-AHZ
+  publisher: CN=LKM-AHZ
+  identity_name: ltd.lkmahz.desktop
   msix_version: 3.9.0.0
   logo_path: buildtools\icon-padded.png
   output_directory: build\msix
   trim_logo: true
-  protocol_activation: solian
-  execution_alias: solian
+  protocol_activation: lkm
+  execution_alias: lkm
   capabilities: "internetClient, location, microphone, webcam"
   languages: en-US
   store: true

@@ -122,7 +122,7 @@ class SharingIntentService {
     for (final url in links) {
       final normalized = url.trim();
       final uri = Uri.tryParse(normalized);
-      if (uri != null && solianLinkToRoutePath(uri) != null) {
+      if (uri != null && lkmLinkToRoutePath(uri) != null) {
         solianDeepLink = normalized;
         break;
       }
@@ -133,7 +133,7 @@ class SharingIntentService {
         Logger.root.info(
           "SharingIntentService: Dispatching deep link $solianDeepLink",
         );
-        eventBus.fire(SolianDeepLinkEvent(uri));
+        eventBus.fire(LkmDeepLinkEvent(uri));
         return;
       }
     }

@@ -128,12 +128,12 @@ class ShowNotificationModalEvent {
   const ShowNotificationModalEvent();
 }
 
-/// Event fired when a custom solian:// deep link is received on platforms
+/// Event fired when a custom lkm:// deep link is received on platforms
 /// that deliver it via sharing intents.
-class SolianDeepLinkEvent {
+class LkmDeepLinkEvent {
   final Uri uri;
 
-  const SolianDeepLinkEvent(this.uri);
+  const LkmDeepLinkEvent(this.uri);
 }
 
 /// Event fired when MLS epoch changes for a room

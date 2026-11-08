@@ -117,7 +117,7 @@ StreamSubscription<WebSocketPacket> setupNotificationListener(
             group: notification.topic,
             image: imagePath,
             largeImage: largeImagePath,
-            launch: actionUrl != null ? 'solian://$actionUrl' : null,
+            launch: actionUrl != null ? 'lkm://$actionUrl' : null,
           );
           await windowsNotification!.showNotificationPluginTemplate(
             notificationMessage,
@@ -137,7 +137,7 @@ Future<void> showDebugLocalNotification(WidgetRef _) async {
     'Debug Local Notification',
     'This is a locally-triggered notification from Debug Sheet.',
     group: 'debug',
-    launch: 'solian:///dashboard',
+    launch: 'lkm:///dashboard',
   );
   await windowsNotification!.showNotificationPluginTemplate(
     notificationMessage,

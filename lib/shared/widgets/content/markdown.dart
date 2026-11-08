@@ -241,7 +241,7 @@ class MarkdownTextContent extends HookConsumerWidget {
   final MarkdownHeadingRegistry? headingAnchors;
 
   /// Whether a paragraph that is nothing but a Solian post link
-  /// (`https://solian.app/posts/<id>`, `solian://posts/<id>`) renders as an
+  /// (`https://lkm-ahz.ltd/posts/<id>`, `lkm://posts/<id>`) renders as an
   /// inline [PostLinkEmbed] preview.
   ///
   /// Off by default: surfaces that already draw a post card — a quoted reply, a
@@ -383,7 +383,7 @@ class MarkdownTextContent extends HookConsumerWidget {
         }
         if (openPostDetailAttentionModalForUri(url)) return;
 
-        final routePath = solianLinkToRoutePath(url);
+        final routePath = lkmLinkToRoutePath(url);
         if (routePath != null &&
             tryNavigateToRoutePath(ref.read(routerProvider), routePath)) {
           return;

@@ -54,36 +54,36 @@ void main() {
     });
   });
 
-  test('solianLinkWebUrl maps custom-scheme links to the web app', () {
+  test('lkmLinkWebUrl maps custom-scheme links to the web app', () {
     expect(
-      solianLinkWebUrl(Uri.parse('solian://posts/123'))?.toString(),
-      'https://solian.app/posts/123',
+      lkmLinkWebUrl(Uri.parse('lkm://posts/123'))?.toString(),
+      'https://lkm-ahz.ltd/posts/123',
     );
     expect(
-      solianLinkWebUrl(
-        Uri.parse('solian://posts/123?tab=comments'),
+      lkmLinkWebUrl(
+        Uri.parse('lkm://posts/123?tab=comments'),
       )?.toString(),
-      'https://solian.app/posts/123?tab=comments',
+      'https://lkm-ahz.ltd/posts/123?tab=comments',
     );
     expect(
-      solianLinkWebUrl(Uri.parse('https://solian.app/posts/123'))?.toString(),
-      'https://solian.app/posts/123',
+      lkmLinkWebUrl(Uri.parse('https://lkm-ahz.ltd/posts/123'))?.toString(),
+      'https://lkm-ahz.ltd/posts/123',
     );
-    expect(solianLinkWebUrl(Uri.parse('https://example.com/x')), isNull);
-    expect(solianLinkWebUrl(Uri.parse('https://api.solian.app/x')), isNull);
+    expect(lkmLinkWebUrl(Uri.parse('https://example.com/x')), isNull);
+    expect(lkmLinkWebUrl(Uri.parse('https://api.lkm-ahz.ltd/x')), isNull);
   });
 
-  test('solianLinkBrowserUrl avoids Android app-link re-entry', () {
+  test('lkmLinkBrowserUrl avoids Android app-link re-entry', () {
     expect(
-      solianLinkBrowserUrl(Uri.parse('solian://posts/123'))?.toString(),
-      'https://www.solian.app/posts/123',
+      lkmLinkBrowserUrl(Uri.parse('lkm://posts/123'))?.toString(),
+      'https://www.lkm-ahz.ltd/posts/123',
     );
     expect(
-      solianLinkBrowserUrl(
-        Uri.parse('https://solian.app/nonexistent'),
+      lkmLinkBrowserUrl(
+        Uri.parse('https://lkm-ahz.ltd/nonexistent'),
       )?.toString(),
-      'https://www.solian.app/nonexistent',
+      'https://www.lkm-ahz.ltd/nonexistent',
     );
-    expect(solianLinkBrowserUrl(Uri.parse('https://example.com/x')), isNull);
+    expect(lkmLinkBrowserUrl(Uri.parse('https://example.com/x')), isNull);
   });
 }

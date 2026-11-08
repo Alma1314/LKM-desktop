@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────
-# Build a Flatpak of Solian.
+# Build a Flatpak of LKM desktop.
 #
 # Uses flatpak build-init / build / build-finish to assemble the
 # Flatpak manually. Missing system libraries (libmpv, libayatana,
@@ -12,7 +12,7 @@
 # ──────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-APP_ID="dev.solsynth.solian"
+APP_ID="ltd.lkmahz.desktop"
 BINARY="island"
 RUNTIME="org.freedesktop.Platform"
 RUNTIME_VER="24.08"

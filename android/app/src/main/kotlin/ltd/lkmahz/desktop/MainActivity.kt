@@ -1,4 +1,4 @@
-package dev.solsynth.solian
+package ltd.lkmahz.desktop
 
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -10,7 +10,7 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 
 class MainActivity : FlutterFragmentActivity()
 {
-    private val CHANNEL = "dev.solsynth.solian/notifications"
+    private val CHANNEL = "ltd.lkmahz.desktop/notifications"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

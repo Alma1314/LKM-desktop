@@ -512,19 +512,19 @@ Future<void> openExternalLinkWithContainer(
   if (openPostDetailAttentionModalForUri(url)) {
     return;
   }
-  final routePath = solianLinkToRoutePath(url);
+  final routePath = lkmLinkToRoutePath(url);
   if (routePath != null) {
     final router = container.read(routerProvider);
     if (tryNavigateToRoutePath(router, routePath)) {
-      // Solian links (custom scheme or https://solian.app) map onto in-app
+      // Solian links (custom scheme or https://lkm-ahz.ltd) map onto in-app
       // routes — open them here instead of handing them to the OS/browser.
       return;
     }
     // The page isn't implemented in-app — hand it to the browser via its
     // browser-safe Solian host on Android to avoid re-entering the app.
     url = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
-        ? solianLinkBrowserUrl(url) ?? url
-        : solianLinkWebUrl(url) ?? url;
+        ? lkmLinkBrowserUrl(url) ?? url
+        : lkmLinkWebUrl(url) ?? url;
   }
 
   final context = container

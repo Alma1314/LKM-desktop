@@ -94,7 +94,7 @@ class AccountQrScreen extends HookConsumerWidget {
     }
 
     final account = user.value!;
-    final profileUrl = 'https://solian.app/accounts/${account.name}';
+    final profileUrl = 'https://lkm-ahz.ltd/accounts/${account.name}';
     final transferWallet = wallet.value;
     final requestData = activeTransferRequest.value;
     final transferQrData = requestData != null
@@ -282,8 +282,8 @@ class AccountQrScreen extends HookConsumerWidget {
       }
 
       final uri = Uri.tryParse(value);
-      if (uri != null && solianLinkToRoutePath(uri) != null) {
-        eventBus.fire(SolianDeepLinkEvent(uri));
+      if (uri != null && lkmLinkToRoutePath(uri) != null) {
+        eventBus.fire(LkmDeepLinkEvent(uri));
         return;
       }
 
@@ -1267,9 +1267,9 @@ String? _resolveScannedAccountName(String rawValue) {
   final uri = Uri.tryParse(value);
   if (uri != null) {
     final segments = uri.pathSegments;
-    final isSolianHost =
-        uri.host == 'solian.app' || uri.host.endsWith('.solian.app');
-    if (isSolianHost && segments.length >= 2 && segments.first == 'accounts') {
+    final isLkmHost =
+        uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd');
+    if (isLkmHost && segments.length >= 2 && segments.first == 'accounts') {
       final name = segments[1].trim();
       return name.isEmpty ? null : name;
     }
@@ -2462,7 +2462,7 @@ class _PhysicalPassportScanSheetState
       SnScanResult? result;
 
       // Check if URI has a path segment (unencrypted tag with entry ID)
-      // e.g., solian://phpass/{tag_id}
+      // e.g., lkm://phpass/{tag_id}
       if (uri.host == 'phpass' && uri.pathSegments.isNotEmpty) {
         final tagId = uri.pathSegments.first;
         final response = await client.dio.get('/stargate/nfc/tags/$tagId');

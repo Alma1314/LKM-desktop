@@ -1,11 +1,11 @@
-package dev.solsynth.solian.receiver
+package ltd.lkmahz.desktop.receiver
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.RemoteInput
-import dev.solsynth.solian.network.ApiClient
+import ltd.lkmahz.desktop.network.ApiClient
 
 class ReplyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

@@ -28,7 +28,7 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <application
-        android:label="Solian"
+        android:label="理科迷"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true">
@@ -61,7 +61,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- Accepts URIs that begin with YOUR_SCHEME://YOUR_HOST -->
-                <data android:scheme="solian" />
+                <data android:scheme="lkm" />
             </intent-filter>
 
             <!-- Deeplinking -->
@@ -69,14 +69,14 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="solian.app" />
-                <data android:scheme="https" android:host="solian.app" />
+                <data android:scheme="http" android:host="lkm-ahz.ltd" />
+                <data android:scheme="https" android:host="lkm-ahz.ltd" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="solian" />
+                <data android:scheme="lkm" />
             </intent-filter>
 
             <!-- Share Intent Filters -->
@@ -156,7 +156,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="dev.solsynth.solian.provider"
+            android:authorities="ltd.lkmahz.desktop.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

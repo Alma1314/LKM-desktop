@@ -6,18 +6,18 @@
 #define FullVersion AppVersion + "." + BuildNumber
 
 [Setup]
-AppName=Solian
+AppName=LKM
 AppVersion={#AppVersion}
-AppPublisher=Solsynth
-AppPublisherURL=https://solsynth.dev
-AppSupportURL=https://kb.solsynth.dev/zh/solar-network
-AppUpdatesURL=https://github.com/Solsynth/Solian/releases
-AppCopyright=Copyright © 2025 Solsynth
+AppPublisher=LKM-AHZ
+AppPublisherURL=https://lkm-ahz.ltd
+AppSupportURL=https://lkm-ahz.ltd
+AppUpdatesURL=https://github.com/LKM-AHZ/LKM-desktop/releases
+AppCopyright=Copyright © 2026 LKM-AHZ
 VersionInfoVersion={#FullVersion}
-UninstallDisplayName=Solian
-UninstallDisplayIcon={app}\Solian.exe
+UninstallDisplayName=LKM
+UninstallDisplayIcon={app}\LKM.exe
 
-DefaultDirName={commonpf}\Solian
+DefaultDirName={commonpf}\LKM
 ; Reuse the directory of an existing installation so an unattended update
 ; (/SILENT) replaces the same files the running build came from.
 UsePreviousAppDir=yes
@@ -38,23 +38,23 @@ PrivilegesRequired=admin
 Source: ".\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Solian"; Filename: "{app}\Solian.exe";IconFilename: "{app}\Solian.exe"
-Name: "{group}\{cm:UninstallProgram,Solian}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Solian"; Filename: "{app}\Solian.exe"; Tasks: desktopicon
+Name: "{group}\LKM"; Filename: "{app}\LKM.exe";IconFilename: "{app}\LKM.exe"
+Name: "{group}\{cm:UninstallProgram,LKM}"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\LKM"; Filename: "{app}\LKM.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Run]
-Filename: "{app}\Solian.exe"; Description: "Launch Solian"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\LKM.exe"; Description: "Launch LKM"; Flags: nowait postinstall skipifsilent
 ; The updater runs this installer with /SILENT, and Setup closes the running
-; Solian through the Restart Manager before replacing its files. Nothing is
+; LKM through the Restart Manager before replacing its files. Nothing is
 ; left on screen afterwards and RestartApplications cannot bring it back
 ; (Flutter's Windows runner never calls RegisterApplicationRestart), so relaunch
 ; the installed build with the original, non-elevated user token.
-Filename: "{app}\Solian.exe"; Flags: nowait runasoriginaluser skipifnotsilent
+Filename: "{app}\LKM.exe"; Flags: nowait runasoriginaluser skipifnotsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{userappdata}\dev.solsynth\Solian"
-Type: files; Name: "{group}\Solian.lnk" ;
-Type: files; Name: "{autodesktop}\Solian.lnk" ;
+Type: filesandordirs; Name: "{userappdata}\LKM-AHZ\LKM"
+Type: files; Name: "{group}\LKM.lnk" ;
+Type: files; Name: "{autodesktop}\LKM.lnk" ;

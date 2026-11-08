@@ -2632,7 +2632,7 @@ class _AddPhysicalPassportSheetState
 
       await FlutterNfcKit.poll(iosAlertMessage: 'nfcTapToWrite'.tr());
 
-      final deepLink = 'solian://phpass/${passport.id}';
+      final deepLink = 'lkm://phpass/${passport.id}';
       final uriRecord = ndef.UriRecord.fromUri(Uri.parse(deepLink));
       await FlutterNfcKit.writeNDEFRecords([uriRecord]);
 
@@ -2985,7 +2985,7 @@ class _PhysicalPassportDetailSheetState
 
       await FlutterNfcKit.poll(iosAlertMessage: 'nfcTapToWrite'.tr());
 
-      final deepLink = 'solian://phpass/${widget.passport.id}';
+      final deepLink = 'lkm://phpass/${widget.passport.id}';
       final uriRecord = ndef.UriRecord.fromUri(Uri.parse(deepLink));
       await FlutterNfcKit.writeNDEFRecords([uriRecord]);
 

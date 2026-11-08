@@ -1024,7 +1024,7 @@ class AppWrapper extends HookConsumerWidget {
   }
 
   void _handleDeepLink(Uri uri, WidgetRef ref, BuildContext context) async {
-    String path = solianLinkToRoutePath(uri) ?? '/${uri.host}${uri.path}';
+    String path = lkmLinkToRoutePath(uri) ?? '/${uri.host}${uri.path}';
     final transferRequestId = parseWalletTransferRequestId(uri.toString());
     final orderId = parseWalletOrderId(uri.toString());
 

@@ -1,11 +1,11 @@
 {
-    "name": "Solian",
-    "short_name": "Solian",
+    "name": "理科迷",
+    "short_name": "LKM",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#7d80ba",
-    "description": "A new Flutter project.",
+    "theme_color": "#4b53c0",
+    "description": "理科迷桌面客户端",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

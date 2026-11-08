@@ -33,7 +33,7 @@ const Duration kWebSignInTimeout = Duration(minutes: 5);
 /// bound to this device by PKCE: only the challenge travels in the browser, and
 /// the verifier never leaves this process.
 ///
-/// The code arrives on a loopback listener rather than a `solian://` custom
+/// The code arrives on a loopback listener rather than a `lkm://` custom
 /// scheme — the console's `solian` client answers native apps on
 /// `http://127.0.0.1:<port>/auth/callback` and refuses a custom scheme.
 Future<OAuthTokenSet?> signInOverWeb({required String serverUrl}) async {

@@ -13,18 +13,18 @@ class DeeplinkService {
   factory DeeplinkService() => _instance;
   DeeplinkService._internal();
 
-  StreamSubscription<SolianDeepLinkEvent>? _solianDeepLinkSub;
+  StreamSubscription<LkmDeepLinkEvent>? _lkmDeepLinkSub;
   ProtocolListener? _protocolListener;
   static const MethodChannel _nativeChannel = MethodChannel(
-    'dev.solsynth.solian/deeplink',
+    'ltd.lkmahz.desktop/deeplink',
   );
   void Function(Uri uri)? _onDeepLink;
 
   void initialize({required void Function(Uri uri) onDeepLink}) {
     _onDeepLink = onDeepLink;
 
-    _solianDeepLinkSub?.cancel();
-    _solianDeepLinkSub = eventBus.on<SolianDeepLinkEvent>().listen((event) {
+    _lkmDeepLinkSub?.cancel();
+    _lkmDeepLinkSub = eventBus.on<LkmDeepLinkEvent>().listen((event) {
       _onDeepLink?.call(event.uri);
     });
 
@@ -71,8 +71,8 @@ class DeeplinkService {
   }
 
   void dispose() {
-    _solianDeepLinkSub?.cancel();
-    _solianDeepLinkSub = null;
+    _lkmDeepLinkSub?.cancel();
+    _lkmDeepLinkSub = null;
     _onDeepLink = null;
 
     if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
@@ -97,13 +97,13 @@ String? parseWalletTransferRequestId(String rawValue) {
 
   final segments = uri.pathSegments;
   final isWalletTransferRequest =
-      uri.scheme == 'solian' &&
+      uri.scheme == 'lkm' &&
       uri.host == 'wallet' &&
       segments.length == 3 &&
       segments[0] == 'transfer' &&
       segments[1] == 'requests';
   final isWebWalletTransferRequest =
-      (uri.host == 'solian.app' || uri.host.endsWith('.solian.app')) &&
+      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
       segments.length >= 3 &&
       segments[0] == 'wallet' &&
       segments[1] == 'transfer' &&
@@ -130,18 +130,18 @@ String? parseAuthQrChallengeId(String rawValue) {
   if (uri == null) return null;
 
   final segments = uri.pathSegments;
-  final isSolianQrLogin =
-      uri.scheme == 'solian' &&
+  final isLkmQrLogin =
+      uri.scheme == 'lkm' &&
       uri.host == 'auth' &&
       segments.length == 2 &&
       segments[0] == 'qr';
   final isWebQrLogin =
-      (uri.host == 'solian.app' || uri.host.endsWith('.solian.app')) &&
+      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
       segments.length >= 3 &&
       segments[0] == 'auth' &&
       segments[1] == 'qr';
 
-  if (isSolianQrLogin) {
+  if (isLkmQrLogin) {
     final id = segments[1].trim();
     return id.isEmpty ? null : id;
   }
@@ -162,16 +162,16 @@ String? parseWalletOrderId(String rawValue) {
   if (uri == null) return null;
 
   final segments = uri.pathSegments;
-  final isSolianOrder =
-      uri.scheme == 'solian' &&
+  final isLkmOrder =
+      uri.scheme == 'lkm' &&
       (uri.host == 'orders' || uri.host == 'order') &&
       segments.length == 1;
   final isWebOrder =
-      (uri.host == 'solian.app' || uri.host.endsWith('.solian.app')) &&
+      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
       segments.length >= 2 &&
       segments[0] == 'orders';
 
-  if (isSolianOrder) {
+  if (isLkmOrder) {
     final id = segments[0].trim();
     return id.isEmpty ? null : id;
   }
@@ -202,13 +202,13 @@ PhysicalPassportDeepLink? parsePhysicalPassportDeepLink(String rawValue) {
   final uri = Uri.tryParse(value);
   if (uri == null) return null;
 
-  final isSolianPhpass = uri.scheme == 'solian' && uri.host == 'phpass';
+  final isLkmPhpass = uri.scheme == 'lkm' && uri.host == 'phpass';
   final isWebPhpass =
-      (uri.host == 'solian.app' || uri.host.endsWith('.solian.app')) &&
+      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
       uri.pathSegments.isNotEmpty &&
       uri.pathSegments[0] == 'phpass';
 
-  if (isSolianPhpass) {
+  if (isLkmPhpass) {
     if (uri.pathSegments.isNotEmpty) {
       final tagId = uri.pathSegments.first.trim();
       if (tagId.isNotEmpty) {
@@ -245,32 +245,32 @@ class _ProtocolListener implements ProtocolListener {
   void onProtocolUrlReceived(String url) => _onProtocolUrlReceived(url);
 }
 
-/// True when [uri] points at the Solian web app itself — its routes map 1:1
+/// True when [uri] points at the LKM web app itself — its routes map 1:1
 /// onto in-app routes. Subdomains (api., nt., fs., …) serve other apps and
 /// are NOT in-app routes.
-bool isSolianWebUri(Uri uri) =>
-    (uri.scheme == 'http' || uri.scheme == 'https') && uri.host == 'solian.app';
+bool isLkmWebUri(Uri uri) =>
+    (uri.scheme == 'http' || uri.scheme == 'https') && uri.host == 'lkm-ahz.ltd';
 
-/// Converts a Solian link — either the `solian://host/path` custom scheme or
-/// the web app URL `https://solian.app/path` — into the matching in-app route
+/// Converts a LKM link — either the `lkm://host/path` custom scheme or
+/// the web app URL `https://lkm-ahz.ltd/path` — into the matching in-app route
 /// path (`/host/path` and `/path` respectively). Returns null when [uri] is
-/// not a Solian link.
-String? solianLinkToRoutePath(Uri uri) {
+/// not a LKM link.
+String? lkmLinkToRoutePath(Uri uri) {
   String path;
-  if (uri.scheme == 'solian') {
+  if (uri.scheme == 'lkm') {
     path = '/${uri.host}${uri.path}';
-  } else if (isSolianWebUri(uri)) {
+  } else if (isLkmWebUri(uri)) {
     path = uri.path.isEmpty ? '/' : uri.path;
     if (!path.startsWith('/')) path = '/$path';
   } else {
     return null;
   }
-  // Normalize trailing slashes so `https://solian.app/orders/123/` matches
+  // Normalize trailing slashes so `https://lkm-ahz.ltd/orders/123/` matches
   // the `/orders/:id` route instead of the 404 catch-all.
   if (path.length > 1 && path.endsWith('/')) {
     path = path.substring(0, path.length - 1);
   }
-  // `solian:///posts/123` (empty authority) yields `//posts/123` — collapse
+  // `lkm:///posts/123` (empty authority) yields `//posts/123` — collapse
   // it to a regular in-app path.
   if (path.startsWith('//')) {
     path = path.substring(1);
@@ -279,43 +279,43 @@ String? solianLinkToRoutePath(Uri uri) {
 }
 
 /// Normalizes a raw action URI to an in-app route path. Handles
-/// `solian://…`, `https://solian.app/…` and bare `/…` paths. Returns null
+/// `lkm://…`, `https://lkm-ahz.ltd/…` and bare `/…` paths. Returns null
 /// when the value should be opened externally instead.
 String? actionUriToRoutePath(String rawValue) {
   final value = rawValue.trim();
   if (value.startsWith('/')) return value;
   final uri = Uri.tryParse(value);
   if (uri == null) return null;
-  return solianLinkToRoutePath(uri);
+  return lkmLinkToRoutePath(uri);
 }
 
-/// The `https://solian.app/…` web URL equivalent of a Solian link, for
+/// The `https://lkm-ahz.ltd/…` web URL equivalent of a LKM link, for
 /// opening in the browser when the app doesn't implement the route in-app.
-/// Returns [uri] itself for `https://solian.app/…` links and null for
+/// Returns [uri] itself for `https://lkm-ahz.ltd/…` links and null for
 /// anything else.
-Uri? solianLinkWebUrl(Uri uri) {
-  if (isSolianWebUri(uri)) return uri;
-  if (uri.scheme != 'solian') return null;
+Uri? lkmLinkWebUrl(Uri uri) {
+  if (isLkmWebUri(uri)) return uri;
+  if (uri.scheme != 'lkm') return null;
   final path = uri.path.isEmpty ? '' : uri.path;
-  final webUrl = Uri.https('solian.app', '${uri.host}$path');
+  final webUrl = Uri.https('lkm-ahz.ltd', '${uri.host}$path');
   return uri.queryParameters.isEmpty
       ? webUrl
       : webUrl.replace(queryParameters: uri.queryParameters);
 }
 
-/// Returns a Solian web URL on a host that is not claimed by the Android app.
+/// Returns a LKM web URL on a host that is not claimed by the Android app.
 ///
-/// Android app links can route `solian.app` back into this app even when the
+/// Android app links can route `lkm-ahz.ltd` back into this app even when the
 /// caller explicitly requests an external application. Use this URL when a
-/// Solian route is not implemented in-app and must be opened in a browser.
-Uri? solianLinkBrowserUrl(Uri uri) {
-  final webUrl = solianLinkWebUrl(uri);
-  return webUrl?.replace(host: 'www.solian.app');
+/// LKM route is not implemented in-app and must be opened in a browser.
+Uri? lkmLinkBrowserUrl(Uri uri) {
+  final webUrl = lkmLinkWebUrl(uri);
+  return webUrl?.replace(host: 'www.lkm-ahz.ltd');
 }
 
 /// True when [path] resolves to a concrete route in [router]'s tree — i.e.
 /// anything other than the 404 catch-all. Use to guard `navigatePath` so
-/// Solian links to pages the app doesn't implement fall back to the browser
+/// LKM links to pages the app doesn't implement fall back to the browser
 /// instead of landing on the in-app 404 page.
 ///
 /// Must be called with the root router: nested routers only match their own
@@ -337,8 +337,8 @@ bool tryNavigateToRoutePath(StackRouter router, String path) {
 
 /// Handles an action URI consistently across notifications and deep links.
 ///
-/// Concrete in-app routes are navigated in-app. Unknown Solian routes are
-/// opened on the web; Android uses `www.solian.app` to avoid re-entering the
+/// Concrete in-app routes are navigated in-app. Unknown LKM routes are
+/// opened on the web; Android uses `www.lkm-ahz.ltd` to avoid re-entering the
 /// app through its verified app link. Other external URLs are passed through
 /// unchanged.
 Future<bool> handleActionUri(StackRouter router, String rawValue) async {
@@ -348,14 +348,14 @@ Future<bool> handleActionUri(StackRouter router, String rawValue) async {
   }
 
   final uri = rawValue.trim().startsWith('/')
-      ? Uri.tryParse('https://solian.app${rawValue.trim()}')
+      ? Uri.tryParse('https://lkm-ahz.ltd${rawValue.trim()}')
       : Uri.tryParse(rawValue.trim());
   if (uri == null) return false;
 
-  final solianWebUrl = solianLinkWebUrl(uri);
-  final launchUri = !kIsWeb && Platform.isAndroid && solianWebUrl != null
-      ? solianLinkBrowserUrl(uri)
-      : solianWebUrl ?? uri;
+  final lkmWebUrl = lkmLinkWebUrl(uri);
+  final launchUri = !kIsWeb && Platform.isAndroid && lkmWebUrl != null
+      ? lkmLinkBrowserUrl(uri)
+      : lkmWebUrl ?? uri;
   if (launchUri == null) return false;
 
   return launchUrlString(
@@ -364,10 +364,10 @@ Future<bool> handleActionUri(StackRouter router, String rawValue) async {
   );
 }
 
-/// The web URL of a shareable chat room: `https://solian.app/chat/<scope>/<slug>`
+/// The web URL of a shareable chat room: `https://lkm-ahz.ltd/chat/<scope>/<slug>`
 /// where [scope] is the owner account name or the realm slug.
 Uri buildChatRoomShareUrl({required String scope, required String slug}) =>
-    Uri.https('solian.app', 'chat/$scope/$slug');
+    Uri.https('lkm-ahz.ltd', 'chat/$scope/$slug');
 
 class ChatRoomShareLink {
   final String scope;
@@ -376,34 +376,34 @@ class ChatRoomShareLink {
   const ChatRoomShareLink({required this.scope, required this.slug});
 }
 
-/// The path segments of a Solian link, however it arrives: the web app URL
-/// (`https://solian.app/...`, `www.solian.app`) or the `solian://host/...`
+/// The path segments of a LKM link, however it arrives: the web app URL
+/// (`https://lkm-ahz.ltd/...`, `www.lkm-ahz.ltd`) or the `lkm://host/...`
 /// custom scheme, whose authority becomes the first segment. Returns null when
-/// [uri] is not a Solian link at all.
+/// [uri] is not a LKM link at all.
 ///
-/// Subdomains are deliberately left out: `api.`, `nt.` and `fs.solian.app`
+/// Subdomains are deliberately left out: `api.`, `nt.` and `fs.lkm-ahz.ltd`
 /// serve other apps, not the routes these segments are read for.
-List<String>? solianLinkPathSegments(Uri uri) {
-  if (uri.scheme == 'solian') {
-    // `solian://chat/room/slug` puts `chat` in the authority, so the path is
-    // the authority and the path glued together. `solian:///posts/<id>` (empty
+List<String>? lkmLinkPathSegments(Uri uri) {
+  if (uri.scheme == 'lkm') {
+    // `lkm://chat/room/slug` puts `chat` in the authority, so the path is
+    // the authority and the path glued together. `lkm:///posts/<id>` (empty
     // authority) yields `//posts/<id>`, which would parse as a *host* — collapse
-    // it the way [solianLinkToRoutePath] does.
+    // it the way [lkmLinkToRoutePath] does.
     var path = '/${uri.host}${uri.path}';
     if (path.startsWith('//')) path = path.substring(1);
     return Uri.parse(path).pathSegments.where((s) => s.isNotEmpty).toList();
   }
   if ((uri.scheme == 'http' || uri.scheme == 'https') &&
-      (uri.host == 'solian.app' || uri.host == 'www.solian.app')) {
+      (uri.host == 'lkm-ahz.ltd' || uri.host == 'www.lkm-ahz.ltd')) {
     return uri.pathSegments.where((s) => s.isNotEmpty).toList();
   }
   return null;
 }
 
-/// The post id in a Solian post link — `https://solian.app/posts/<id>` or
-/// `solian://posts/<id>`. Returns null for anything else, or for an empty id.
+/// The post id in a LKM post link — `https://lkm-ahz.ltd/posts/<id>` or
+/// `lkm://posts/<id>`. Returns null for anything else, or for an empty id.
 String? parsePostLinkId(Uri uri) {
-  final segments = solianLinkPathSegments(uri);
+  final segments = lkmLinkPathSegments(uri);
   if (segments == null || segments.length < 2 || segments.first != 'posts') {
     return null;
   }
@@ -412,16 +412,16 @@ String? parsePostLinkId(Uri uri) {
 }
 
 /// Parses a chat room share link produced by [buildChatRoomShareUrl].
-/// Accepts the web URL, the `solian://chat/...` custom scheme and bare
+/// Accepts the web URL, the `lkm://chat/...` custom scheme and bare
 /// `/chat/<scope>/<slug>` paths. Returns null for anything else.
 ChatRoomShareLink? parseChatRoomShareLink(String rawValue) {
   final value = rawValue.trim();
   final uri = value.startsWith('/')
-      ? Uri.tryParse('https://solian.app$value')
+      ? Uri.tryParse('https://lkm-ahz.ltd$value')
       : Uri.tryParse(value);
   if (uri == null) return null;
 
-  final segments = solianLinkPathSegments(uri);
+  final segments = lkmLinkPathSegments(uri);
   if (segments == null || segments.length != 3 || segments.first != 'chat') {
     return null;
   }

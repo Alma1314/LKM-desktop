@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "dev.solsynth.solian"
+    namespace = "ltd.lkmahz.desktop"
     compileSdk = 37
     ndkVersion = "29.0.13113456"
 
@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.solsynth.solian"
+        applicationId = "ltd.lkmahz.desktop"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26

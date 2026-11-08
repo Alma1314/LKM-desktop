@@ -123,8 +123,8 @@ class NfcScanService {
         Logger.root.info('NfcScanService: Text record[$i]: "$text"');
         final trimmed = text.trim();
 
-        // Check if it looks like a solian:// URL
-        if (trimmed.toLowerCase().startsWith('solian://')) {
+        // Check if it looks like a lkm:// URL
+        if (trimmed.toLowerCase().startsWith('lkm://')) {
           final uri = Uri.tryParse(trimmed);
           if (uri != null) {
             Logger.root.info('NfcScanService: Parsed solian URI: $uri');
