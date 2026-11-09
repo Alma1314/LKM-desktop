@@ -5531,5 +5531,18 @@
   "thoughtsSkillWebSearchLabel": "網頁搜尋",
   "thoughtsSkillWebSearchDescription": "從本機自己的連線發起 web_search，而不是伺服器的，因此搜尋引擎看到的是使用者的位址。關掉它則改用伺服器自己的搜尋。",
   "thoughtsSkillWebFetchLabel": "網頁擷取",
-  "thoughtsSkillWebFetchDescription": "從本機自己的連線擷取頁面，而不是伺服器的，因此對伺服器位址彈出驗證碼的網站會以使用者自己的身分讀取。"
+  "thoughtsSkillWebFetchDescription": "從本機自己的連線擷取頁面，而不是伺服器的，因此對伺服器位址彈出驗證碼的網站會以使用者自己的身分讀取。",
+  "lkmComposeTitle": "發佈貼文",
+  "lkmComposeBoard": "版塊",
+  "lkmComposePublish": "發佈",
+  "lkmComposeFailed": "發佈失敗",
+  "lkmComposeEmptyBoards": "沒有可以發文的版塊",
+  "lkmDeletePostConfirm": "刪除後無法復原，確定要刪除嗎？",
+  "lkmAddImage": "新增圖片",
+  "lkmUploadUploading": "上傳中",
+  "lkmUploadPending": "審核中",
+  "lkmUploadApproved": "已通過",
+  "lkmUploadFailed": "上傳失敗",
+  "lkmUploadRejected": "附件未通過審核，已移除",
+  "lkmUploadWaitReview": "附件仍在審核中，請等待通過或移除後再發佈"
 }

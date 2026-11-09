@@ -14,8 +14,73 @@ class _FakeContent implements ContentApi {
   final List<int> requestedPages = [];
   final List<String> posted = [];
 
+  LkmViewerState? viewer;
+  int likeCount = 0;
+  int bookmarkCount = 0;
+  bool failLike = false;
+  bool failFavorite = false;
+  final List<String> writes = [];
+
   @override
   Future<LkmContentItem?> item(String id) async => null;
+
+  @override
+  Future<List<LkmBoard>> boards() async => const [];
+
+  @override
+  Future<String> createDiscussion({
+    required String boardId,
+    required String title,
+    required String content,
+    List<String> tags = const [],
+  }) async => 'new-item';
+
+  @override
+  Future<void> deleteItem(String contentId) async {}
+
+  @override
+  Future<LkmViewerState?> viewerState(String contentId) async => viewer;
+
+  @override
+  Future<int> like(String contentId) async {
+    writes.add('like');
+    if (failLike) throw StateError('like failed');
+    return ++likeCount;
+  }
+
+  @override
+  Future<int> unlike(String contentId) async {
+    writes.add('unlike');
+    if (failLike) throw StateError('unlike failed');
+    return --likeCount;
+  }
+
+  @override
+  Future<int> favorite(String contentId, {required bool favorited}) async {
+    writes.add(favorited ? 'favorite' : 'unfavorite');
+    if (failFavorite) throw StateError('favorite failed');
+    bookmarkCount += favorited ? 1 : -1;
+    return bookmarkCount;
+  }
+
+  @override
+  Future<int> forward(String contentId) async => 4;
+
+  @override
+  Future<void> reportView(String contentId) async {}
+
+  @override
+  Future<int> likeComment(String itemId, String commentId) async => 1;
+
+  @override
+  Future<int> unlikeComment(String itemId, String commentId) async => 0;
+
+  @override
+  Future<void> report({
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {}
 
   @override
   Future<LkmCommentPage> comments(
@@ -77,7 +142,118 @@ Future<ProviderContainer> _container(_FakeContent fake) async {
   return container;
 }
 
+/// One instance: the viewer provider is keyed by the item object itself.
+final _viewerItem = LkmContentItem(
+  id: 'item-1',
+  contentType: 'discussion',
+  title: 't',
+  excerpt: '',
+  content: '',
+  authorName: 'alma',
+  tags: const [],
+  viewCount: 0,
+  likeCount: 3,
+  commentCount: 0,
+  bookmarkCount: 1,
+  forwardCount: 0,
+  createdAt: DateTime(2026, 11, 8),
+);
+
+Future<ProviderContainer> _viewerContainer(_FakeContent fake) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  final session = ApiSession(prefs: prefs, serverUrl: 'https://lkm-ahz.ltd');
+  final container = ProviderContainer(
+    overrides: [
+      lkmApiSessionProvider.overrideWithValue(session),
+      contentApiProvider.overrideWithValue(fake),
+    ],
+  );
+  addTearDown(container.dispose);
+  final subscription = container.listen(
+    contentViewerProvider(_viewerItem),
+    (_, _) {},
+  );
+  addTearDown(subscription.close);
+  return container;
+}
+
 void main() {
+  test('viewer state seeds from GraphQL, then adopts server counts', () async {
+    final fake = _FakeContent(const [])
+      ..viewer = const LkmViewerState(
+        liked: false,
+        favorited: false,
+        likeCount: 3,
+        bookmarkCount: 1,
+      )
+      ..likeCount = 3
+      ..bookmarkCount = 1;
+    final container = await _viewerContainer(fake);
+
+    final initial = await container.read(contentViewerProvider(_viewerItem).future);
+    expect(initial.liked, isFalse);
+    expect(initial.likeCount, 3);
+
+    await container
+        .read(contentViewerProvider(_viewerItem).notifier)
+        .toggleLike();
+    final liked = container.read(contentViewerProvider(_viewerItem)).value!;
+    expect(liked.liked, isTrue);
+    expect(liked.likeCount, 4);
+    expect(liked.pending, isFalse);
+    expect(fake.writes, ['like']);
+
+    await container
+        .read(contentViewerProvider(_viewerItem).notifier)
+        .toggleFavorite();
+    final favorited = container.read(contentViewerProvider(_viewerItem)).value!;
+    expect(favorited.favorited, isTrue);
+    expect(favorited.bookmarkCount, 2);
+    expect(fake.writes, ['like', 'favorite']);
+  });
+
+  test('a failed like rolls the button back and surfaces the error', () async {
+    final fake = _FakeContent(const [])
+      ..viewer = const LkmViewerState(
+        liked: false,
+        favorited: false,
+        likeCount: 3,
+        bookmarkCount: 1,
+      )
+      ..likeCount = 3
+      ..failLike = true;
+    final container = await _viewerContainer(fake);
+    await container.read(contentViewerProvider(_viewerItem).future);
+
+    await expectLater(
+      container.read(contentViewerProvider(_viewerItem).notifier).toggleLike(),
+      throwsStateError,
+    );
+
+    final state = container.read(contentViewerProvider(_viewerItem)).value!;
+    expect(state.liked, isFalse);
+    expect(state.likeCount, 3);
+    expect(state.pending, isFalse);
+  });
+
+  test('comment like flips one row against the server count', () async {
+    final fake = _FakeContent([
+      _page([_comment('a'), _comment('b')], page: 1, pages: 1),
+    ]);
+    final container = await _container(fake);
+    await container.read(contentCommentsProvider('item-1').future);
+
+    await container
+        .read(contentCommentsProvider('item-1').notifier)
+        .toggleCommentLike('a');
+
+    final items = container.read(contentCommentsProvider('item-1')).value!.items;
+    expect(items[0].liked, isTrue);
+    expect(items[0].likeCount, 1);
+    expect(items[1].liked, isFalse);
+  });
+
   test('loads the first page and appends the next', () async {
     final fake = _FakeContent([
       _page([_comment('a'), _comment('b')], page: 1, pages: 2),

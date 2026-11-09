@@ -18,6 +18,43 @@ const String _commentsQuery =
     'items { id contentId authorId authorName content floorNumber parentId '
     'likeCount liked createdAt } total page pages } }';
 
+/// Detail-page interaction buttons: server truth for "did I like/save this",
+/// without re-fetching the body. Anonymous visitors still get the counts.
+const String _viewerStateQuery =
+    'query ContentViewerState(\$contentId: ID!) { '
+    'contentViewerState(contentId: \$contentId) { liked favorited '
+    'likeCount bookmarkCount } }';
+
+const String _boardsQuery =
+    'query Boards { boards { id slug title parentId status isPublic } }';
+
+/// A forum board (`status == active` is the only postable state).
+class LkmBoard {
+  const LkmBoard({
+    required this.id,
+    required this.slug,
+    required this.title,
+    required this.status,
+    this.parentId,
+  });
+
+  final String id;
+  final String slug;
+  final String title;
+  final String status;
+  final String? parentId;
+
+  bool get isActive => status == 'active';
+
+  factory LkmBoard.fromJson(Map<String, dynamic> json) => LkmBoard(
+    id: '${json['id'] ?? ''}',
+    slug: '${json['slug'] ?? ''}',
+    title: '${json['title'] ?? ''}',
+    status: '${json['status'] ?? ''}',
+    parentId: json['parentId'] as String?,
+  );
+}
+
 /// One unified content row (`discussion` / `article` / `column_post` /
 /// `blog_post`). The detail page is the first surface that needs the body,
 /// which the REST contract does not expose.
@@ -41,6 +78,8 @@ class LkmContentItem {
     this.columnTitle = '',
     this.slug,
     this.publishedAt,
+    this.bookmarkCount = 0,
+    this.forwardCount = 0,
   });
 
   final String id;
@@ -61,6 +100,8 @@ class LkmContentItem {
   final int viewCount;
   final int likeCount;
   final int commentCount;
+  final int bookmarkCount;
+  final int forwardCount;
   final DateTime createdAt;
   final DateTime? publishedAt;
 
@@ -86,12 +127,38 @@ class LkmContentItem {
       viewCount: _asInt(json['viewCount']),
       likeCount: _asInt(json['likeCount']),
       commentCount: _asInt(json['commentCount']),
+      bookmarkCount: _asInt(json['bookmarkCount']),
+      forwardCount: _asInt(json['forwardCount']),
       createdAt: (created ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal(),
       publishedAt: DateTime.tryParse('${json['publishedAt'] ?? ''}')?.toLocal(),
     );
   }
 
   static int _asInt(Object? value) => value is num ? value.toInt() : 0;
+}
+
+/// [GraphQL `contentViewerState`] initial values for the detail actions row.
+class LkmViewerState {
+  const LkmViewerState({
+    required this.liked,
+    required this.favorited,
+    required this.likeCount,
+    required this.bookmarkCount,
+  });
+
+  final bool liked;
+  final bool favorited;
+  final int likeCount;
+  final int bookmarkCount;
+
+  factory LkmViewerState.fromJson(Map<String, dynamic> json) {
+    return LkmViewerState(
+      liked: json['liked'] == true,
+      favorited: json['favorited'] == true,
+      likeCount: LkmContentItem._asInt(json['likeCount']),
+      bookmarkCount: LkmContentItem._asInt(json['bookmarkCount']),
+    );
+  }
 }
 
 class LkmContentComment {
@@ -129,6 +196,20 @@ class LkmContentComment {
       likeCount: _asInt(json['likeCount']),
       liked: json['liked'] == true,
       createdAt: (created ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal(),
+    );
+  }
+
+  LkmContentComment copyWith({int? likeCount, bool? liked}) {
+    return LkmContentComment(
+      id: id,
+      authorId: authorId,
+      authorName: authorName,
+      content: content,
+      floorNumber: floorNumber,
+      likeCount: likeCount ?? this.likeCount,
+      liked: liked ?? this.liked,
+      createdAt: createdAt,
+      parentId: parentId,
     );
   }
 
@@ -220,6 +301,122 @@ class ContentApi {
       '/content/items/$itemId/comments',
       body: {'content': content, 'parent_id': ?parentId},
     );
+  }
+
+  Future<List<LkmBoard>> boards() async {
+    final data = await _graphql(_boardsQuery, const {});
+    final raw = data['boards'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => LkmBoard.fromJson(Map<String, dynamic>.from(e)))
+        .toList(growable: false);
+  }
+
+  /// Creates a discussion post and returns its id. Forum posts are the only
+  /// write shape the desktop exposes for now: articles/columns/blog/QA have
+  /// their own review pipelines and stay on the website.
+  Future<String> createDiscussion({
+    required String boardId,
+    required String title,
+    required String content,
+    List<String> tags = const [],
+  }) async {
+    final body = await _client.post(
+      '/content/items',
+      body: {
+        'content_type': 'discussion',
+        'board_id': boardId,
+        'title': title,
+        'content': content,
+        'tags': tags,
+      },
+    );
+    final id = body is Map ? body['id'] : null;
+    if (id == null) {
+      throw ApiException(
+        code: ApiCode.internalError,
+        message: '创建内容后未返回 id',
+        path: '/content/items',
+      );
+    }
+    return '$id';
+  }
+
+  Future<void> deleteItem(String contentId) async {
+    await _client.delete('/content/items/$contentId');
+  }
+
+  Future<LkmViewerState?> viewerState(String contentId) async {
+    final data = await _graphql(_viewerStateQuery, {'contentId': contentId});
+    final raw = data['contentViewerState'];
+    if (raw is! Map) return null;
+    return LkmViewerState.fromJson(Map<String, dynamic>.from(raw));
+  }
+
+  /// Returns the server's new like count (like/unlike are exclusive REST verbs).
+  Future<int> like(String contentId) async {
+    final body = await _client.post('/content/items/$contentId/like');
+    return _count(body, 'like_count');
+  }
+
+  Future<int> unlike(String contentId) async {
+    final body = await _client.delete('/content/items/$contentId/like');
+    return _count(body, 'like_count');
+  }
+
+  /// Returns the server's new bookmark count after favoriting/unfavoriting.
+  Future<int> favorite(String contentId, {required bool favorited}) async {
+    final path = '/interaction/favorites/$contentId';
+    final body = favorited
+        ? await _client.post(path)
+        : await _client.delete(path);
+    return _count(body, 'bookmark_count');
+  }
+
+  /// Called after the link is copied; returns the new forward count.
+  Future<int> forward(String contentId) async {
+    final body = await _client.post('/content/items/$contentId/forward');
+    return _count(body, 'forward_count');
+  }
+
+  /// Fire-and-forget view bookkeeping; the caller decides whether to log.
+  Future<void> reportView(String contentId) async {
+    await _client.post('/interaction/views/$contentId');
+  }
+
+  Future<int> likeComment(String itemId, String commentId) async {
+    final body = await _client.post(
+      '/content/items/$itemId/comments/$commentId/like',
+    );
+    return _count(body, 'like_count');
+  }
+
+  Future<int> unlikeComment(String itemId, String commentId) async {
+    final body = await _client.delete(
+      '/content/items/$itemId/comments/$commentId/like',
+    );
+    return _count(body, 'like_count');
+  }
+
+  Future<void> report({
+    required String targetType,
+    required String targetId,
+    required String reason,
+  }) async {
+    await _client.post(
+      '/content/reports',
+      body: {
+        'target_type': targetType,
+        'target_id': targetId,
+        'reason': reason,
+      },
+    );
+  }
+
+  static int _count(Object? body, String field) {
+    if (body is Map && body[field] is num) return (body[field] as num).toInt();
+    return 0;
   }
 
   Future<Map<String, dynamic>> _graphql(

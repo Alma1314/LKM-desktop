@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'package:island/community/compose_sheet.dart';
 import 'package:island/community/feed_links.dart';
 import 'package:island/community/feed_pod.dart';
 import 'package:island/community/notification_pod.dart';
@@ -31,6 +32,16 @@ class CommunityFeedScreen extends HookConsumerWidget {
     final mode = state?.mode ?? (signedIn ? 'follow' : 'hot');
     final notifier = ref.read(communityFeedProvider.notifier);
 
+    // A pushed notification moves the badge immediately; the inbox itself
+    // refreshes when opened.
+    ref.listen(lkmWsEventsProvider, (_, next) {
+      next.whenData((event) {
+        if (event.event == 'notification_created') {
+          ref.invalidate(lkmUnreadNotificationsProvider);
+        }
+      });
+    });
+
     return AppScaffold(
       isNoBackground: false,
       body: SafeArea(
@@ -50,6 +61,25 @@ class CommunityFeedScreen extends HookConsumerWidget {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
+                      if (signedIn)
+                        IconButton(
+                          tooltip: 'lkmComposeTitle'.tr(),
+                          onPressed: () async {
+                            final id = await showModalBottomSheet<String>(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (_) => const LkmComposeSheet(),
+                            );
+                            if (id == null) return;
+                            await notifier.refresh();
+                            if (context.mounted) {
+                              context.router.push(
+                                ContentDetailRoute(id: id),
+                              );
+                            }
+                          },
+                          icon: const Icon(Symbols.edit_square),
+                        ),
                       IconButton(
                         tooltip: 'search'.tr(),
                         onPressed: () => showModalBottomSheet<void>(

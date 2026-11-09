@@ -5344,5 +5344,18 @@
   "thoughtsSkillWebSearchLabel": "網搜",
   "thoughtsSkillWebSearchDescription": "自本機之連發 web_search，不由伺服器，故搜尋之器所見者，用戶之址也。關之則用伺服器之搜。",
   "thoughtsSkillWebFetchLabel": "網取",
-  "thoughtsSkillWebFetchDescription": "自本機之連取頁，不由伺服器，故以驗證碼拒伺服器之址者，得以用戶之身取之。"
+  "thoughtsSkillWebFetchDescription": "自本機之連取頁，不由伺服器，故以驗證碼拒伺服器之址者，得以用戶之身取之。",
+  "lkmComposeTitle": "撰文",
+  "lkmComposeBoard": "版塊",
+  "lkmComposePublish": "刊出",
+  "lkmComposeFailed": "刊出未果",
+  "lkmComposeEmptyBoards": "暫無可發文之版塊",
+  "lkmDeletePostConfirm": "刪去之後不可復原，確定焚之？",
+  "lkmAddImage": "添圖",
+  "lkmUploadUploading": "上傳中",
+  "lkmUploadPending": "待核",
+  "lkmUploadApproved": "已准",
+  "lkmUploadFailed": "上傳未果",
+  "lkmUploadRejected": "附件未獲准，已撤",
+  "lkmUploadWaitReview": "附件尚待核，靜候或撤之而後刊"
 }

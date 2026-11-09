@@ -14,6 +14,135 @@ final contentItemProvider = FutureProvider.autoDispose
       return session.run(() => ref.watch(contentApiProvider).item(id));
     });
 
+/// Postable boards for the compose sheet (`status == active` filters in UI).
+final contentBoardsProvider = FutureProvider.autoDispose<List<LkmBoard>>((
+  ref,
+) {
+  final session = ref.watch(lkmApiSessionProvider);
+  return session.run(() => ref.watch(contentApiProvider).boards());
+});
+
+/// Detail action buttons (like / favorite / forward) with optimistic updates.
+class ContentViewerState {
+  const ContentViewerState({
+    required this.liked,
+    required this.favorited,
+    required this.likeCount,
+    required this.bookmarkCount,
+    required this.forwardCount,
+    this.pending = false,
+  });
+
+  final bool liked;
+  final bool favorited;
+  final int likeCount;
+  final int bookmarkCount;
+  final int forwardCount;
+
+  /// One like/favorite round-trip at a time; a double tap would flip the
+  /// intent twice and leave the button out of sync.
+  final bool pending;
+
+  ContentViewerState copyWith({
+    bool? liked,
+    bool? favorited,
+    int? likeCount,
+    int? bookmarkCount,
+    int? forwardCount,
+    bool? pending,
+  }) => ContentViewerState(
+    liked: liked ?? this.liked,
+    favorited: favorited ?? this.favorited,
+    likeCount: likeCount ?? this.likeCount,
+    bookmarkCount: bookmarkCount ?? this.bookmarkCount,
+    forwardCount: forwardCount ?? this.forwardCount,
+    pending: pending ?? this.pending,
+  );
+}
+
+class ContentViewerNotifier extends AsyncNotifier<ContentViewerState> {
+  ContentViewerNotifier(this.item);
+
+  final LkmContentItem item;
+
+  @override
+  Future<ContentViewerState> build() async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = ref.read(contentApiProvider);
+    final viewer = await session.run(() => api.viewerState(item.id));
+    return ContentViewerState(
+      liked: viewer?.liked ?? false,
+      favorited: viewer?.favorited ?? false,
+      likeCount: viewer?.likeCount ?? item.likeCount,
+      bookmarkCount: viewer?.bookmarkCount ?? item.bookmarkCount,
+      forwardCount: item.forwardCount,
+    );
+  }
+
+  Future<void> toggleLike() async {
+    final current = state.value;
+    if (current == null || current.pending) return;
+    final target = !current.liked;
+    state = AsyncData(
+      current.copyWith(
+        liked: target,
+        likeCount: current.likeCount + (target ? 1 : -1),
+        pending: true,
+      ),
+    );
+    final api = ref.read(contentApiProvider);
+    try {
+      final count = await ref
+          .read(lkmApiSessionProvider)
+          .run(() => target ? api.like(item.id) : api.unlike(item.id));
+      state = AsyncData(state.value!.copyWith(likeCount: count, pending: false));
+    } catch (_) {
+      state = AsyncData(current.copyWith(pending: false));
+      rethrow;
+    }
+  }
+
+  Future<void> toggleFavorite() async {
+    final current = state.value;
+    if (current == null || current.pending) return;
+    final target = !current.favorited;
+    state = AsyncData(
+      current.copyWith(
+        favorited: target,
+        bookmarkCount: current.bookmarkCount + (target ? 1 : -1),
+        pending: true,
+      ),
+    );
+    final api = ref.read(contentApiProvider);
+    try {
+      final count = await ref
+          .read(lkmApiSessionProvider)
+          .run(() => api.favorite(item.id, favorited: target));
+      state = AsyncData(
+        state.value!.copyWith(bookmarkCount: count, pending: false),
+      );
+    } catch (_) {
+      state = AsyncData(current.copyWith(pending: false));
+      rethrow;
+    }
+  }
+
+  Future<void> forward() async {
+    final count = await ref
+        .read(lkmApiSessionProvider)
+        .run(() => ref.read(contentApiProvider).forward(item.id));
+    final latest = state.value;
+    if (latest != null) {
+      state = AsyncData(latest.copyWith(forwardCount: count));
+    }
+  }
+}
+
+final contentViewerProvider = AsyncNotifierProvider.autoDispose
+    .family<ContentViewerNotifier, ContentViewerState, LkmContentItem>(
+      ContentViewerNotifier.new,
+    );
+
 class ContentCommentsState {
   const ContentCommentsState({
     required this.items,
@@ -95,6 +224,44 @@ class ContentCommentsNotifier extends AsyncNotifier<ContentCommentsState> {
       );
     } catch (error) {
       state = AsyncData(current.copyWith(loadingMore: false, error: '$error'));
+    }
+  }
+
+  /// Optimistically flips one comment's like, then adopts the server count.
+  /// A failure rolls the whole list back to the pre-tap snapshot.
+  Future<void> toggleCommentLike(String commentId) async {
+    final current = state.value;
+    if (current == null) return;
+    final index = current.items.indexWhere((c) => c.id == commentId);
+    if (index < 0) return;
+    final comment = current.items[index];
+    final target = !comment.liked;
+    final optimistic = [...current.items];
+    optimistic[index] = comment.copyWith(
+      liked: target,
+      likeCount: comment.likeCount + (target ? 1 : -1),
+    );
+    state = AsyncData(current.copyWith(items: optimistic));
+
+    final api = ref.read(contentApiProvider);
+    try {
+      final count = await ref
+          .read(lkmApiSessionProvider)
+          .run(
+            () => target
+                ? api.likeComment(itemId, commentId)
+                : api.unlikeComment(itemId, commentId),
+          );
+      final latest = state.value;
+      if (latest == null) return;
+      final list = [...latest.items];
+      final at = list.indexWhere((c) => c.id == commentId);
+      if (at >= 0) {
+        list[at] = list[at].copyWith(likeCount: count);
+        state = AsyncData(latest.copyWith(items: list, clearError: true));
+      }
+    } catch (error) {
+      state = AsyncData(current.copyWith(error: '$error'));
     }
   }
 

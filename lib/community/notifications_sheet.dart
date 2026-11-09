@@ -19,6 +19,14 @@ class LkmNotificationsSheet extends HookConsumerWidget {
     final notifications = ref.watch(communityNotificationsProvider);
     final notifier = ref.read(communityNotificationsProvider.notifier);
 
+    ref.listen(lkmWsEventsProvider, (_, next) {
+      next.whenData((event) {
+        if (event.event == 'notification_created') {
+          notifier.refresh();
+        }
+      });
+    });
+
     return SheetScaffold(
       titleText: 'notifications'.tr(),
       actions: [

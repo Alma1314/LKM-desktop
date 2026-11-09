@@ -5679,5 +5679,18 @@
   "thoughtsSkillWebSearchLabel": "网页搜索",
   "thoughtsSkillWebSearchDescription": "从本机自己的连接发起 web_search，而不是服务器的，因此搜索引擎看到的是用户的地址。关掉它则改用服务器自己的搜索。",
   "thoughtsSkillWebFetchLabel": "网页抓取",
-  "thoughtsSkillWebFetchDescription": "从本机自己的连接抓取页面，而不是服务器的，因此对服务器地址弹出验证码的站点会以用户自己的身份读取。"
+  "thoughtsSkillWebFetchDescription": "从本机自己的连接抓取页面，而不是服务器的，因此对服务器地址弹出验证码的站点会以用户自己的身份读取。",
+  "lkmComposeTitle": "发帖",
+  "lkmComposeBoard": "板块",
+  "lkmComposePublish": "发布",
+  "lkmComposeFailed": "发布失败",
+  "lkmComposeEmptyBoards": "没有可发帖的板块",
+  "lkmDeletePostConfirm": "删除后无法恢复，确定删除吗？",
+  "lkmAddImage": "添加图片",
+  "lkmUploadUploading": "上传中",
+  "lkmUploadPending": "审核中",
+  "lkmUploadApproved": "已通过",
+  "lkmUploadFailed": "上传失败",
+  "lkmUploadRejected": "附件未通过审核，已移除",
+  "lkmUploadWaitReview": "附件仍在审核中，请等待通过或移除后再发布"
 }

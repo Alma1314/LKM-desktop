@@ -5679,5 +5679,18 @@
   "thoughtsSkillWebSearchLabel": "Web search",
   "thoughtsSkillWebSearchDescription": "Runs web_search from this machine's own connection instead of the server's, so search engines see the user's address. Turn it off to use the server's own search instead.",
   "thoughtsSkillWebFetchLabel": "Web fetch",
-  "thoughtsSkillWebFetchDescription": "Fetches pages from this machine's own connection instead of the server's, so a site that challenges the server's address with a captcha is read from the user's own."
+  "thoughtsSkillWebFetchDescription": "Fetches pages from this machine's own connection instead of the server's, so a site that challenges the server's address with a captcha is read from the user's own.",
+  "lkmComposeTitle": "New post",
+  "lkmComposeBoard": "Board",
+  "lkmComposePublish": "Publish",
+  "lkmComposeFailed": "Failed to publish",
+  "lkmComposeEmptyBoards": "No boards available",
+  "lkmDeletePostConfirm": "This cannot be undone. Delete?",
+  "lkmAddImage": "Add image",
+  "lkmUploadUploading": "Uploading",
+  "lkmUploadPending": "Under review",
+  "lkmUploadApproved": "Approved",
+  "lkmUploadFailed": "Upload failed",
+  "lkmUploadRejected": "Attachment was rejected and removed",
+  "lkmUploadWaitReview": "Attachments are still under review; wait or remove them before publishing"
 }

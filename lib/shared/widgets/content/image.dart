@@ -23,6 +23,11 @@ class UniversalImage extends HookConsumerWidget {
   final bool noCacheOptimization;
   final bool isSvg;
   final bool useFallbackImage;
+
+  /// Headers for hosts this widget does not own (LKM-service attachment URLs
+  /// need the desktop's LKM bearer; the built-in rule only knows the Solian
+  /// server).
+  final Map<String, String>? httpHeaders;
   final Widget Function(BuildContext context, double? progress)?
   loadingIndicatorBuilder;
 
@@ -36,6 +41,7 @@ class UniversalImage extends HookConsumerWidget {
     this.noCacheOptimization = false,
     this.isSvg = false,
     this.useFallbackImage = true,
+    this.httpHeaders,
     this.loadingIndicatorBuilder,
   });
 
@@ -64,9 +70,10 @@ class UniversalImage extends HookConsumerWidget {
     final renderMethod = imageRenderMethodForWebFor(uri, serverUrl: serverUrl);
 
     final Map<String, String>? httpHeaders =
-        uri.startsWith(serverUrl) && token != null
-        ? {'Authorization': 'Bearer ${token.token}'}
-        : null;
+        this.httpHeaders ??
+        (uri.startsWith(serverUrl) && token != null
+            ? {'Authorization': 'Bearer ${token.token}'}
+            : null);
 
     useEffect(() {
       loaded.value = false;

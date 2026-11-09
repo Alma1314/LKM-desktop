@@ -1,10 +1,26 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:island/core/api/api_providers.dart';
+import 'package:island/core/api/lkm_ws.dart';
 import 'package:island/core/api/notification_api.dart';
 
 final notificationApiProvider = Provider<NotificationApi>((ref) {
   return NotificationApi(ref.watch(lkmApiSessionProvider).client);
+});
+
+/// Live push frames (`upload` + `notify`). Scoped to whoever listens, so the
+/// socket only stays open while a community surface is on screen. Delivery is
+/// best-effort — consumers also refresh on open.
+final lkmWsEventsProvider = StreamProvider.autoDispose<LkmWsEvent>((ref) {
+  final session = ref.watch(lkmApiSessionProvider);
+  if (!session.isSignedIn) return const Stream<LkmWsEvent>.empty();
+  final client = LkmWsClient(
+    serverUrl: session.serverUrl,
+    tokenProvider: () => session.cachedAccessToken,
+  );
+  ref.onDispose(client.close);
+  client.connect();
+  return client.events;
 });
 
 /// Badge count for the community bell. Stays 0 when signed out.

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/network/domain_trust.dart';
 import 'package:island/shared/widgets/content/blocked_image_placeholder.dart';
 import 'package:island/shared/widgets/content/image.dart';
@@ -16,6 +17,14 @@ class MarkdownRemoteImage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final domainTrustService = ref.watch(domainTrustServiceProvider);
+    // LKM attachment previews (`/api/v1/files/{id}/preview`) are gated on a
+    // bearer token; the image widget only knows the Solian server, so pass the
+    // LKM header explicitly for that host.
+    final lkmHost = ref.watch(lkmServerUrlProvider);
+    final lkmToken = ref.watch(lkmApiSessionProvider).cachedAccessToken;
+    final lkmHeaders = uri.toString().startsWith(lkmHost) && lkmToken != null
+        ? {'Authorization': 'Bearer $lkmToken'}
+        : null;
     final validationResult = useState<DomainTrustResult?>(null);
     final isLoading = useState(true);
     final userConfirmed = useState(false);
@@ -50,7 +59,7 @@ class MarkdownRemoteImage extends HookConsumerWidget {
     }
 
     if (result.trustLevel == DomainTrustLevel.verified) {
-      return _buildImage();
+      return _buildImage(lkmHeaders);
     }
 
     if (!userConfirmed.value) {
@@ -63,10 +72,10 @@ class MarkdownRemoteImage extends HookConsumerWidget {
       );
     }
 
-    return _buildImage();
+    return _buildImage(lkmHeaders);
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(Map<String, String>? httpHeaders) {
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(8)),
       child: ConstrainedBox(
@@ -74,6 +83,7 @@ class MarkdownRemoteImage extends HookConsumerWidget {
         child: UniversalImage(
           uri: uri.toString(),
           fit: BoxFit.contain,
+          httpHeaders: httpHeaders,
         ),
       ),
     );

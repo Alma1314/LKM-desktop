@@ -201,6 +201,10 @@ dev_dependencies:
   # under flutter test), so the package must be a direct dependency.
   flutter_image_compress_macos: ^1.1.0
 
+  # The websocket test channel implements StreamChannelMixin; stream_channel is
+  # already present transitively via web_socket_channel.
+  stream_channel: ^2.1.4
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

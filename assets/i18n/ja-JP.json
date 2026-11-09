@@ -5376,5 +5376,18 @@
   "thoughtsSkillWebSearchLabel": "ウェブ検索",
   "thoughtsSkillWebSearchDescription": "サーバーではなくこの端末の接続から web_search を実行するため、検索エンジンにはユーザーのアドレスが見えます。オフにするとサーバー側の検索を使います。",
   "thoughtsSkillWebFetchLabel": "ウェブ取得",
-  "thoughtsSkillWebFetchDescription": "サーバーではなくこの端末の接続からページを取得するため、サーバーのアドレスに captcha を出すサイトもユーザー自身として読めます。"
+  "thoughtsSkillWebFetchDescription": "サーバーではなくこの端末の接続からページを取得するため、サーバーのアドレスに captcha を出すサイトもユーザー自身として読めます。",
+  "lkmComposeTitle": "投稿",
+  "lkmComposeBoard": "板",
+  "lkmComposePublish": "投稿する",
+  "lkmComposeFailed": "投稿に失敗しました",
+  "lkmComposeEmptyBoards": "投稿できる板がありません",
+  "lkmDeletePostConfirm": "削除すると元に戻せません。削除しますか？",
+  "lkmAddImage": "画像を追加",
+  "lkmUploadUploading": "アップロード中",
+  "lkmUploadPending": "審査中",
+  "lkmUploadApproved": "承認済み",
+  "lkmUploadFailed": "アップロード失敗",
+  "lkmUploadRejected": "添付ファイルは審査で却下されたため削除しました",
+  "lkmUploadWaitReview": "添付ファイルはまだ審査中です。承認を待つか削除してから投稿してください"
 }

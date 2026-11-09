@@ -5376,5 +5376,18 @@
   "thoughtsSkillWebSearchLabel": "Búsqueda web",
   "thoughtsSkillWebSearchDescription": "Ejecuta web_search desde la conexión de esta máquina en lugar de la del servidor, así que los buscadores ven la dirección del usuario. Desactívalo para usar la búsqueda del servidor.",
   "thoughtsSkillWebFetchLabel": "Obtención web",
-  "thoughtsSkillWebFetchDescription": "Obtiene páginas desde la conexión de esta máquina en lugar de la del servidor, así que un sitio que exige un captcha a la dirección del servidor se lee como el propio usuario."
+  "thoughtsSkillWebFetchDescription": "Obtiene páginas desde la conexión de esta máquina en lugar de la del servidor, así que un sitio que exige un captcha a la dirección del servidor se lee como el propio usuario.",
+  "lkmComposeTitle": "Publicar",
+  "lkmComposeBoard": "Tablero",
+  "lkmComposePublish": "Publicar",
+  "lkmComposeFailed": "No se pudo publicar",
+  "lkmComposeEmptyBoards": "No hay tableros disponibles",
+  "lkmDeletePostConfirm": "Esta acción no se puede deshacer. ¿Eliminar?",
+  "lkmAddImage": "Añadir imagen",
+  "lkmUploadUploading": "Subiendo",
+  "lkmUploadPending": "En revisión",
+  "lkmUploadApproved": "Aprobado",
+  "lkmUploadFailed": "Error al subir",
+  "lkmUploadRejected": "El adjunto fue rechazado y eliminado",
+  "lkmUploadWaitReview": "Los adjuntos siguen en revisión; espérelos o elimínelos antes de publicar"
 }
