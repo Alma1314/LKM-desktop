@@ -30,6 +30,7 @@ import 'package:island/accounts/screens/progress.dart' as _i52;
 import 'package:island/accounts/screens/punishments.dart' as _i54;
 import 'package:island/accounts/screens/relationship.dart' as _i57;
 import 'package:island/accounts/screens/store.dart' as _i62;
+import 'package:island/admin/admin_screen.dart' as _i86;
 import 'package:island/auth/authorize_screen.dart' as _i14;
 import 'package:island/auth/captcha.dart' as _i19;
 import 'package:island/auth/create_account.dart' as _i25;
@@ -2146,6 +2147,22 @@ class PostCategoryDetailRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ slug.hashCode ^ isCategory.hashCode;
+}
+
+/// generated route for
+/// [_i86.AdminScreen]
+class AdminRoute extends _i72.PageRouteInfo<void> {
+  const AdminRoute({List<_i72.PageRouteInfo>? children})
+    : super(AdminRoute.name, initialChildren: children);
+
+  static const String name = 'AdminRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i86.AdminScreen();
+    },
+  );
 }
 
 /// generated route for

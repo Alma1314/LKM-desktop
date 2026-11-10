@@ -193,6 +193,16 @@ class _LkmAccountPage extends HookConsumerWidget {
                 MaterialPageRoute(builder: (_) => const WebfDemoScreen()),
               ),
             ),
+          // Admin surfaces are only offered to admin accounts; the panel then
+          // signs in with its own cookie session (a bearer token cannot be
+          // reused — every `/admin/*` endpoint reads `admin_session`).
+          if (account.isAdmin)
+            ListTile(
+              leading: const Icon(Symbols.admin_panel_settings),
+              trailing: const Icon(Symbols.chevron_right),
+              title: Text('adminPanel.title'.tr()),
+              onTap: () => context.router.push(AdminRoute()),
+            ),
           ListTile(
             leading: const Icon(Symbols.logout),
             title: Text('logout'.tr()),

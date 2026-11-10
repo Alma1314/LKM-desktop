@@ -40,6 +40,7 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: ExamAttemptRoute.page, path: '/exam/attempt'),
     AutoRoute(page: ExamDetailRoute.page, path: '/exam/:id'),
     AutoRoute(page: ExamHallRoute.page, path: '/exam'),
+    AutoRoute(page: AdminRoute.page, path: '/admin'),
     AutoRoute(page: HubRoute.page, path: '/hub'),
     AutoRoute(page: QaDetailRoute.page, path: '/hub/qa/:id'),
     AutoRoute(page: ColumnDetailRoute.page, path: '/hub/columns/:id'),
