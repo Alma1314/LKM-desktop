@@ -5762,5 +5762,128 @@
   "treeholeTagFamily": "Family",
   "treeholeTagLife": "Life",
   "treeholeBottleHint": "Write a line and let the waves carry it...",
-  "treeholeWishHint": "Write down your wish..."
+  "treeholeWishHint": "Write down your wish...",
+  "contribution": {
+    "title": "Contribution System",
+    "currentPoints": "Current Points",
+    "tabAchievements": "Achievements",
+    "tabPoints": "Points Detail",
+    "tabLeaderboard": "Leaderboard",
+    "tabExchange": "Exchange",
+    "tabTasks": "Task Center",
+    "virtual": "Virtual",
+    "physical": "Physical",
+    "lowStock": "Only {stock} left",
+    "pointsCost": "{points} points",
+    "soldOut": "Sold out",
+    "exchange": "Exchange",
+    "dailyCheckin": "Daily Check-in",
+    "checkedIn": "Checked in today ✓",
+    "checkinReward": "Check in +{points} points",
+    "checkinSuccess": "Checked in! +{points} points",
+    "dailyTasks": "Today's Tasks",
+    "taskReward": "Reward {points} points",
+    "periodDaily": "Daily",
+    "periodWeekly": "Weekly",
+    "periodTotal": "All-time",
+    "pointsSuffix": "{points} pts",
+    "loginRequired": "Sign in to view points",
+    "loadFailed": "Could not load points data",
+    "empty": "No records yet",
+    "exchangeUnavailable": "Redeem points on the website"
+  },
+  "contributionData": {
+    "achievements": {
+      "a1": {
+        "name": "Newcomer",
+        "description": "Complete the onboarding tutorial"
+      },
+      "a2": { "name": "First Post", "description": "Publish your first post" },
+      "a3": { "name": "Ten Posts", "description": "Publish 10 posts in total" },
+      "a4": { "name": "Featured Author", "description": "Get a post featured" },
+      "a5": {
+        "name": "Century Posts",
+        "description": "Publish 100 posts in total"
+      },
+      "a6": { "name": "Helpful", "description": "Get 5 answers accepted" },
+      "a7": {
+        "name": "Hardcore Answerer",
+        "description": "Get 20 answers accepted"
+      },
+      "a8": {
+        "name": "File Expert",
+        "description": "Get 10 uploaded files approved"
+      },
+      "a9": {
+        "name": "7-Day Streak",
+        "description": "Check in for 7 consecutive days"
+      },
+      "a10": {
+        "name": "30-Day Streak",
+        "description": "Check in for 30 consecutive days"
+      },
+      "a11": { "name": "Project Pioneer", "description": "Join 3 projects" },
+      "a12": {
+        "name": "Column Author",
+        "description": "Publish 5 column articles"
+      }
+    },
+    "pointLogs": {
+      "checkin": "Daily check-in",
+      "post": "Post",
+      "comment": "Comment reply",
+      "answerAccepted": "Answer accepted",
+      "fileApproved": "File upload approved",
+      "competition": "Competition award",
+      "dailyTask": "Daily task completed",
+      "like": "Like",
+      "qaAccept": "Answer accepted",
+      "transfer": "Points transferred"
+    },
+    "leaderboard": {
+      "titles": {
+        "hardcore": "Hardcore Answerer",
+        "columnAuthor": "Column Author",
+        "active": "Active User",
+        "newcomer": "Newcomer",
+        "fileExpert": "File Expert"
+      }
+    },
+    "tasks": {
+      "t1": { "title": "Daily check-in", "description": "Come check in today" },
+      "t2": {
+        "title": "Post 1 article",
+        "description": "Share your knowledge and insights"
+      },
+      "t3": {
+        "title": "Answer 3 questions",
+        "description": "Help others solve problems"
+      },
+      "t4": { "title": "Like 10 posts", "description": "Like quality content" },
+      "t5": {
+        "title": "Upload 1 file",
+        "description": "Enrich the community resource library"
+      }
+    },
+    "exchangeItems": {
+      "e1": {
+        "name": "LKM Custom Badge (Virtual)",
+        "description": "Exclusive badge shown on your profile page"
+      },
+      "e2": {
+        "name": "Exclusive Title Color",
+        "description": "Unlock gold title display"
+      },
+      "e3": {
+        "name": "Column Article Promotion Slot",
+        "description": "Show your column article in the homepage recommendations for 7 days"
+      },
+      "e4": {
+        "name": "LKM Custom Notebook",
+        "description": "Limited-edition LKM-themed notebook"
+      },
+      "e5": { "name": "LKM Physical Badge", "description": "LKM metal badge" },
+      "e6": { "name": "T-shirt Voucher", "description": "LKM-themed T-shirt" }
+    }
+  }
 }

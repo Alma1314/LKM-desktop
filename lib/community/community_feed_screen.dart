@@ -86,6 +86,11 @@ class CommunityFeedScreen extends HookConsumerWidget {
                         icon: const Icon(Symbols.forest),
                       ),
                       IconButton(
+                        tooltip: 'contribution.title'.tr(),
+                        onPressed: () => context.router.push(PointsRoute()),
+                        icon: const Icon(Symbols.emoji_events),
+                      ),
+                      IconButton(
                         tooltip: 'search'.tr(),
                         onPressed: () => showModalBottomSheet<void>(
                           context: context,

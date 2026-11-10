@@ -5762,5 +5762,92 @@
   "treeholeTagFamily": "家庭",
   "treeholeTagLife": "生活",
   "treeholeBottleHint": "写一句想说的话，让海浪带走……",
-  "treeholeWishHint": "写下你的心愿……"
+  "treeholeWishHint": "写下你的心愿……",
+  "contribution": {
+    "title": "贡献系统",
+    "currentPoints": "当前积分",
+    "tabAchievements": "成就墙",
+    "tabPoints": "积分明细",
+    "tabLeaderboard": "排行榜",
+    "tabExchange": "兑换区",
+    "tabTasks": "任务中心",
+    "virtual": "虚拟",
+    "physical": "实物",
+    "lowStock": "仅剩 {stock}",
+    "pointsCost": "{points} 积分",
+    "soldOut": "已售罄",
+    "exchange": "兑换",
+    "dailyCheckin": "每日打卡",
+    "checkedIn": "今日已打卡 ✓",
+    "checkinReward": "打卡 +{points} 积分",
+    "checkinSuccess": "打卡成功，+{points} 积分",
+    "dailyTasks": "今日任务",
+    "taskReward": "奖励 {points} 积分",
+    "periodDaily": "日榜",
+    "periodWeekly": "周榜",
+    "periodTotal": "总榜",
+    "pointsSuffix": "{points} 分",
+    "loginRequired": "登录后查看积分",
+    "loadFailed": "积分数据加载失败",
+    "empty": "暂无记录",
+    "exchangeUnavailable": "兑换功能请在官网使用"
+  },
+  "contributionData": {
+    "achievements": {
+      "a1": { "name": "初来乍到", "description": "完成新手引导" },
+      "a2": { "name": "首帖", "description": "发布第一篇帖子" },
+      "a3": { "name": "十帖", "description": "累计发布 10 篇帖子" },
+      "a4": { "name": "精华作者", "description": "帖子被加精" },
+      "a5": { "name": "百帖达人", "description": "累计发布 100 篇帖子" },
+      "a6": { "name": "助人为乐", "description": "回答被采纳 5 次" },
+      "a7": { "name": "硬核答主", "description": "回答被采纳 20 次" },
+      "a8": { "name": "文件达人", "description": "上传文件通过审核 10 个" },
+      "a9": { "name": "连续打卡 7 天", "description": "连续签到 7 天" },
+      "a10": { "name": "连续打卡 30 天", "description": "连续签到 30 天" },
+      "a11": { "name": "项目先锋", "description": "参与项目 3 个" },
+      "a12": { "name": "专栏作者", "description": "发布专栏文章 5 篇" }
+    },
+    "pointLogs": {
+      "checkin": "每日打卡",
+      "post": "发帖",
+      "comment": "评论回复",
+      "answerAccepted": "回答被采纳",
+      "fileApproved": "文件上传通过审核",
+      "competition": "竞赛获奖",
+      "dailyTask": "完成每日任务",
+      "like": "点赞",
+      "qaAccept": "回答被采纳",
+      "transfer": "积分转移"
+    },
+    "leaderboard": {
+      "titles": {
+        "hardcore": "硬核答主",
+        "columnAuthor": "专栏作者",
+        "active": "活跃用户",
+        "newcomer": "初来乍到",
+        "fileExpert": "文件达人"
+      }
+    },
+    "tasks": {
+      "t1": { "title": "每日打卡", "description": "今天来签到吧" },
+      "t2": { "title": "发表 1 篇帖子", "description": "分享你的知识与见解" },
+      "t3": { "title": "回答 3 个问题", "description": "帮助他人解决问题" },
+      "t4": { "title": "点赞 10 次", "description": "为优质内容点赞" },
+      "t5": { "title": "上传 1 个文件", "description": "充实社区资源库" }
+    },
+    "exchangeItems": {
+      "e1": {
+        "name": "理科迷定制徽章（虚拟）",
+        "description": "个人主页专属展示徽章"
+      },
+      "e2": { "name": "专属称号颜色", "description": "解锁金色称号显示" },
+      "e3": {
+        "name": "专栏文章推广位",
+        "description": "在首页推荐区展示你的专栏文章 7 天"
+      },
+      "e4": { "name": "理科迷定制笔记本", "description": "限量版理科迷主题笔记本" },
+      "e5": { "name": "LKM 徽章实物", "description": "理科迷金属徽章" },
+      "e6": { "name": "T恤兑换券", "description": "理科迷主题T恤" }
+    }
+  }
 }

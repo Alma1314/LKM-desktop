@@ -66,6 +66,7 @@ import 'package:island/misc/not_found.dart' as _i44;
 import 'package:island/misc/settings.dart' as _i59;
 import 'package:island/misc/tabs_screen.dart' as _i66;
 import 'package:island/payments/order_detail.dart' as _i70;
+import 'package:island/points/points_screen.dart' as _i80;
 import 'package:island/posts/compose.dart' as _i75;
 import 'package:island/posts/screens/bookmarks.dart' as _i16;
 import 'package:island/posts/screens/compose_article.dart' as _i13;
@@ -2140,6 +2141,22 @@ class PostCategoryDetailRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ slug.hashCode ^ isCategory.hashCode;
+}
+
+/// generated route for
+/// [_i80.PointsScreen]
+class PointsRoute extends _i72.PageRouteInfo<void> {
+  const PointsRoute({List<_i72.PageRouteInfo>? children})
+    : super(PointsRoute.name, initialChildren: children);
+
+  static const String name = 'PointsRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i80.PointsScreen();
+    },
+  );
 }
 
 /// generated route for

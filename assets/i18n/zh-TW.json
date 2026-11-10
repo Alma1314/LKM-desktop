@@ -5614,5 +5614,92 @@
   "treeholeTagFamily": "家庭",
   "treeholeTagLife": "生活",
   "treeholeBottleHint": "寫一句想說的話，讓海浪帶走……",
-  "treeholeWishHint": "寫下你的心願……"
+  "treeholeWishHint": "寫下你的心願……",
+  "contribution": {
+    "title": "貢獻系統",
+    "currentPoints": "當前積分",
+    "tabAchievements": "成就牆",
+    "tabPoints": "積分明細",
+    "tabLeaderboard": "排行榜",
+    "tabExchange": "兌換區",
+    "tabTasks": "任務中心",
+    "virtual": "虛擬",
+    "physical": "實物",
+    "lowStock": "僅剩 {stock}",
+    "pointsCost": "{points} 積分",
+    "soldOut": "已售罄",
+    "exchange": "兌換",
+    "dailyCheckin": "每日打卡",
+    "checkedIn": "今日已打卡 ✓",
+    "checkinReward": "打卡 +{points} 積分",
+    "checkinSuccess": "打卡成功，+{points} 積分",
+    "dailyTasks": "今日任務",
+    "taskReward": "獎勵 {points} 積分",
+    "periodDaily": "日榜",
+    "periodWeekly": "週榜",
+    "periodTotal": "總榜",
+    "pointsSuffix": "{points} 分",
+    "loginRequired": "登入後查看積分",
+    "loadFailed": "積分資料載入失敗",
+    "empty": "暫無記錄",
+    "exchangeUnavailable": "兌換功能請在官網使用"
+  },
+  "contributionData": {
+    "achievements": {
+      "a1": { "name": "初來乍到", "description": "完成新手引導" },
+      "a2": { "name": "首帖", "description": "發佈第一篇帖子" },
+      "a3": { "name": "十帖", "description": "累計發佈 10 篇帖子" },
+      "a4": { "name": "精華作者", "description": "帖子被加精" },
+      "a5": { "name": "百帖達人", "description": "累計發佈 100 篇帖子" },
+      "a6": { "name": "助人為樂", "description": "回答被採納 5 次" },
+      "a7": { "name": "硬核答主", "description": "回答被採納 20 次" },
+      "a8": { "name": "文件達人", "description": "上傳文件通過審核 10 個" },
+      "a9": { "name": "連續打卡 7 天", "description": "連續簽到 7 天" },
+      "a10": { "name": "連續打卡 30 天", "description": "連續簽到 30 天" },
+      "a11": { "name": "項目先鋒", "description": "參與項目 3 個" },
+      "a12": { "name": "專欄作者", "description": "發佈專欄文章 5 篇" }
+    },
+    "pointLogs": {
+      "checkin": "每日打卡",
+      "post": "發帖",
+      "comment": "評論回覆",
+      "answerAccepted": "回答被採納",
+      "fileApproved": "文件上傳通過審核",
+      "competition": "競賽獲獎",
+      "dailyTask": "完成每日任務",
+      "like": "點讚",
+      "qaAccept": "回答被採納",
+      "transfer": "積分轉移"
+    },
+    "leaderboard": {
+      "titles": {
+        "hardcore": "硬核答主",
+        "columnAuthor": "專欄作者",
+        "active": "活躍用戶",
+        "newcomer": "初來乍到",
+        "fileExpert": "文件達人"
+      }
+    },
+    "tasks": {
+      "t1": { "title": "每日打卡", "description": "今天來簽到吧" },
+      "t2": { "title": "發表 1 篇帖子", "description": "分享你的知識與見解" },
+      "t3": { "title": "回答 3 個問題", "description": "幫助他人解決問題" },
+      "t4": { "title": "點讚 10 次", "description": "為優質內容點讚" },
+      "t5": { "title": "上傳 1 個文件", "description": "充實社區資源庫" }
+    },
+    "exchangeItems": {
+      "e1": {
+        "name": "理科迷定製徽章（虛擬）",
+        "description": "個人主頁專屬展示徽章"
+      },
+      "e2": { "name": "專屬稱號顏色", "description": "解鎖金色稱號顯示" },
+      "e3": {
+        "name": "專欄文章推廣位",
+        "description": "在首頁推薦區展示你的專欄文章 7 天"
+      },
+      "e4": { "name": "理科迷定製筆記本", "description": "限量版理科迷主題筆記本" },
+      "e5": { "name": "LKM 徽章實物", "description": "理科迷金屬徽章" },
+      "e6": { "name": "T恤兌換券", "description": "理科迷主題T恤" }
+    }
+  }
 }
