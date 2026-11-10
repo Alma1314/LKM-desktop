@@ -96,6 +96,11 @@ class CommunityFeedScreen extends HookConsumerWidget {
                         icon: const Icon(Symbols.widgets),
                       ),
                       IconButton(
+                        tooltip: 'exam.title'.tr(),
+                        onPressed: () => context.router.push(ExamHallRoute()),
+                        icon: const Icon(Symbols.trophy),
+                      ),
+                      IconButton(
                         tooltip: 'search'.tr(),
                         onPressed: () => showModalBottomSheet<void>(
                           context: context,

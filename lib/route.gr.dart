@@ -69,6 +69,9 @@ import 'package:island/payments/order_detail.dart' as _i70;
 import 'package:island/points/points_screen.dart' as _i80;
 import 'package:island/hub/hub_detail_screen.dart' as _i81;
 import 'package:island/hub/hub_screen.dart' as _i82;
+import 'package:island/core/api/exam_api.dart' as _i83;
+import 'package:island/exam/exam_attempt_screen.dart' as _i84;
+import 'package:island/exam/exam_screen.dart' as _i85;
 import 'package:island/posts/compose.dart' as _i75;
 import 'package:island/posts/screens/bookmarks.dart' as _i16;
 import 'package:island/posts/screens/compose_article.dart' as _i13;
@@ -2393,6 +2396,127 @@ class BoardDetailRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ id.hashCode ^ title.hashCode;
+}
+
+/// generated route for
+/// [_i85.ExamHallScreen]
+class ExamHallRoute extends _i72.PageRouteInfo<void> {
+  const ExamHallRoute({List<_i72.PageRouteInfo>? children})
+    : super(ExamHallRoute.name, initialChildren: children);
+
+  static const String name = 'ExamHallRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i85.ExamHallScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i85.ExamDetailScreen]
+class ExamDetailRoute extends _i72.PageRouteInfo<ExamDetailRouteArgs> {
+  ExamDetailRoute({
+    _i73.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         ExamDetailRoute.name,
+         args: ExamDetailRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'ExamDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<ExamDetailRouteArgs>(
+        orElse: () => ExamDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i85.ExamDetailScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class ExamDetailRouteArgs {
+  const ExamDetailRouteArgs({this.key, required this.id});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'ExamDetailRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ExamDetailRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
+}
+
+/// generated route for
+/// [_i84.ExamAttemptScreen]
+class ExamAttemptRoute extends _i72.PageRouteInfo<ExamAttemptRouteArgs> {
+  ExamAttemptRoute({
+    _i73.Key? key,
+    required _i83.ExamAttempt attempt,
+    String? title,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         ExamAttemptRoute.name,
+         args: ExamAttemptRouteArgs(key: key, attempt: attempt, title: title),
+         initialChildren: children,
+       );
+
+  static const String name = 'ExamAttemptRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<ExamAttemptRouteArgs>();
+      return _i84.ExamAttemptScreen(
+        key: args.key,
+        attempt: args.attempt,
+        title: args.title,
+      );
+    },
+  );
+}
+
+class ExamAttemptRouteArgs {
+  const ExamAttemptRouteArgs({this.key, required this.attempt, this.title});
+
+  final _i73.Key? key;
+
+  final _i83.ExamAttempt attempt;
+
+  final String? title;
+
+  @override
+  String toString() {
+    return 'ExamAttemptRouteArgs{key: $key, attempt: $attempt, title: $title}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ExamAttemptRouteArgs) return false;
+    return key == other.key && attempt == other.attempt && title == other.title;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ attempt.hashCode ^ title.hashCode;
 }
 
 /// generated route for
