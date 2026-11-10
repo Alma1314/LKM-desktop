@@ -88,6 +88,7 @@ import 'package:island/thoughts/screens/ai_console.dart' as _i12;
 import 'package:island/thoughts/screens/thoughts.dart' as _i67;
 import 'package:island/wallets/transaction_detail.dart' as _i68;
 import 'package:island/wallets/wallet.dart' as _i71;
+import 'package:island/treehole/treehole_screen.dart' as _i79;
 import 'package:material_ui/material_ui.dart' as _i73;
 import 'package:solar_network_sdk/solar_network_sdk.dart' as _i74;
 
@@ -3107,6 +3108,22 @@ class WalletRoute extends _i72.PageRouteInfo<void> {
     name,
     builder: (data) {
       return const _i71.WalletScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i79.TreeholeScreen]
+class TreeholeRoute extends _i72.PageRouteInfo<void> {
+  const TreeholeRoute({List<_i72.PageRouteInfo>? children})
+    : super(TreeholeRoute.name, initialChildren: children);
+
+  static const String name = 'TreeholeRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i79.TreeholeScreen();
     },
   );
 }

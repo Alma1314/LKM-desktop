@@ -81,6 +81,11 @@ class CommunityFeedScreen extends HookConsumerWidget {
                           icon: const Icon(Symbols.edit_square),
                         ),
                       IconButton(
+                        tooltip: 'treehole'.tr(),
+                        onPressed: () => context.router.push(TreeholeRoute()),
+                        icon: const Icon(Symbols.forest),
+                      ),
+                      IconButton(
                         tooltip: 'search'.tr(),
                         onPressed: () => showModalBottomSheet<void>(
                           context: context,

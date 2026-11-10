@@ -35,6 +35,7 @@ class AppRouter extends RootStackRouter {
 
     // Other standalone routes
     AutoRoute(page: ContentDetailRoute.page, path: '/content/:id'),
+    AutoRoute(page: TreeholeRoute.page, path: '/treehole'),
     AutoRoute(page: UserProfileRoute.page, path: '/community/users/:id'),
     AutoRoute(page: SettingsRoute.page, path: '/settings'),
     AutoRoute(page: AiConsoleRoute.page, path: '/thoughts/console'),
