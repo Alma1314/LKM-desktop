@@ -59,16 +59,8 @@ class SettingsScreen extends HookConsumerWidget {
     switch ('${locale.languageCode}-${locale.countryCode}') {
       case 'en-US':
         return 'English (US)';
-      case 'es-ES':
-        return 'Español (España)';
-      case 'ja-JP':
-        return '日本語 (日本)';
-      case 'ko-KR':
-        return '한국어 (대한민국)';
       case 'zh-CN':
         return '简体中文';
-      case 'zh-OG':
-        return '文言文 (华夏)';
       case 'zh-TW':
         return '繁體中文 (台灣)';
       default:
