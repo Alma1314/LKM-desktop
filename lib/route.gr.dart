@@ -67,6 +67,8 @@ import 'package:island/misc/settings.dart' as _i59;
 import 'package:island/misc/tabs_screen.dart' as _i66;
 import 'package:island/payments/order_detail.dart' as _i70;
 import 'package:island/points/points_screen.dart' as _i80;
+import 'package:island/hub/hub_detail_screen.dart' as _i81;
+import 'package:island/hub/hub_screen.dart' as _i82;
 import 'package:island/posts/compose.dart' as _i75;
 import 'package:island/posts/screens/bookmarks.dart' as _i16;
 import 'package:island/posts/screens/compose_article.dart' as _i13;
@@ -2157,6 +2159,240 @@ class PointsRoute extends _i72.PageRouteInfo<void> {
       return const _i80.PointsScreen();
     },
   );
+}
+
+/// generated route for
+/// [_i82.HubScreen]
+class HubRoute extends _i72.PageRouteInfo<void> {
+  const HubRoute({List<_i72.PageRouteInfo>? children})
+    : super(HubRoute.name, initialChildren: children);
+
+  static const String name = 'HubRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i82.HubScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i81.QaDetailScreen]
+class QaDetailRoute extends _i72.PageRouteInfo<QaDetailRouteArgs> {
+  QaDetailRoute({
+    _i73.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         QaDetailRoute.name,
+         args: QaDetailRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'QaDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<QaDetailRouteArgs>(
+        orElse: () => QaDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i81.QaDetailScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class QaDetailRouteArgs {
+  const QaDetailRouteArgs({this.key, required this.id});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'QaDetailRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! QaDetailRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
+}
+
+/// generated route for
+/// [_i81.ColumnDetailScreen]
+class ColumnDetailRoute extends _i72.PageRouteInfo<ColumnDetailRouteArgs> {
+  ColumnDetailRoute({
+    _i73.Key? key,
+    required String id,
+    String? title,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         ColumnDetailRoute.name,
+         args: ColumnDetailRouteArgs(key: key, id: id, title: title),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'ColumnDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<ColumnDetailRouteArgs>(
+        orElse: () => ColumnDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i81.ColumnDetailScreen(
+        key: args.key,
+        id: args.id,
+        title: args.title,
+      );
+    },
+  );
+}
+
+class ColumnDetailRouteArgs {
+  const ColumnDetailRouteArgs({this.key, required this.id, this.title});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  final String? title;
+
+  @override
+  String toString() {
+    return 'ColumnDetailRouteArgs{key: $key, id: $id, title: $title}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ColumnDetailRouteArgs) return false;
+    return key == other.key && id == other.id && title == other.title;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode ^ title.hashCode;
+}
+
+/// generated route for
+/// [_i81.ProjectDetailScreen]
+class ProjectDetailRoute extends _i72.PageRouteInfo<ProjectDetailRouteArgs> {
+  ProjectDetailRoute({
+    _i73.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         ProjectDetailRoute.name,
+         args: ProjectDetailRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'ProjectDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<ProjectDetailRouteArgs>(
+        orElse: () => ProjectDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i81.ProjectDetailScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class ProjectDetailRouteArgs {
+  const ProjectDetailRouteArgs({this.key, required this.id});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'ProjectDetailRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ProjectDetailRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
+}
+
+/// generated route for
+/// [_i82.BoardDetailScreen]
+class BoardDetailRoute extends _i72.PageRouteInfo<BoardDetailRouteArgs> {
+  BoardDetailRoute({
+    _i73.Key? key,
+    required String id,
+    String? title,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         BoardDetailRoute.name,
+         args: BoardDetailRouteArgs(key: key, id: id, title: title),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'BoardDetailRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<BoardDetailRouteArgs>(
+        orElse: () => BoardDetailRouteArgs(id: pathParams.getString('id')),
+      );
+      return _i82.BoardDetailScreen(
+        key: args.key,
+        id: args.id,
+        title: args.title,
+      );
+    },
+  );
+}
+
+class BoardDetailRouteArgs {
+  const BoardDetailRouteArgs({this.key, required this.id, this.title});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  final String? title;
+
+  @override
+  String toString() {
+    return 'BoardDetailRouteArgs{key: $key, id: $id, title: $title}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! BoardDetailRouteArgs) return false;
+    return key == other.key && id == other.id && title == other.title;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode ^ title.hashCode;
 }
 
 /// generated route for

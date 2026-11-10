@@ -12,6 +12,12 @@ const String _itemFields =
 const String _itemQuery =
     'query ContentItem(\$id: ID!) { contentItem(id: \$id) { $_itemFields } }';
 
+const String _itemsQuery =
+    'query ContentItems(\$page: Int!, \$pageSize: Int!, \$boardId: ID, '
+    '\$contentType: String) { contentItems(page: \$page, pageSize: \$pageSize, '
+    'boardId: \$boardId, contentType: \$contentType) { '
+    'items { $_itemFields } total page pages } }';
+
 const String _commentsQuery =
     'query ContentComments(\$itemId: ID!, \$page: Int!, \$pageSize: Int!) { '
     'contentComments(itemId: \$itemId, page: \$page, pageSize: \$pageSize) { '
@@ -28,6 +34,49 @@ const String _viewerStateQuery =
 const String _boardsQuery =
     'query Boards { boards { id slug title parentId status isPublic } }';
 
+/// The GraphQL endpoint lives at the server root, not under `/api/v1`.
+String graphqlUrlFor(ApiClient client) {
+  final base = client.baseUrl;
+  final origin = base.endsWith(kApiPathPrefix)
+      ? base.substring(0, base.length - kApiPathPrefix.length)
+      : base;
+  return '$origin/graphql/v1';
+}
+
+/// POSTs one GraphQL query and unwraps the `{data, errors}` body.
+///
+/// Shared by [ContentApi] and the columns reader so the error mapping and the
+/// root-level URL stay in one place.
+Future<Map<String, dynamic>> graphqlRequest(
+  ApiClient client,
+  String query,
+  Map<String, dynamic> variables,
+) async {
+  final body = await client.post(
+    graphqlUrlFor(client),
+    body: {'query': query, 'variables': variables},
+  );
+  if (body is! Map) {
+    throw ApiException(
+      code: ApiCode.internalError,
+      message: 'GraphQL 响应格式错误',
+      path: '/graphql/v1',
+    );
+  }
+  final errors = body['errors'];
+  if (errors is List && errors.isNotEmpty) {
+    final first = errors.first;
+    final message = first is Map ? '${first['message'] ?? ''}' : '$first';
+    throw ApiException(
+      code: ApiCode.internalError,
+      message: message.isEmpty ? 'GraphQL 请求失败' : message,
+      path: '/graphql/v1',
+    );
+  }
+  final data = body['data'];
+  return data is Map ? Map<String, dynamic>.from(data) : const {};
+}
+
 /// A forum board (`status == active` is the only postable state).
 class LkmBoard {
   const LkmBoard({
@@ -36,6 +85,7 @@ class LkmBoard {
     required this.title,
     required this.status,
     this.parentId,
+    this.isPublic = true,
   });
 
   final String id;
@@ -43,6 +93,7 @@ class LkmBoard {
   final String title;
   final String status;
   final String? parentId;
+  final bool isPublic;
 
   bool get isActive => status == 'active';
 
@@ -52,6 +103,7 @@ class LkmBoard {
     title: '${json['title'] ?? ''}',
     status: '${json['status'] ?? ''}',
     parentId: json['parentId'] as String?,
+    isPublic: json['isPublic'] != false,
   );
 }
 
@@ -259,20 +311,44 @@ class ContentApi {
 
   final ApiClient _client;
 
-  /// The GraphQL endpoint lives at the server root, not under `/api/v1`.
-  String get graphqlUrl {
-    final base = _client.baseUrl;
-    final origin = base.endsWith(kApiPathPrefix)
-        ? base.substring(0, base.length - kApiPathPrefix.length)
-        : base;
-    return '$origin/graphql/v1';
-  }
+  String get graphqlUrl => graphqlUrlFor(_client);
 
   Future<LkmContentItem?> item(String id) async {
     final data = await _graphql(_itemQuery, {'id': id});
     final raw = data['contentItem'];
     if (raw is! Map) return null;
     return LkmContentItem.fromJson(Map<String, dynamic>.from(raw));
+  }
+
+  /// Published content page, optionally narrowed to one board.
+  Future<ApiPage<LkmContentItem>> items({
+    String? boardId,
+    String? contentType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _graphql(_itemsQuery, {
+      'boardId': boardId,
+      'contentType': contentType,
+      'page': page,
+      'pageSize': pageSize,
+    });
+    final raw = data['contentItems'];
+    if (raw is! Map) return const ApiPage.empty();
+    final items = raw['items'];
+    final parsed = items is List
+        ? items
+              .whereType<Map>()
+              .map((e) => LkmContentItem.fromJson(Map<String, dynamic>.from(e)))
+              .toList(growable: false)
+        : const <LkmContentItem>[];
+    int asInt(Object? value) => value is num ? value.toInt() : 0;
+    return ApiPage(
+      items: parsed,
+      total: asInt(raw['total']) == 0 ? parsed.length : asInt(raw['total']),
+      page: asInt(raw['page']) == 0 ? page : asInt(raw['page']),
+      pages: asInt(raw['pages']) == 0 ? page : asInt(raw['pages']),
+    );
   }
 
   Future<LkmCommentPage> comments(
@@ -422,29 +498,5 @@ class ContentApi {
   Future<Map<String, dynamic>> _graphql(
     String query,
     Map<String, dynamic> variables,
-  ) async {
-    final body = await _client.post(
-      graphqlUrl,
-      body: {'query': query, 'variables': variables},
-    );
-    if (body is! Map) {
-      throw ApiException(
-        code: ApiCode.internalError,
-        message: 'GraphQL 响应格式错误',
-        path: '/graphql/v1',
-      );
-    }
-    final errors = body['errors'];
-    if (errors is List && errors.isNotEmpty) {
-      final first = errors.first;
-      final message = first is Map ? '${first['message'] ?? ''}' : '$first';
-      throw ApiException(
-        code: ApiCode.internalError,
-        message: message.isEmpty ? 'GraphQL 请求失败' : message,
-        path: '/graphql/v1',
-      );
-    }
-    final data = body['data'];
-    return data is Map ? Map<String, dynamic>.from(data) : const {};
-  }
+  ) => graphqlRequest(_client, query, variables);
 }

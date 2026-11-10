@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:island/community/content_detail_pod.dart';
+import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_session.dart';
 import 'package:island/core/api/content_api.dart';
@@ -26,6 +27,14 @@ class _FakeContent implements ContentApi {
 
   @override
   Future<List<LkmBoard>> boards() async => const [];
+
+  @override
+  Future<ApiPage<LkmContentItem>> items({
+    String? boardId,
+    String? contentType,
+    int page = 1,
+    int pageSize = 20,
+  }) async => const ApiPage.empty();
 
   @override
   Future<String> createDiscussion({

@@ -91,6 +91,11 @@ class CommunityFeedScreen extends HookConsumerWidget {
                         icon: const Icon(Symbols.emoji_events),
                       ),
                       IconButton(
+                        tooltip: 'hub.title'.tr(),
+                        onPressed: () => context.router.push(HubRoute()),
+                        icon: const Icon(Symbols.widgets),
+                      ),
+                      IconButton(
                         tooltip: 'search'.tr(),
                         onPressed: () => showModalBottomSheet<void>(
                           context: context,
