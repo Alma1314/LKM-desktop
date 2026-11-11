@@ -22,7 +22,8 @@ class MarkdownRemoteImage extends HookConsumerWidget {
     // LKM header explicitly for that host.
     final lkmHost = ref.watch(lkmServerUrlProvider);
     final lkmToken = ref.watch(lkmApiSessionProvider).cachedAccessToken;
-    final lkmHeaders = uri.toString().startsWith(lkmHost) && lkmToken != null
+    final lkmHeaders = (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.origin == Uri.parse(lkmHost).origin && lkmToken != null
         ? {'Authorization': 'Bearer $lkmToken'}
         : null;
     final validationResult = useState<DomainTrustResult?>(null);

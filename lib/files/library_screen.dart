@@ -1,3 +1,10 @@
+import 'package:island/files/categories.dart';
+import 'package:island/core/api/search_api.dart';
+import 'package:island/shared/widgets/content/markdown_remote_image.dart';
+import 'package:mime/mime.dart';
+import 'dart:io';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,7 +20,13 @@ import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
 
-typedef LibraryFilter = ({String? status, String sort});
+typedef LibraryFilter = ({
+  String? status,
+  String sort,
+  int page,
+  String? category,
+  String? mime,
+});
 
 final libraryFilesProvider = FutureProvider.autoDispose
     .family<ApiPage<LkmFile>, LibraryFilter>((ref, filter) {
@@ -21,7 +34,13 @@ final libraryFilesProvider = FutureProvider.autoDispose
       return session.run(
         () => ref
             .watch(filesApiProvider)
-            .files(status: filter.status, sort: filter.sort),
+            .files(
+              status: filter.status,
+              sort: filter.sort,
+              page: filter.page,
+              categoryId: filter.category,
+              mimePrefix: filter.mime,
+            ),
       );
     });
 
@@ -40,8 +59,7 @@ final libraryVersionsProvider = FutureProvider.autoDispose
     });
 
 /// The website's `/files` list: server-side visibility filtering, status tabs
-/// and newest/downloads sorting. Categories are a static tree on the website,
-/// so the desktop list leaves them out for now.
+/// and newest/downloads sorting, with the website's shared category IDs.
 @RoutePage()
 class LibraryScreen extends HookConsumerWidget {
   const LibraryScreen({super.key});
@@ -50,7 +68,37 @@ class LibraryScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final status = useState<String?>(null);
     final sort = useState('newest');
-    final filter = (status: status.value, sort: sort.value);
+    final number = useState(1);
+    final category = useState<String?>(null);
+    final mime = useState<String?>(null);
+    final grid = useState(false);
+    final searchText = useTextEditingController();
+    final query = useState('');
+    final searchEpoch = useState(0);
+    final search = useMemoized(
+      () => query.value.isEmpty
+          ? Future.value(const ApiPage<SearchHit>.empty())
+          : ref
+                .read(lkmApiSessionProvider)
+                .run(
+                  () =>
+                      SearchApi(ref.read(lkmApiSessionProvider).client).search(
+                        query.value,
+                        contentType: 'library_file',
+                        page: number.value,
+                      ),
+                ),
+      [query.value, number.value, searchEpoch.value],
+    );
+    final hits = useFuture(search);
+    final busy = useState(false);
+    final filter = (
+      status: status.value,
+      sort: sort.value,
+      page: number.value,
+      category: category.value,
+      mime: mime.value,
+    );
     final page = ref.watch(libraryFilesProvider(filter));
 
     return AppScaffold(
@@ -58,91 +106,235 @@ class LibraryScreen extends HookConsumerWidget {
       appBar: AppBar(
         leading: const AutoLeadingButton(),
         title: Text('library.title'.tr()),
+        actions: [
+          IconButton(
+            tooltip: 'libraryMore.grid'.tr(),
+            onPressed: () => grid.value = !grid.value,
+            icon: const Icon(Icons.grid_view),
+          ),
+          IconButton(
+            tooltip: 'libraryMore.upload'.tr(),
+            onPressed: busy.value
+                ? null
+                : () async {
+                    busy.value = true;
+                    try {
+                      await _upload(ref, categoryId: category.value ?? '');
+                      ref.invalidate(libraryFilesProvider);
+                    } catch (e) {
+                      if (context.mounted) showSnackBar('$e');
+                    } finally {
+                      if (context.mounted) busy.value = false;
+                    }
+                  },
+            icon: const Icon(Icons.upload_file),
+          ),
+        ],
       ),
       body: Column(
         children: [
+          if (busy.value) const LinearProgressIndicator(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<String?>(
-                    segments: [
-                      ButtonSegment(
-                        value: null,
-                        label: Text('library.filterAll'.tr()),
-                      ),
-                      ButtonSegment(
-                        value: 'approved',
-                        label: Text('library.filterApproved'.tr()),
-                      ),
-                      ButtonSegment(
-                        value: 'pending',
-                        label: Text('library.filterPending'.tr()),
-                      ),
-                    ],
-                    selected: {status.value},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selection) =>
-                        status.value = selection.first,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                DropdownButton<String>(
-                  value: sort.value,
-                  onChanged: (value) {
-                    if (value != null) sort.value = value;
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: searchText,
+              decoration: InputDecoration(
+                labelText: 'libraryMore.search'.tr(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    query.value = searchText.text.trim();
+                    number.value = 1;
                   },
-                  items: [
-                    DropdownMenuItem(
-                      value: 'newest',
-                      child: Text('library.sortNewest'.tr()),
-                    ),
-                    DropdownMenuItem(
-                      value: 'downloads',
-                      child: Text('library.sortDownloads'.tr()),
-                    ),
-                  ],
                 ),
-              ],
+              ),
+              onSubmitted: (v) {
+                query.value = v.trim();
+                number.value = 1;
+              },
             ),
           ),
+          if (query.value.isEmpty)
+            Wrap(
+              spacing: 8,
+              children: [
+                if (category.value != null)
+                  ActionChip(
+                    label: Text('libraryMore.back'.tr()),
+                    onPressed: () {
+                      category.value = fileCategories
+                          .firstWhere((c) => c.id == category.value)
+                          .parent;
+                      number.value = 1;
+                    },
+                  ),
+                for (final c in fileCategories.where(
+                  (c) => c.parent == category.value,
+                ))
+                  ActionChip(
+                    label: Text('libraryMore.categories.${c.key}'.tr()),
+                    onPressed: () {
+                      category.value = c.id;
+                      number.value = 1;
+                    },
+                  ),
+              ],
+            ),
+          if (query.value.isEmpty)
+            DropdownButton<String?>(
+              value: mime.value,
+              items: [
+                for (final (value, label) in <(String?, String)>[
+                  (null, 'allTypes'),
+                  ('image/', 'images'),
+                  ('application/pdf', 'pdf'),
+                  ('text/', 'text'),
+                  ('audio/', 'audio'),
+                  ('video/', 'video'),
+                ])
+                  DropdownMenuItem(
+                    value: value,
+                    child: Text('libraryMore.$label'.tr()),
+                  ),
+              ],
+              onChanged: (value) {
+                mime.value = value;
+                number.value = 1;
+              },
+            ),
+          if (query.value.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<String?>(
+                      segments: [
+                        ButtonSegment(
+                          value: null,
+                          label: Text('library.filterAll'.tr()),
+                        ),
+                        ButtonSegment(
+                          value: 'approved',
+                          label: Text('library.filterApproved'.tr()),
+                        ),
+                        ButtonSegment(
+                          value: 'pending',
+                          label: Text('library.filterPending'.tr()),
+                        ),
+                      ],
+                      selected: {status.value},
+                      showSelectedIcon: false,
+                      onSelectionChanged: (selection) {
+                        status.value = selection.first;
+                        number.value = 1;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  DropdownButton<String>(
+                    value: sort.value,
+                    onChanged: (value) {
+                      if (value != null) {
+                        sort.value = value;
+                        number.value = 1;
+                      }
+                    },
+                    items: [
+                      DropdownMenuItem(
+                        value: 'newest',
+                        child: Text('library.sortNewest'.tr()),
+                      ),
+                      DropdownMenuItem(
+                        value: 'downloads',
+                        child: Text('library.sortDownloads'.tr()),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(libraryFilesProvider(filter));
+                searchEpoch.value++;
               },
-              child: page.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _Message(text: '$error'),
-                data: (result) {
-                  if (result.items.isEmpty) {
-                    return _Message(text: 'library.empty'.tr());
-                  }
-                  return ListView.builder(
-                    itemCount: result.items.length,
-                    itemBuilder: (context, index) {
-                      final file = result.items[index];
-                      return ListTile(
-                        leading: Icon(_iconFor(file.mimeType)),
-                        title: Text(file.originalName),
-                        subtitle: Text(
-                          [
-                            if (file.categoryName.isNotEmpty) file.categoryName,
-                            _size(file.size),
-                            '${'library.downloads'.tr()}: '
-                                '${file.downloadCount}',
-                          ].join(' · '),
-                        ),
-                        trailing: _StatusChip(status: file.status),
-                        onTap: () =>
-                            context.router.push(LibraryFileRoute(id: file.id)),
-                      );
-                    },
-                  );
-                },
-              ),
+              child: query.value.isNotEmpty
+                  ? hits.hasError
+                        ? _Message(text: '${hits.error}')
+                        : !hits.hasData
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView(
+                            children: [
+                              for (final hit in hits.data!.items)
+                                ListTile(
+                                  title: Text(hit.title),
+                                  subtitle: Text(hit.excerpt),
+                                  onTap: () => context.router.push(
+                                    LibraryFileRoute(id: hit.id),
+                                  ),
+                                ),
+                            ],
+                          )
+                  : page.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, _) => _Message(text: '$error'),
+                      data: (result) {
+                        if (result.items.isEmpty) {
+                          return _Message(text: 'library.empty'.tr());
+                        }
+                        Widget tile(LkmFile file) => ListTile(
+                          leading: Icon(_iconFor(file.mimeType)),
+                          title: Text(file.originalName),
+                          subtitle: Text(
+                            '${_size(file.size)} · ${file.downloadCount}',
+                          ),
+                          trailing: _StatusChip(status: file.status),
+                          onTap: () => context.router.push(
+                            LibraryFileRoute(id: file.id),
+                          ),
+                        );
+                        if (grid.value)
+                          return GridView.extent(
+                            maxCrossAxisExtent: 400,
+                            childAspectRatio: 2.8,
+                            children: [
+                              for (final file in result.items)
+                                Card(child: tile(file)),
+                            ],
+                          );
+                        return ListView(
+                          children: [
+                            for (final file in result.items) tile(file),
+                          ],
+                        );
+                      },
+                    ),
             ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                tooltip: 'libraryMore.previous'.tr(),
+                onPressed: number.value > 1 ? () => number.value-- : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Text('${'libraryMore.page'.tr()} ${number.value}'),
+              IconButton(
+                tooltip: 'libraryMore.next'.tr(),
+                onPressed:
+                    (query.value.isEmpty
+                            ? page.value?.hasMore
+                            : hits.data?.hasMore) ==
+                        true
+                    ? () => number.value++
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
           ),
         ],
       ),
@@ -240,6 +432,72 @@ class LibraryFileScreen extends HookConsumerWidget {
               ),
             ],
             const SizedBox(height: 20),
+            if (value.isApproved && value.mimeType.startsWith('image/'))
+              MarkdownRemoteImage(
+                uri: Uri.parse(ref.read(filesApiProvider).previewUrl(value.id)),
+              ),
+            if (value.isApproved && !value.mimeType.startsWith('image/'))
+              OutlinedButton.icon(
+                icon: const Icon(Icons.preview),
+                label: Text('libraryMore.preview'.tr()),
+                onPressed: busy.value
+                    ? null
+                    : () async {
+                        busy.value = true;
+                        try {
+                          final extension = value.mimeType == 'application/pdf'
+                              ? 'pdf'
+                              : value.mimeType.startsWith('text/')
+                              ? 'txt'
+                              : value.mimeType == 'audio/mpeg'
+                              ? 'mp3'
+                              : value.mimeType == 'video/mp4'
+                              ? 'mp4'
+                              : null;
+                          if (extension == null)
+                            throw StateError(
+                              'libraryMore.previewUnsupported'.tr(),
+                            );
+                          final bytes = await ref
+                              .read(lkmApiSessionProvider)
+                              .run(
+                                () => ref
+                                    .read(filesApiProvider)
+                                    .downloadBytes(value.id),
+                              );
+                          final directory = await getTemporaryDirectory();
+                          final output = File(
+                            '${directory.path}/library-${DateTime.now().microsecondsSinceEpoch}.$extension',
+                          );
+                          await output.writeAsBytes(bytes);
+                          final result = await OpenFile.open(output.path);
+                          if (result.type != ResultType.done)
+                            throw StateError(result.message);
+                        } catch (e) {
+                          if (context.mounted) showSnackBar('$e');
+                        } finally {
+                          if (context.mounted) busy.value = false;
+                        }
+                      },
+              ),
+            OutlinedButton.icon(
+              onPressed: busy.value
+                  ? null
+                  : () async {
+                      busy.value = true;
+                      try {
+                        await _upload(ref, versionOf: value.id);
+                        ref.invalidate(libraryVersionsProvider(id));
+                        ref.invalidate(libraryFilesProvider);
+                      } catch (e) {
+                        if (context.mounted) showSnackBar('$e');
+                      } finally {
+                        if (context.mounted) busy.value = false;
+                      }
+                    },
+              icon: const Icon(Icons.upload_file),
+              label: Text('libraryMore.uploadVersion'.tr()),
+            ),
             FilledButton.icon(
               onPressed: busy.value || !value.isApproved
                   ? null
@@ -267,6 +525,9 @@ class LibraryFileScreen extends HookConsumerWidget {
                       children: [
                         for (final version in items)
                           ListTile(
+                            onTap: () => context.router.push(
+                              LibraryFileRoute(id: version.id),
+                            ),
                             contentPadding: EdgeInsets.zero,
                             title: Text(
                               'v${version.version} · ${version.originalName}',
@@ -358,4 +619,35 @@ String _size(int bytes) {
   if (bytes < 1024) return '$bytes B';
   if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
   return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
+Future<void> _upload(
+  WidgetRef ref, {
+  String categoryId = '',
+  String? versionOf,
+}) async {
+  final picked = await FilePicker.pickFile();
+  if (picked == null) return;
+  final bytes = await picked.xFile.readAsBytes();
+  final mime =
+      lookupMimeType(picked.name, headerBytes: bytes) ??
+      'application/octet-stream';
+  final api = ref.read(filesApiProvider);
+  await ref
+      .read(lkmApiSessionProvider)
+      .run(
+        () => versionOf == null
+            ? api.upload(
+                bytes: bytes,
+                originalName: picked.name,
+                mimeType: mime,
+                categoryId: categoryId,
+              )
+            : api.uploadVersion(
+                versionOf,
+                bytes: bytes,
+                originalName: picked.name,
+                mimeType: mime,
+              ),
+      );
 }

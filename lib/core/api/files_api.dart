@@ -184,21 +184,65 @@ class FilesApi {
     String? categoryId,
     String? status,
     String sort = 'newest',
-  }) => _client.getPage(
-    '/files',
-    query: {
-      'page': page,
-      'limit': limit,
-      'category_id': ?categoryId,
-      'status': ?status,
-      'sort': sort,
-    },
-    parseItem: LkmFile.fromJson,
-  );
+    String? mimePrefix,
+  }) async {
+    Future<ApiPage<LkmFile>> fetch(int index, int size) => _client.getPage(
+      '/files',
+      query: {
+        'page': index,
+        'limit': size,
+        'category_id': ?categoryId,
+        'status': ?status,
+        'sort': sort,
+      },
+      parseItem: LkmFile.fromJson,
+    );
+    if (mimePrefix == null) return fetch(page, limit);
+    // ponytail: service has no MIME filter; scan pages on demand. Move this
+    // predicate server-side if library size makes the linear scan expensive.
+    final matches = <LkmFile>[];
+    var index = 1;
+    while (true) {
+      final result = await fetch(index, 100);
+      matches.addAll(
+        result.items.where((f) => f.mimeType.startsWith(mimePrefix)),
+      );
+      if (!result.hasMore) break;
+      index++;
+    }
+    final offset = (page - 1) * limit;
+    return ApiPage(
+      items: matches.skip(offset).take(limit).toList(),
+      total: matches.length,
+      page: page,
+      pages: (matches.length / limit).ceil(),
+    );
+  }
 
   /// `GET /files/{id}/versions` — the uploader's previous revisions.
   Future<List<LkmFile>> versions(String fileId) =>
       _client.getList('/files/$fileId/versions', parseItem: LkmFile.fromJson);
+
+  Future<LkmFile> uploadVersion(
+    String fileId, {
+    required Uint8List bytes,
+    required String originalName,
+    required String mimeType,
+  }) async {
+    final data = await _client.postForm(
+      '/files/$fileId/versions',
+      form: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: originalName,
+          contentType: MediaType.parse(mimeType),
+        ),
+      }),
+    );
+    if (data is! Map)
+      throw const FormatException('Invalid file version response');
+    return LkmFile.fromJson(Map<String, dynamic>.from(data));
+  }
 
   /// `GET /files/{id}/download/url` — presigned link or backend kind.
   Future<LkmDownloadInfo> downloadUrl(String fileId) async {
@@ -264,7 +308,7 @@ class FilesApi {
       'description': description,
       'tags': jsonEncode(tags),
     });
-    final body = await _client.post('/files', body: form);
+    final body = await _client.postForm('/files', form: form);
     if (body is! Map) {
       throw ApiException(
         code: ApiCode.internalError,

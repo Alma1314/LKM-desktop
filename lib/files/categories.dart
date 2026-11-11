@@ -1,0 +1,23 @@
+// Category IDs shared with the website file library.
+const fileCategories = <({String id, String key, String? parent})>[
+  (id: 'basic-science', key: 'basicScience', parent: null),
+  (id: 'applied-science', key: 'appliedScience', parent: null),
+  (id: 'language', key: 'language', parent: null),
+  (id: 'math', key: 'math', parent: 'basic-science'),
+  (id: 'physics', key: 'physics', parent: 'basic-science'),
+  (id: 'chemistry', key: 'chemistry', parent: 'basic-science'),
+  (id: 'biology', key: 'biology', parent: 'basic-science'),
+  (id: 'earth-science', key: 'earthScience', parent: 'basic-science'),
+  (id: 'cosmos-astronomy', key: 'cosmosAstronomy', parent: 'basic-science'),
+  (id: 'cs', key: 'cs', parent: 'applied-science'),
+  (id: 'ic-semiconductor', key: 'icSemiconductor', parent: 'applied-science'),
+  (id: 'lang-en', key: 'langEn', parent: 'language'),
+  (id: 'math-linear-algebra', key: 'mathLinearAlgebra', parent: 'math'),
+  (id: 'math-modeling', key: 'mathModeling', parent: 'math'),
+  (id: 'physics-quantum', key: 'physicsQuantum', parent: 'physics'),
+  (id: 'physics-astrophysics', key: 'physicsAstrophysics', parent: 'physics'),
+  (id: 'chemistry-organic', key: 'chemistryOrganic', parent: 'chemistry'),
+  (id: 'cs-python', key: 'csPython', parent: 'cs'),
+  (id: 'ic-design', key: 'icDesign', parent: 'ic-semiconductor'),
+  (id: 'lang-en-writing', key: 'langEnWriting', parent: 'lang-en'),
+];

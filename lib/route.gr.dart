@@ -1,3 +1,4 @@
+import 'package:island/editor/series_editor_screen.dart' as _i94;
 // dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
@@ -3686,5 +3687,16 @@ class TreeholeRoute extends _i72.PageRouteInfo<void> {
     builder: (data) {
       return const _i79.TreeholeScreen();
     },
+  );
+}
+
+/// generated route for [_i94.SeriesEditorScreen]
+class SeriesEditorRoute extends _i72.PageRouteInfo<void> {
+  const SeriesEditorRoute({List<_i72.PageRouteInfo>? children})
+    : super(SeriesEditorRoute.name, initialChildren: children);
+  static const String name = 'SeriesEditorRoute';
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) => const _i94.SeriesEditorScreen(),
   );
 }

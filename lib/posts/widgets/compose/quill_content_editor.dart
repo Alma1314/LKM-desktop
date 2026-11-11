@@ -1,3 +1,4 @@
+import 'package:island/shared/widgets/content/markdown_remote_image.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -1126,11 +1127,8 @@ class _SolianImageEmbedBuilder extends EmbedBuilder {
         ),
       );
     }
-    return Image.network(
-      source,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
-    );
+    if (uri == null) return const Icon(Icons.broken_image);
+    return MarkdownRemoteImage(uri: uri);
   }
 }
 

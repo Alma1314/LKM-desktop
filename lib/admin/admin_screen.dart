@@ -1,3 +1,4 @@
+import 'package:island/editor/series_editor_screen.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -96,6 +97,7 @@ class _AdminTab {
 }
 
 List<_AdminTab> _tabsFor(AdminSessionInfo info) => [
+  _AdminTab('seriesEditor.documents', Symbols.edit_document, SeriesEditorScreen.new),
   if (info.can('admin.moderation_manage'))
     _AdminTab(
       'adminPanel.tabModeration',

@@ -46,6 +46,55 @@ const _fileRow = {
 };
 
 void main() {
+  test('MIME filtering scans later pages before paginating matches', () async {
+    final adapter = _Adapter((options) {
+      final page = options.queryParameters['page'] as int;
+      return _envelope({
+        'items': page == 1
+            ? [
+                {..._fileRow, 'mime_type': 'application/pdf'},
+              ]
+            : [_fileRow],
+        'total': 2,
+        'page': page,
+        'pages': 2,
+      });
+    });
+    final api = FilesApi(
+      ApiClient(
+        serverUrl: 'https://example.com',
+        dio: Dio()..httpClientAdapter = adapter,
+      ),
+    );
+    final result = await api.files(mimePrefix: 'image/', limit: 1);
+    expect(adapter.requests.length, 2);
+    expect(result.items.single.mimeType, 'image/png');
+    expect(result.total, 1);
+    expect(result.hasMore, isFalse);
+  });
+
+  test('upload version uses multipart and correct endpoint', () async {
+    final adapter = _Adapter((options) {
+      expect(options.path, '/files/f1/versions');
+      expect(options.contentType, startsWith('multipart/form-data'));
+      expect(options.data, isA<FormData>());
+      return _envelope({..._fileRow, 'version': 2});
+    });
+    final api = FilesApi(
+      ApiClient(
+        serverUrl: 'https://example.com',
+        dio: Dio()..httpClientAdapter = adapter,
+      ),
+    );
+    final file = await api.uploadVersion(
+      'f1',
+      bytes: Uint8List.fromList([1]),
+      originalName: 'photo.png',
+      mimeType: 'image/png',
+    );
+    expect(file.version, 2);
+  });
+
   test('direct upload runs init → presigned PUT → confirm', () async {
     final put = _Adapter((_) => ResponseBody.fromString('', 200));
     var step = 0;
