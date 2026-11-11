@@ -15,6 +15,17 @@ class LkmFile {
     required this.mimeType,
     required this.size,
     required this.status,
+    this.uploaderName = '',
+    this.categoryId = '',
+    this.categoryName = '',
+    this.description = '',
+    this.tags = const [],
+    this.reviewComment,
+    this.downloadCount = 0,
+    this.viewCount = 0,
+    this.version = 1,
+    this.rootFileId,
+    this.createdAt,
   });
 
   final String id;
@@ -22,28 +33,72 @@ class LkmFile {
   final String mimeType;
   final int size;
   final String status;
+  final String uploaderName;
+  final String categoryId;
+  final String categoryName;
+  final String description;
+  final List<String> tags;
+  final String? reviewComment;
+  final int downloadCount;
+  final int viewCount;
+  final int version;
+  final String? rootFileId;
+  final DateTime? createdAt;
 
   bool get isPending => status == 'pending';
   bool get isApproved => status == 'approved';
   bool get isRejected => status == 'rejected';
 
-  factory LkmFile.fromJson(Map<String, dynamic> json) => LkmFile(
-    id: '${json['id'] ?? ''}',
-    originalName: '${json['original_name'] ?? ''}',
-    mimeType: '${json['mime_type'] ?? ''}',
-    size: json['size'] is num ? (json['size'] as num).toInt() : 0,
-    status: '${json['status'] ?? ''}',
-  );
+  factory LkmFile.fromJson(Map<String, dynamic> json) {
+    final tags = json['tags'];
+    return LkmFile(
+      id: '${json['id'] ?? ''}',
+      originalName: '${json['original_name'] ?? ''}',
+      mimeType: '${json['mime_type'] ?? ''}',
+      size: json['size'] is num ? (json['size'] as num).toInt() : 0,
+      status: '${json['status'] ?? ''}',
+      uploaderName: '${json['uploader_name'] ?? ''}',
+      categoryId: '${json['category_id'] ?? ''}',
+      categoryName: '${json['category_name'] ?? ''}',
+      description: '${json['description'] ?? ''}',
+      tags: tags is List
+          ? tags.whereType<String>().toList(growable: false)
+          : const [],
+      reviewComment: json['review_comment'] as String?,
+      downloadCount: json['download_count'] is num
+          ? (json['download_count'] as num).toInt()
+          : 0,
+      viewCount: json['view_count'] is num
+          ? (json['view_count'] as num).toInt()
+          : 0,
+      version: json['version'] is num ? (json['version'] as num).toInt() : 1,
+      rootFileId: json['root_file_id'] as String?,
+      createdAt: DateTime.tryParse('${json['created_at'] ?? ''}')?.toLocal(),
+    );
+  }
+}
+
+/// `GET /files/{id}/download/url` — `backend` means the bytes must be fetched
+/// through the authenticated `/content` endpoint, `presigned` is a direct link.
+class LkmDownloadInfo {
+  const LkmDownloadInfo({required this.kind, required this.url});
+
+  final String kind;
+  final String url;
+
+  bool get isPresigned => kind == 'presigned';
+
+  factory LkmDownloadInfo.fromJson(Map<String, dynamic> json) =>
+      LkmDownloadInfo(
+        kind: '${json['kind'] ?? ''}',
+        url: '${json['url'] ?? ''}',
+      );
 }
 
 enum LkmUploadMode { direct, sync }
 
 class LkmUploadInit {
-  const LkmUploadInit({
-    required this.mode,
-    this.uploadId,
-    this.presignedUrl,
-  });
+  const LkmUploadInit({required this.mode, this.uploadId, this.presignedUrl});
 
   final LkmUploadMode mode;
   final String? uploadId;
@@ -122,6 +177,51 @@ class FilesApi {
     return LkmFile.fromJson(await _client.getObject('/files/$fileId'));
   }
 
+  /// `GET /files` — the library page, already visibility-filtered server-side.
+  Future<ApiPage<LkmFile>> files({
+    int page = 1,
+    int limit = 20,
+    String? categoryId,
+    String? status,
+    String sort = 'newest',
+  }) => _client.getPage(
+    '/files',
+    query: {
+      'page': page,
+      'limit': limit,
+      'category_id': ?categoryId,
+      'status': ?status,
+      'sort': sort,
+    },
+    parseItem: LkmFile.fromJson,
+  );
+
+  /// `GET /files/{id}/versions` — the uploader's previous revisions.
+  Future<List<LkmFile>> versions(String fileId) =>
+      _client.getList('/files/$fileId/versions', parseItem: LkmFile.fromJson);
+
+  /// `GET /files/{id}/download/url` — presigned link or backend kind.
+  Future<LkmDownloadInfo> downloadUrl(String fileId) async {
+    final data = await _client.getObject('/files/$fileId/download/url');
+    return LkmDownloadInfo.fromJson(data);
+  }
+
+  /// Streams the bytes through the authenticated `/content` endpoint.
+  Future<Uint8List> downloadBytes(String fileId) async {
+    try {
+      final response = await _client.dio.get<dynamic>(
+        '/files/$fileId/content',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      if (data is List<int>) return Uint8List.fromList(data);
+      if (data is Uint8List) return data;
+      return Uint8List(0);
+    } on DioException catch (error) {
+      throw ApiTransportException('下载失败', cause: error);
+    }
+  }
+
   /// Uploads [bytes] and returns the registered row (status `pending`).
   Future<LkmFile> upload({
     required Uint8List bytes,
@@ -146,10 +246,7 @@ class FilesApi {
         init.presignedUrl!,
         data: Stream.fromIterable([bytes]),
         options: Options(
-          headers: {
-            'Content-Type': mimeType,
-            'Content-Length': bytes.length,
-          },
+          headers: {'Content-Type': mimeType, 'Content-Length': bytes.length},
         ),
         onSendProgress: (sent, total) =>
             onProgress?.call(total > 0 ? sent / total : null),

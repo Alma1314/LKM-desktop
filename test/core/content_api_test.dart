@@ -201,9 +201,7 @@ void main() {
       }),
     );
 
-    final state = await _api(
-      adapter,
-    ).viewerState(_graphItem['id'] as String);
+    final state = await _api(adapter).viewerState(_graphItem['id'] as String);
 
     final request = adapter.requests.single;
     expect(request.uri.toString(), 'https://lkm-ahz.ltd/graphql/v1');
@@ -228,10 +226,9 @@ void main() {
 
     expect(adapter.requests[0].method, 'POST');
     expect(adapter.requests[1].method, 'DELETE');
-    expect(
-      adapter.requests.map((r) => r.uri.path).toSet(),
-      {'/api/v1/content/items/$id/like'},
-    );
+    expect(adapter.requests.map((r) => r.uri.path).toSet(), {
+      '/api/v1/content/items/$id/like',
+    });
   });
 
   test('favorite toggles over the interaction endpoint', () async {
@@ -319,7 +316,10 @@ void main() {
 
     final boards = await _api(adapter).boards();
 
-    expect(adapter.requests.single.uri.toString(), 'https://lkm-ahz.ltd/graphql/v1');
+    expect(
+      adapter.requests.single.uri.toString(),
+      'https://lkm-ahz.ltd/graphql/v1',
+    );
     expect(boards.map((b) => b.id), ['b1', 'b2']);
     expect(boards.first.isActive, isTrue);
     expect(boards.last.isActive, isFalse);
@@ -369,6 +369,91 @@ void main() {
     expect(
       adapter.requests.single.uri.path,
       '/api/v1/content/items/${_graphItem['id']}/comments/c1/like',
+    );
+  });
+
+  test('content list forwards authorId to GraphQL', () async {
+    final adapter = _Adapter(
+      (_) => _json({
+        'data': {
+          'contentItems': {
+            'items': [_graphItem],
+            'total': 1,
+            'page': 1,
+            'pages': 1,
+          },
+        },
+      }),
+    );
+
+    final page = await _api(adapter).items(authorId: 'u-1');
+
+    final body = adapter.requests.single.data as Map;
+    expect((body['variables'] as Map)['authorId'], 'u-1');
+    expect(page.items.single.title, '拉格朗日点');
+  });
+
+  test(
+    'favorites and history map content_id and their own timestamp',
+    () async {
+      final adapter = _Adapter((options) {
+        final history = options.uri.path.endsWith('/history');
+        return _envelope({
+          'items': [
+            {
+              'content_id': 'item-1',
+              'content_type': 'discussion',
+              'title': '第一次',
+              'slug': null,
+              'board_id': 'board-1',
+              if (history)
+                'viewed_at': '2026-11-10T10:00:00+00:00'
+              else
+                'created_at': '2026-11-09T10:00:00+00:00',
+            },
+          ],
+          'total': 1,
+          'page': 1,
+          'pages': 1,
+        });
+      });
+      final api = _api(adapter);
+
+      final favorites = await api.favorites();
+      expect(favorites.items.single.contentId, 'item-1');
+      expect(favorites.items.single.at, isNotNull);
+
+      final history = await api.history();
+      expect(history.items.single.title, '第一次');
+      expect(adapter.requests.last.uri.path, '/api/v1/interaction/me/history');
+    },
+  );
+
+  test('board follow list and toggle use the interaction routes', () async {
+    final adapter = _Adapter((options) {
+      if (options.uri.path.endsWith('/following')) {
+        return _envelope({
+          'items': [
+            {'board_id': 'board-1', 'title': '物理'},
+          ],
+        });
+      }
+      return _envelope({'following': options.method == 'POST'});
+    });
+    final api = _api(adapter);
+
+    final boards = await api.followingBoards();
+    expect(boards.single.title, '物理');
+    expect(
+      adapter.requests.last.uri.path,
+      '/api/v1/content/boards/me/following',
+    );
+
+    expect(await api.setBoardFollow('board-1', follow: true), isTrue);
+    expect(adapter.requests.last.method, 'POST');
+    expect(
+      adapter.requests.last.uri.path,
+      '/api/v1/content/boards/board-1/follow',
     );
   });
 }

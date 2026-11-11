@@ -69,7 +69,11 @@ String normalizeApiBase(String serverUrl) {
     throw ArgumentError.value(serverUrl, 'serverUrl', '服务器地址不能为空');
   }
   if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-    throw ArgumentError.value(serverUrl, 'serverUrl', '服务器地址必须以 http:// 或 https:// 开头');
+    throw ArgumentError.value(
+      serverUrl,
+      'serverUrl',
+      '服务器地址必须以 http:// 或 https:// 开头',
+    );
   }
 
   var url = trimmed;
@@ -146,11 +150,7 @@ class ApiPage<T> {
     this.pages = 1,
   });
 
-  const ApiPage.empty()
-    : items = const [],
-      total = 0,
-      page = 1,
-      pages = 1;
+  const ApiPage.empty() : items = const [], total = 0, page = 1, pages = 1;
 
   final List<T> items;
   final int total;
@@ -295,6 +295,28 @@ class ApiClient {
     cancelToken: cancelToken,
   );
 
+  /// POST a `multipart/form-data` body (avatar upload, QA question images).
+  ///
+  /// The client-wide JSON content type has to be overridden per request, or
+  /// Dio sends the form parts under an `application/json` header and the
+  /// server rejects the body.
+  Future<Object?> postForm(
+    String path, {
+    required FormData form,
+    Map<String, dynamic>? query,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _send(
+      'POST',
+      path,
+      body: form,
+      query: query,
+      headers: {'Content-Type': 'multipart/form-data'},
+      cancelToken: cancelToken,
+    );
+    return _unwrap(response, 'POST', path);
+  }
+
   /// GET returning a JSON object, or an empty map when `data` is null.
   Future<Map<String, dynamic>> getObject(
     String path, {
@@ -423,10 +445,7 @@ class ApiClient {
       );
     } on DioException catch (error) {
       if (error.type == DioExceptionType.cancel) rethrow;
-      throw ApiTransportException(
-        _describeTransportError(error),
-        cause: error,
-      );
+      throw ApiTransportException(_describeTransportError(error), cause: error);
     }
   }
 

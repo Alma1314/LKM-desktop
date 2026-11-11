@@ -76,7 +76,11 @@ void main() {
 
     expect(file.id, 'f1');
     expect(file.isPending, isTrue);
-    expect(step, 2, reason: 'init + confirm reach the service; the PUT does not');
+    expect(
+      step,
+      2,
+      reason: 'init + confirm reach the service; the PUT does not',
+    );
 
     final init = api.requests.first;
     expect(init.uri.path, '/api/v1/files/upload-init');
@@ -146,5 +150,77 @@ void main() {
       files.previewUrl('f1'),
       'https://lkm-ahz.ltd/api/v1/files/f1/preview',
     );
+  });
+
+  test('library list forwards filters and parses the full row', () async {
+    final api = _Adapter(
+      (_) => _json({
+        'code': 0,
+        'message': 'ok',
+        'data': {
+          'items': [
+            {
+              ..._fileRow,
+              'status': 'approved',
+              'uploader_name': 'alma',
+              'category_name': '物理',
+              'download_count': 7,
+              'view_count': 9,
+              'version': 2,
+              'tags': ['力学'],
+              'created_at': '2026-11-10T10:00:00+00:00',
+            },
+          ],
+          'total': 1,
+          'page': 1,
+          'pages': 1,
+        },
+      }),
+    );
+    final files = FilesApi(
+      ApiClient(
+        serverUrl: 'https://lkm-ahz.ltd',
+        dio: Dio()..httpClientAdapter = api,
+      ),
+    );
+
+    final page = await files.files(status: 'approved', sort: 'downloads');
+
+    final request = api.requests.single;
+    expect(request.uri.path, '/api/v1/files');
+    expect(request.uri.queryParameters['status'], 'approved');
+    expect(request.uri.queryParameters['sort'], 'downloads');
+    expect(page.items.single.categoryName, '物理');
+    expect(page.items.single.downloadCount, 7);
+    expect(page.items.single.tags, ['力学']);
+  });
+
+  test('download url and bytes use their own endpoints', () async {
+    var call = 0;
+    final api = _Adapter((options) {
+      call += 1;
+      if (options.uri.path.endsWith('/download/url')) {
+        return _envelope({
+          'kind': 'presigned',
+          'url': 'https://s3.example/dl/f1',
+        });
+      }
+      return ResponseBody.fromBytes([1, 2, 3], 200);
+    });
+    final files = FilesApi(
+      ApiClient(
+        serverUrl: 'https://lkm-ahz.ltd',
+        dio: Dio()..httpClientAdapter = api,
+      ),
+    );
+
+    final info = await files.downloadUrl('f1');
+    expect(info.isPresigned, isTrue);
+    expect(info.url, 'https://s3.example/dl/f1');
+
+    final bytes = await files.downloadBytes('f1');
+    expect(bytes, [1, 2, 3]);
+    expect(api.requests.last.uri.path, '/api/v1/files/f1/content');
+    expect(call, 2);
   });
 }

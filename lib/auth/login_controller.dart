@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_session.dart';
+import 'package:island/auth/oauth_desktop.dart';
 import 'package:island/auth/passkey.dart';
 import 'package:island/core/api/auth_api.dart';
 
@@ -36,6 +37,7 @@ class LoginState {
     this.codeSent = false,
     this.method = LoginMethod.password,
     this.recoveryMode = false,
+    this.oauthTempToken,
   });
 
   /// The signed-in account, or null when nobody is signed in.
@@ -57,6 +59,10 @@ class LoginState {
   /// Whether the TOTP step is being answered with a recovery code instead.
   final bool recoveryMode;
 
+  /// GitHub OAuth answered `requires_2fa`: the temp token to pass to
+  /// `/auth/2fa/verify` once the user enters a code.
+  final String? oauthTempToken;
+
   bool get signedIn => account != null;
   bool get hasChallenge => challenge != null;
   LkmChallengeFactor? get currentFactor => challenge?.current;
@@ -70,6 +76,8 @@ class LoginState {
     bool? codeSent,
     LoginMethod? method,
     bool? recoveryMode,
+    String? oauthTempToken,
+    bool clearOauthTempToken = false,
     bool clearAccount = false,
     bool clearChallenge = false,
     bool clearMessages = false,
@@ -82,6 +90,9 @@ class LoginState {
     codeSent: codeSent ?? this.codeSent,
     method: method ?? this.method,
     recoveryMode: recoveryMode ?? this.recoveryMode,
+    oauthTempToken: clearOauthTempToken
+        ? null
+        : (oauthTempToken ?? this.oauthTempToken),
   );
 }
 
@@ -312,11 +323,89 @@ class LoginController extends Notifier<LoginState> {
     }
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final token = await _api.registerWithEmail(
+      final result = await _api.registerWithEmail(
         email: email.trim(),
         code: code.trim(),
       );
-      await _finish(token);
+      if (result.tokens != null) {
+        await _finish(result.tokens!);
+      } else if (result.isPendingAdmission) {
+        state = state.copyWith(busy: false, info: _t('lkmAdmissionPending'));
+      } else {
+        state = state.copyWith(
+          busy: false,
+          info: _t('lkmRegistrationComplete'),
+        );
+      }
+    } catch (error) {
+      state = state.copyWith(busy: false, error: _describe(error));
+    }
+  }
+
+  /// Browser-based GitHub login: opens the system browser, waits on the
+  /// loopback callback, then exchanges the one-time code.
+  Future<void> signInWithGithub() async {
+    state = state.copyWith(busy: true, clearMessages: true);
+    try {
+      final result = await runGithubLogin(_api);
+      await _applyOauthResult(result);
+    } catch (error) {
+      state = state.copyWith(busy: false, error: _describe(error));
+    }
+  }
+
+  Future<void> _applyOauthResult(LkmAuthResult result) async {
+    if (result.tokens != null) {
+      await _finish(result.tokens!);
+      return;
+    }
+    if (result.requires2fa && result.tempToken != null) {
+      state = state.copyWith(
+        busy: false,
+        oauthTempToken: result.tempToken,
+        info: _t('lkmTotpLabel'),
+      );
+      return;
+    }
+    state = state.copyWith(
+      busy: false,
+      info: result.isPendingAdmission
+          ? _t('lkmAdmissionPending')
+          : _t('lkmRegistrationComplete'),
+      clearOauthTempToken: true,
+    );
+  }
+
+  /// Second factor for the OAuth path (the challenge flow does not apply).
+  Future<void> submitOauthTotp(String code) async {
+    final temp = state.oauthTempToken;
+    if (temp == null) return;
+    if (code.trim().isEmpty) {
+      state = state.copyWith(error: _t('lkmErrEmptyCode'));
+      return;
+    }
+    state = state.copyWith(busy: true, clearMessages: true);
+    try {
+      final verified = await _api.verifyTotp(
+        tempToken: temp,
+        code: code.trim(),
+        trustDevice: true,
+      );
+      if (!verified.hasTokens) {
+        state = state.copyWith(
+          busy: false,
+          error: _t('lkmErrGeneric', ['2FA']),
+        );
+        return;
+      }
+      await _finish(
+        LkmAuthToken(
+          userId: verified.userId,
+          accountLevel: verified.accountLevel,
+          accessToken: verified.accessToken!,
+          refreshToken: verified.refreshToken ?? '',
+        ),
+      );
     } catch (error) {
       state = state.copyWith(busy: false, error: _describe(error));
     }
@@ -326,6 +415,13 @@ class LoginController extends Notifier<LoginState> {
     state = state.copyWith(busy: true, clearMessages: true);
     await ref.read(lkmApiSessionProvider).signOut();
     state = const LoginState();
+  }
+
+  /// Adopts a pair minted outside the challenge flow (registration, passkey
+  /// management), through the same single adoption path as login.
+  Future<LkmAccount?> adoptTokens(LkmAuthToken token) async {
+    await _finish(token);
+    return state.account;
   }
 
   Future<bool> _createChallenge({
@@ -431,5 +527,12 @@ class LoginController extends Notifier<LoginState> {
   }
 }
 
-final loginControllerProvider =
-    NotifierProvider<LoginController, LoginState>(LoginController.new);
+final loginControllerProvider = NotifierProvider<LoginController, LoginState>(
+  LoginController.new,
+);
+
+/// Shared [AuthApi] for flows outside the login controller (registration,
+/// recovery, account settings).
+final authApiProvider = Provider<AuthApi>((ref) {
+  return AuthApi(ref.watch(lkmApiSessionProvider).client);
+});

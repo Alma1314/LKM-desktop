@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_session.dart';
+import 'package:island/core/api/files_api.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/services/udid.dart';
 
@@ -64,6 +65,12 @@ final lkmApiSessionProvider = Provider<ApiSession>((ref) {
   return session;
 });
 
+/// File-library reads and the three-step upload, shared by the community
+/// composer and the library screens.
+final filesApiProvider = Provider<FilesApi>((ref) {
+  return FilesApi(ref.watch(lkmApiSessionProvider).client);
+});
+
 /// Outcome of probing a candidate server before the user commits to it.
 ///
 /// [reachable] and [isLkmService] are separate on purpose: a host that answers
@@ -115,15 +122,9 @@ class LkmServerProbe {
         dependencies: dependencies,
       );
     } on ApiException catch (error) {
-      return LkmServerProbe(
-        reachable: true,
-        message: error.message,
-      );
+      return LkmServerProbe(reachable: true, message: error.message);
     } on ApiTransportException catch (error) {
-      return LkmServerProbe(
-        reachable: false,
-        message: error.message,
-      );
+      return LkmServerProbe(reachable: false, message: error.message);
     } finally {
       client.close();
     }

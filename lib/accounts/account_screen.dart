@@ -171,6 +171,30 @@ class _LkmAccountPage extends HookConsumerWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Symbols.folder_open),
+            trailing: const Icon(Symbols.chevron_right),
+            title: Text('library.title'.tr()),
+            onTap: () => context.router.push(const LibraryRoute()),
+          ),
+          ListTile(
+            leading: const Icon(Symbols.article),
+            trailing: const Icon(Symbols.chevron_right),
+            title: Text('authFlow.myContent'.tr()),
+            onTap: () => context.router.push(const MyContentRoute()),
+          ),
+          ListTile(
+            leading: const Icon(Symbols.group),
+            trailing: const Icon(Symbols.chevron_right),
+            title: Text('authFlow.myFollowing'.tr()),
+            onTap: () => context.router.push(const MyFollowRoute()),
+          ),
+          ListTile(
+            leading: const Icon(Symbols.shield_person),
+            trailing: const Icon(Symbols.chevron_right),
+            title: Text('authFlow.accountSecurity'.tr()),
+            onTap: () => context.router.push(const AccountSecurityRoute()),
+          ),
+          ListTile(
             leading: const Icon(Symbols.settings),
             trailing: const Icon(Symbols.chevron_right),
             title: Text('appSettings'.tr()),

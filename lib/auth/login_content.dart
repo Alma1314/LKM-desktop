@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:island/auth/login_controller.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/auth_api.dart';
+import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/alert.dart';
 
 /// Entry mode of the login screen.
@@ -77,10 +79,22 @@ class _LoginContentState extends ConsumerState<LoginContent> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              if (!state.hasChallenge) ...[
+              if (state.oauthTempToken != null)
+                ..._oauthTotpFields(state)
+              else if (!state.hasChallenge) ...[
                 _modeSelector(state.busy),
                 const SizedBox(height: 20),
                 ..._entryFields(state),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: state.busy
+                      ? null
+                      : () => ref
+                            .read(loginControllerProvider.notifier)
+                            .signInWithGithub(),
+                  icon: const Icon(Icons.code),
+                  label: Text('authFlow.continueWithGithub'.tr()),
+                ),
               ] else
                 ..._factorFields(state),
               const SizedBox(height: 16),
@@ -88,7 +102,8 @@ class _LoginContentState extends ConsumerState<LoginContent> {
                 TextButton(
                   onPressed: state.busy
                       ? null
-                      : () => ref.read(loginControllerProvider.notifier).cancel(),
+                      : () =>
+                            ref.read(loginControllerProvider.notifier).cancel(),
                   child: Text('lkmCancel'.tr()),
                 ),
               if (state.info != null) ...[
@@ -112,6 +127,14 @@ class _LoginContentState extends ConsumerState<LoginContent> {
                 ),
               ],
               const SizedBox(height: 20),
+              TextButton(
+                onPressed: () => context.router.push(const RegisterRoute()),
+                child: Text('authFlow.createAccount'.tr()),
+              ),
+              TextButton(
+                onPressed: () => context.router.push(const RecoveryRoute()),
+                child: Text('authFlow.forgotPassword'.tr()),
+              ),
               Text(
                 'lkmServerHint'.tr(args: [ref.watch(lkmServerUrlProvider)]),
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -258,6 +281,29 @@ class _LoginContentState extends ConsumerState<LoginContent> {
           ),
         ];
     }
+  }
+
+  /// GitHub OAuth landed on a 2FA-required account: collect the TOTP code.
+  List<Widget> _oauthTotpFields(LoginState state) {
+    final controller = ref.read(loginControllerProvider.notifier);
+    return [
+      _field(
+        controller: _code,
+        label: 'lkmTotpLabel'.tr(),
+        icon: Icons.shield_outlined,
+        onSubmitted: () => controller.submitOauthTotp(_code.text),
+      ),
+      const SizedBox(height: 16),
+      _primaryButton(
+        busy: state.busy,
+        label: 'lkmVerifyAction'.tr(),
+        onPressed: () => controller.submitOauthTotp(_code.text),
+      ),
+      TextButton(
+        onPressed: state.busy ? null : controller.cancel,
+        child: Text('lkmCancel'.tr()),
+      ),
+    ];
   }
 
   /// A challenge is open: render whatever factor it names next.

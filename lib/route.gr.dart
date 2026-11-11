@@ -31,6 +31,13 @@ import 'package:island/accounts/screens/punishments.dart' as _i54;
 import 'package:island/accounts/screens/relationship.dart' as _i57;
 import 'package:island/accounts/screens/store.dart' as _i62;
 import 'package:island/admin/admin_screen.dart' as _i86;
+import 'package:island/auth/register_screen.dart' as _i87;
+import 'package:island/auth/onboarding_screen.dart' as _i88;
+import 'package:island/auth/recovery_screen.dart' as _i89;
+import 'package:island/auth/account_security_screen.dart' as _i90;
+import 'package:island/community/my_content_screen.dart' as _i91;
+import 'package:island/community/my_follow_screen.dart' as _i92;
+import 'package:island/files/library_screen.dart' as _i93;
 import 'package:island/auth/authorize_screen.dart' as _i14;
 import 'package:island/auth/captcha.dart' as _i19;
 import 'package:island/auth/create_account.dart' as _i25;
@@ -2163,6 +2170,166 @@ class AdminRoute extends _i72.PageRouteInfo<void> {
       return const _i86.AdminScreen();
     },
   );
+}
+
+/// generated route for
+/// [_i87.RegisterScreen]
+class RegisterRoute extends _i72.PageRouteInfo<void> {
+  const RegisterRoute({List<_i72.PageRouteInfo>? children})
+    : super(RegisterRoute.name, initialChildren: children);
+
+  static const String name = 'RegisterRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i87.RegisterScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i88.OnboardingScreen]
+class OnboardingRoute extends _i72.PageRouteInfo<void> {
+  const OnboardingRoute({List<_i72.PageRouteInfo>? children})
+    : super(OnboardingRoute.name, initialChildren: children);
+
+  static const String name = 'OnboardingRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i88.OnboardingScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i89.RecoveryScreen]
+class RecoveryRoute extends _i72.PageRouteInfo<void> {
+  const RecoveryRoute({List<_i72.PageRouteInfo>? children})
+    : super(RecoveryRoute.name, initialChildren: children);
+
+  static const String name = 'RecoveryRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i89.RecoveryScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i90.AccountSecurityScreen]
+class AccountSecurityRoute extends _i72.PageRouteInfo<void> {
+  const AccountSecurityRoute({List<_i72.PageRouteInfo>? children})
+    : super(AccountSecurityRoute.name, initialChildren: children);
+
+  static const String name = 'AccountSecurityRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i90.AccountSecurityScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i91.MyContentScreen]
+class MyContentRoute extends _i72.PageRouteInfo<void> {
+  const MyContentRoute({List<_i72.PageRouteInfo>? children})
+    : super(MyContentRoute.name, initialChildren: children);
+
+  static const String name = 'MyContentRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i91.MyContentScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i92.MyFollowScreen]
+class MyFollowRoute extends _i72.PageRouteInfo<void> {
+  const MyFollowRoute({List<_i72.PageRouteInfo>? children})
+    : super(MyFollowRoute.name, initialChildren: children);
+
+  static const String name = 'MyFollowRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i92.MyFollowScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i93.LibraryScreen]
+class LibraryRoute extends _i72.PageRouteInfo<void> {
+  const LibraryRoute({List<_i72.PageRouteInfo>? children})
+    : super(LibraryRoute.name, initialChildren: children);
+
+  static const String name = 'LibraryRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      return const _i93.LibraryScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [_i93.LibraryFileScreen]
+class LibraryFileRoute extends _i72.PageRouteInfo<LibraryFileRouteArgs> {
+  LibraryFileRoute({
+    _i73.Key? key,
+    required String id,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         LibraryFileRoute.name,
+         args: LibraryFileRouteArgs(key: key, id: id),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
+
+  static const String name = 'LibraryFileRoute';
+
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<LibraryFileRouteArgs>();
+      return _i93.LibraryFileScreen(key: args.key, id: args.id);
+    },
+  );
+}
+
+class LibraryFileRouteArgs {
+  const LibraryFileRouteArgs({this.key, required this.id});
+
+  final _i73.Key? key;
+
+  final String id;
+
+  @override
+  String toString() {
+    return 'LibraryFileRouteArgs{key: $key, id: $id}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LibraryFileRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
 }
 
 /// generated route for

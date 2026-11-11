@@ -65,9 +65,11 @@ class ProjectSummary {
     this.goals,
     this.requirements,
     this.teamIntro,
+    this.applicantId,
   });
 
   final String id;
+  final String? applicantId;
   final String title;
   final String summary;
   final String description;
@@ -93,6 +95,7 @@ class ProjectSummary {
     final members = json['members'];
     return ProjectSummary(
       id: '${json['id'] ?? ''}',
+      applicantId: json['applicant_id'] as String?,
       title: '${json['title'] ?? ''}',
       summary: '${json['summary'] ?? ''}',
       description: '${json['description'] ?? ''}',
@@ -158,12 +161,8 @@ class ProjectApplication {
       summary: '${json['summary'] ?? ''}',
       status: '${json['status'] ?? ''}',
       reviewNote: json['review_note'] as String?,
-      reviewedAt: DateTime.tryParse(
-        '${json['reviewed_at'] ?? ''}',
-      )?.toLocal(),
-      createdAt: DateTime.tryParse(
-        '${json['created_at'] ?? ''}',
-      )?.toLocal(),
+      reviewedAt: DateTime.tryParse('${json['reviewed_at'] ?? ''}')?.toLocal(),
+      createdAt: DateTime.tryParse('${json['created_at'] ?? ''}')?.toLocal(),
     );
   }
 }
@@ -175,10 +174,7 @@ class ProjectsApi {
   final ApiClient _client;
 
   Future<List<ProjectSummary>> projects() {
-    return _client.getList(
-      '/projects',
-      parseItem: ProjectSummary.fromJson,
-    );
+    return _client.getList('/projects', parseItem: ProjectSummary.fromJson);
   }
 
   Future<ProjectSummary> project(String id) async {
@@ -200,11 +196,7 @@ class ProjectsApi {
   }) async {
     await _client.post(
       '/projects/applications',
-      body: {
-        'title': title,
-        'summary': summary,
-        'description': description,
-      },
+      body: {'title': title, 'summary': summary, 'description': description},
     );
   }
 }

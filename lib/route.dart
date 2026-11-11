@@ -30,6 +30,9 @@ class AppRouter extends RootStackRouter {
 
     // Auth routes
     AutoRoute(page: LoginRoute.page, path: '/auth/login'),
+    AutoRoute(page: RegisterRoute.page, path: '/auth/register'),
+    AutoRoute(page: OnboardingRoute.page, path: '/auth/onboarding'),
+    AutoRoute(page: RecoveryRoute.page, path: '/auth/recovery'),
     AutoRoute(page: CreateAccountRoute.page, path: '/auth/create-account'),
     AutoRoute(page: AuthorizeRoute.page, path: '/auth/authorize'),
 
@@ -48,6 +51,14 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: BoardDetailRoute.page, path: '/hub/boards/:id'),
     AutoRoute(page: UserProfileRoute.page, path: '/community/users/:id'),
     AutoRoute(page: SettingsRoute.page, path: '/settings'),
+    AutoRoute(
+      page: AccountSecurityRoute.page,
+      path: '/settings/account',
+    ),
+    AutoRoute(page: MyContentRoute.page, path: '/my/content'),
+    AutoRoute(page: MyFollowRoute.page, path: '/my/following'),
+    AutoRoute(page: LibraryRoute.page, path: '/library/files'),
+    AutoRoute(page: LibraryFileRoute.page, path: '/library/files/:id'),
     AutoRoute(page: AiConsoleRoute.page, path: '/thoughts/console'),
     AutoRoute(
       page: ChatRoomStorageRoute.page,

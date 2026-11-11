@@ -17,10 +17,6 @@ import 'package:island/core/api/files_api.dart';
 import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/layouts/sheet_scaffold.dart';
 
-final filesApiProvider = Provider<FilesApi>((ref) {
-  return FilesApi(ref.watch(lkmApiSessionProvider).client);
-});
-
 enum _AttachmentStage { uploading, pending, approved, failed }
 
 class _Attachment {

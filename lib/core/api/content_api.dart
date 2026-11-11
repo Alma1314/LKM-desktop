@@ -14,8 +14,9 @@ const String _itemQuery =
 
 const String _itemsQuery =
     'query ContentItems(\$page: Int!, \$pageSize: Int!, \$boardId: ID, '
-    '\$contentType: String) { contentItems(page: \$page, pageSize: \$pageSize, '
-    'boardId: \$boardId, contentType: \$contentType) { '
+    '\$contentType: String, \$authorId: ID) { contentItems(page: \$page, '
+    'pageSize: \$pageSize, '
+    'boardId: \$boardId, contentType: \$contentType, authorId: \$authorId) { '
     'items { $_itemFields } total page pages } }';
 
 const String _commentsQuery =
@@ -304,6 +305,50 @@ class LkmCommentPage {
   static int _asInt(Object? value) => value is num ? value.toInt() : 0;
 }
 
+/// One row of the viewer's favorites / reading history. `at` is `created_at`
+/// for favorites and `viewed_at` for history.
+class LkmSavedItem {
+  const LkmSavedItem({
+    required this.contentId,
+    required this.contentType,
+    required this.title,
+    this.slug,
+    this.boardId,
+    this.at,
+  });
+
+  final String contentId;
+  final String contentType;
+  final String title;
+  final String? slug;
+  final String? boardId;
+  final DateTime? at;
+
+  factory LkmSavedItem.fromJson(Map<String, dynamic> json) => LkmSavedItem(
+    contentId: '${json['content_id'] ?? ''}',
+    contentType: '${json['content_type'] ?? ''}',
+    title: '${json['title'] ?? ''}',
+    slug: json['slug'] as String?,
+    boardId: json['board_id'] as String?,
+    at: DateTime.tryParse(
+      '${json['created_at'] ?? json['viewed_at'] ?? ''}',
+    )?.toLocal(),
+  );
+}
+
+/// One followed board (`GET /content/boards/me/following`).
+class LkmFollowBoard {
+  const LkmFollowBoard({required this.boardId, required this.title});
+
+  final String boardId;
+  final String title;
+
+  factory LkmFollowBoard.fromJson(Map<String, dynamic> json) => LkmFollowBoard(
+    boardId: '${json['board_id'] ?? ''}',
+    title: '${json['title'] ?? ''}',
+  );
+}
+
 /// Reads content detail over GraphQL and writes comments over REST — the same
 /// split the website uses (`src/lib/api/modules/content.ts`).
 class ContentApi {
@@ -324,12 +369,14 @@ class ContentApi {
   Future<ApiPage<LkmContentItem>> items({
     String? boardId,
     String? contentType,
+    String? authorId,
     int page = 1,
     int pageSize = 20,
   }) async {
     final data = await _graphql(_itemsQuery, {
       'boardId': boardId,
       'contentType': contentType,
+      'authorId': authorId,
       'page': page,
       'pageSize': pageSize,
     });
@@ -387,6 +434,35 @@ class ContentApi {
         .whereType<Map>()
         .map((e) => LkmBoard.fromJson(Map<String, dynamic>.from(e)))
         .toList(growable: false);
+  }
+
+  /// `GET /interaction/me/favorites` — the viewer's saved content.
+  Future<ApiPage<LkmSavedItem>> favorites({int page = 1, int limit = 20}) =>
+      _client.getPage(
+        '/interaction/me/favorites',
+        query: {'page': page, 'limit': limit},
+        parseItem: LkmSavedItem.fromJson,
+      );
+
+  /// `GET /interaction/me/history` — recently viewed content.
+  Future<ApiPage<LkmSavedItem>> history({int page = 1, int limit = 20}) =>
+      _client.getPage(
+        '/interaction/me/history',
+        query: {'page': page, 'limit': limit},
+        parseItem: LkmSavedItem.fromJson,
+      );
+
+  /// `GET /content/boards/me/following` — followed boards.
+  Future<List<LkmFollowBoard>> followingBoards() => _client.getList(
+    '/content/boards/me/following',
+    parseItem: LkmFollowBoard.fromJson,
+  );
+
+  /// `POST/DELETE /content/boards/{id}/follow`.
+  Future<bool> setBoardFollow(String boardId, {required bool follow}) async {
+    final path = '/content/boards/$boardId/follow';
+    final data = follow ? await _client.post(path) : await _client.delete(path);
+    return data is Map && data['following'] == true;
   }
 
   /// Creates a discussion post and returns its id. Forum posts are the only
