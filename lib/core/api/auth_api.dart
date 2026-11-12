@@ -143,15 +143,26 @@ class LkmChallenge {
 /// Result of submitting one factor: either the last step (tokens) or the next
 /// challenge state.
 class LkmAuthStep {
-  const LkmAuthStep.complete(LkmAuthToken this.tokens) : challenge = null;
-  const LkmAuthStep.pending(LkmChallenge this.challenge) : tokens = null;
+  const LkmAuthStep.complete(LkmAuthToken this.tokens)
+    : challenge = null,
+      setup = null;
+  const LkmAuthStep.pending(LkmChallenge this.challenge)
+    : tokens = null,
+      setup = null;
+  const LkmAuthStep.setup(LkmAuthResult this.setup)
+    : tokens = null,
+      challenge = null;
 
   final LkmAuthToken? tokens;
   final LkmChallenge? challenge;
+  final LkmAuthResult? setup;
 
   bool get isComplete => tokens != null;
 
   factory LkmAuthStep.fromJson(Map<String, dynamic> json) {
+    if (json['setup_required'] == true && json['temp_token'] is String) {
+      return LkmAuthStep.setup(LkmAuthResult.fromJson(json));
+    }
     if (json['status'] == 'complete') {
       return LkmAuthStep.complete(LkmAuthToken.fromJson(json));
     }
@@ -664,6 +675,21 @@ class AuthApi {
         )
         .toString();
   }
+
+  Future<void> requestMagicLink(String email) => _client.post(
+    '/auth/login/magic-link/request',
+    query: {'email': email.trim()},
+  );
+
+  Future<LkmAuthResult> verifyMagicLink(String token) async =>
+      LkmAuthResult.fromJson(
+        _asMap(
+          await _client.get(
+            '/auth/login/magic-link/verify',
+            query: {'token': token},
+          ),
+        ),
+      );
 
   /// Desktop bind start; same loopback shape as [githubLoginUrl].
   Future<String> githubBindUrl({

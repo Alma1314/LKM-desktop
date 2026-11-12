@@ -32,6 +32,7 @@ class _FakeContent implements ContentApi {
   Future<ApiPage<LkmContentItem>> items({
     String? boardId,
     String? contentType,
+    String? authorId,
     int page = 1,
     int pageSize = 20,
   }) async => const ApiPage.empty();
@@ -111,7 +112,24 @@ class _FakeContent implements ContentApi {
   }
 
   @override
-  String get graphqlUrl => 'https://lkm-ahz.ltd/graphql/v1';
+  String get graphqlUrl => 'https://community.example/graphql/v1';
+
+  @override
+  Future<ApiPage<LkmSavedItem>> favorites({
+    int page = 1,
+    int limit = 20,
+  }) async => const ApiPage.empty();
+
+  @override
+  Future<ApiPage<LkmSavedItem>> history({int page = 1, int limit = 20}) async =>
+      const ApiPage.empty();
+
+  @override
+  Future<List<LkmFollowBoard>> followingBoards() async => const [];
+
+  @override
+  Future<bool> setBoardFollow(String boardId, {required bool follow}) async =>
+      follow;
 }
 
 LkmContentComment _comment(String id) => LkmContentComment(
@@ -135,7 +153,10 @@ LkmCommentPage _page(
 Future<ProviderContainer> _container(_FakeContent fake) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final session = ApiSession(prefs: prefs, serverUrl: 'https://lkm-ahz.ltd');
+  final session = ApiSession(
+    prefs: prefs,
+    serverUrl: 'https://community.example',
+  );
   final container = ProviderContainer(
     overrides: [
       lkmApiSessionProvider.overrideWithValue(session),
@@ -171,7 +192,10 @@ final _viewerItem = LkmContentItem(
 Future<ProviderContainer> _viewerContainer(_FakeContent fake) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final session = ApiSession(prefs: prefs, serverUrl: 'https://lkm-ahz.ltd');
+  final session = ApiSession(
+    prefs: prefs,
+    serverUrl: 'https://community.example',
+  );
   final container = ProviderContainer(
     overrides: [
       lkmApiSessionProvider.overrideWithValue(session),
@@ -200,7 +224,9 @@ void main() {
       ..bookmarkCount = 1;
     final container = await _viewerContainer(fake);
 
-    final initial = await container.read(contentViewerProvider(_viewerItem).future);
+    final initial = await container.read(
+      contentViewerProvider(_viewerItem).future,
+    );
     expect(initial.liked, isFalse);
     expect(initial.likeCount, 3);
 
@@ -257,7 +283,10 @@ void main() {
         .read(contentCommentsProvider('item-1').notifier)
         .toggleCommentLike('a');
 
-    final items = container.read(contentCommentsProvider('item-1')).value!.items;
+    final items = container
+        .read(contentCommentsProvider('item-1'))
+        .value!
+        .items;
     expect(items[0].liked, isTrue);
     expect(items[0].likeCount, 1);
     expect(items[1].liked, isFalse);

@@ -79,7 +79,7 @@ Future<void> _mount(
   final dio = Dio()..httpClientAdapter = _Adapter(handle);
   final session = ApiSession(
     prefs: prefs,
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: dio,
     refreshDio: dio,
   );
@@ -228,7 +228,7 @@ void main() {
         if (options.path.contains('/passkey/start')) {
           return _envelope({
             'challenge_id': 'wac-1',
-            'public_key': {'challenge': 'abc', 'rpId': 'lkm-ahz.ltd'},
+            'public_key': {'challenge': 'abc', 'rpId': 'community.example'},
           });
         }
         if (options.path.contains('/passkey/complete')) {

@@ -358,11 +358,12 @@ class LibraryFileScreen extends HookConsumerWidget {
       busy.value = true;
       try {
         final api = ref.read(filesApiProvider);
-        final info = await api.downloadUrl(value.id);
+        final session = ref.read(lkmApiSessionProvider);
+        final info = await session.run(() => api.downloadUrl(value.id));
         if (info.isPresigned) {
           await launchUrlString(info.url, mode: LaunchMode.externalApplication);
         } else {
-          final bytes = await api.downloadBytes(value.id);
+          final bytes = await session.run(() => api.downloadBytes(value.id));
           await FilePicker.saveFile(
             fileName: value.originalName,
             bytes: bytes,
@@ -373,7 +374,7 @@ class LibraryFileScreen extends HookConsumerWidget {
       } catch (error) {
         if (context.mounted) showSnackBar('$error');
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

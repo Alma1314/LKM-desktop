@@ -28,7 +28,7 @@ class OnboardingScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final step = useState(1);
-    final busy = useState(false);
+    final busy = useState(true);
     final error = useState<String?>(null);
     final info = useState<String?>(null);
     final tags = useState(<String>{});
@@ -54,12 +54,17 @@ class OnboardingScreen extends HookConsumerWidget {
           if (first is Map && first['tags'] is List) {
             tags.value = (first['tags'] as List).whereType<String>().toSet();
           }
+          final third = data?['3'];
+          if (third is Map && third['answer'] is int)
+            answer.value = third['answer'] as int;
           final fourth = data?['4'];
           if (fourth is Map && fourth['tasks'] is List) {
             tasks.value = (fourth['tasks'] as List).whereType<String>().toSet();
           }
         } catch (failure) {
           if (context.mounted) error.value = _describe(failure);
+        } finally {
+          if (context.mounted) busy.value = false;
         }
       });
       return null;
@@ -73,9 +78,9 @@ class OnboardingScreen extends HookConsumerWidget {
       try {
         await action();
       } catch (failure) {
-        error.value = _describe(failure);
+        if (context.mounted) error.value = _describe(failure);
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

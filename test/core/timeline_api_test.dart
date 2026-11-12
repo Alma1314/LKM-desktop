@@ -36,7 +36,7 @@ ResponseBody _ok(Object? data) => ResponseBody.fromString(
 
 TimelineApi _api(_Adapter adapter) => TimelineApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );

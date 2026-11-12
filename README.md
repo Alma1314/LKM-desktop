@@ -192,3 +192,9 @@ Solar Network 的后端服务位于：
 <p align="center">
   Made with love by the Solar Network Team
 </p>
+
+## LKM 服务地址
+
+项目没有预设正式域名。LKM 服务默认连接 `http://127.0.0.1:8000`，可在设置中修改，或构建时指定 `--dart-define=LKM_SERVER_URL=<服务地址>`。网页跳转、分享链接和账户二维码跟随当前服务的 origin，不自动生成域名别名。
+
+保留的 Solar 服务独立使用 `--dart-define=NETWORK_SERVER_URL=<服务地址>`，默认同为本机地址。Android HTTPS 应用链接的主机通过 Gradle property 或环境变量 `LKM_APP_LINK_HOST` 指定，默认 `localhost`；打包时应与 LKM 服务主机一致，更改主机后需重新打包。

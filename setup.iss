@@ -9,8 +9,6 @@
 AppName=理科迷
 AppVersion={#AppVersion}
 AppPublisher=LKM-AHZ
-AppPublisherURL=https://lkm-ahz.ltd
-AppSupportURL=https://lkm-ahz.ltd
 AppUpdatesURL=https://github.com/LKM-AHZ/LKM-desktop/releases
 AppCopyright=Copyright © 2026 LKM-AHZ
 VersionInfoVersion={#FullVersion}

@@ -36,7 +36,7 @@ ResponseBody _ok(Object? data) => ResponseBody.fromString(
 
 AuthApi _api(_Adapter adapter) => AuthApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );
@@ -197,7 +197,7 @@ void main() {
         'challenge_id': 'wac-1',
         'public_key': {
           'challenge': 'abc123',
-          'rpId': 'lkm-ahz.ltd',
+          'rpId': 'community.example',
           'allowCredentials': [
             {
               'type': 'public-key',
@@ -218,7 +218,7 @@ void main() {
     expect(adapter.requests.single.data, isNull);
     expect(options.challengeId, 'wac-1');
     expect(options.challenge, 'abc123');
-    expect(options.rpId, 'lkm-ahz.ltd');
+    expect(options.rpId, 'community.example');
     expect(options.allowCredentials.single['id'], 'cred-1');
   });
 

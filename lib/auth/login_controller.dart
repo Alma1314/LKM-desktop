@@ -6,6 +6,7 @@ import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_session.dart';
 import 'package:island/auth/oauth_desktop.dart';
 import 'package:island/auth/passkey.dart';
+import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/auth_api.dart';
 
 /// Resolves an i18n key for the controller.
@@ -38,6 +39,7 @@ class LoginState {
     this.method = LoginMethod.password,
     this.recoveryMode = false,
     this.oauthTempToken,
+    this.setup,
   });
 
   /// The signed-in account, or null when nobody is signed in.
@@ -62,6 +64,7 @@ class LoginState {
   /// GitHub OAuth answered `requires_2fa`: the temp token to pass to
   /// `/auth/2fa/verify` once the user enters a code.
   final String? oauthTempToken;
+  final LkmAuthResult? setup;
 
   bool get signedIn => account != null;
   bool get hasChallenge => challenge != null;
@@ -81,6 +84,7 @@ class LoginState {
     bool clearAccount = false,
     bool clearChallenge = false,
     bool clearMessages = false,
+    LkmAuthResult? setup,
   }) => LoginState(
     account: clearAccount ? null : (account ?? this.account),
     challenge: clearChallenge ? null : (challenge ?? this.challenge),
@@ -93,6 +97,7 @@ class LoginState {
     oauthTempToken: clearOauthTempToken
         ? null
         : (oauthTempToken ?? this.oauthTempToken),
+    setup: setup ?? this.setup,
   );
 }
 
@@ -202,6 +207,10 @@ class LoginController extends Notifier<LoginState> {
       );
       if (step.isComplete) {
         await _finish(step.tokens!);
+        return;
+      }
+      if (step.setup != null) {
+        await _applyOauthResult(step.setup!);
         return;
       }
       state = state.copyWith(
@@ -354,7 +363,46 @@ class LoginController extends Notifier<LoginState> {
     }
   }
 
+  Future<void> requestMagicLink(String email) async {
+    if (state.busy) return;
+    if (email.trim().isEmpty) {
+      state = state.copyWith(error: _t('lkmErrEmptyEmail'));
+      return;
+    }
+    state = state.copyWith(busy: true, clearMessages: true);
+    try {
+      await _api.requestMagicLink(email);
+      state = state.copyWith(
+        busy: false,
+        info: _t('lkmCodeSentTo', [email.trim()]),
+      );
+    } catch (error) {
+      state = state.copyWith(busy: false, error: _describe(error));
+    }
+  }
+
+  Future<void> verifyMagicLink(String link) async {
+    if (state.busy) return;
+    final raw = link.trim();
+    if (raw.isEmpty) {
+      state = state.copyWith(error: _t('lkmErrEmptyCode'));
+      return;
+    }
+    state = state.copyWith(busy: true, clearMessages: true);
+    try {
+      final uri = Uri.tryParse(raw);
+      final token = uri?.queryParameters['token'] ?? raw;
+      await _applyOauthResult(await _api.verifyMagicLink(token));
+    } catch (error) {
+      state = state.copyWith(busy: false, error: _describe(error));
+    }
+  }
+
   Future<void> _applyOauthResult(LkmAuthResult result) async {
+    if (result.setupRequired && result.tempToken != null) {
+      state = LoginState(setup: result);
+      return;
+    }
     if (result.tokens != null) {
       await _finish(result.tokens!);
       return;
@@ -388,7 +436,8 @@ class LoginController extends Notifier<LoginState> {
     try {
       final verified = await _api.verifyTotp(
         tempToken: temp,
-        code: code.trim(),
+        code: state.recoveryMode ? null : code.trim(),
+        recoveryCode: state.recoveryMode ? code.trim() : null,
         trustDevice: true,
       );
       if (!verified.hasTokens) {
@@ -414,6 +463,7 @@ class LoginController extends Notifier<LoginState> {
   Future<void> signOut() async {
     state = state.copyWith(busy: true, clearMessages: true);
     await ref.read(lkmApiSessionProvider).signOut();
+    ref.invalidate(lkmMeProvider);
     state = const LoginState();
   }
 
@@ -466,6 +516,10 @@ class LoginController extends Notifier<LoginState> {
         code: code,
         recoveryCode: recoveryCode,
       );
+      if (step.setup != null) {
+        await _applyOauthResult(step.setup!);
+        return;
+      }
       if (step.isComplete) {
         await _finish(step.tokens!);
         return;
@@ -510,6 +564,7 @@ class LoginController extends Notifier<LoginState> {
       ),
     );
     final account = await _api.me();
+    ref.invalidate(lkmMeProvider);
     state = LoginState(account: account);
   }
 

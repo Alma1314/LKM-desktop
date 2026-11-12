@@ -691,56 +691,46 @@ class QuillContentEditor extends HookConsumerWidget {
 
     return MouseRegion(
       onHover: onToolbarPointerMove,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              QuillEditor(
-                key: editorKey,
-                controller: quill,
-                focusNode: focusNode,
-                scrollController: scrollController,
-                config: QuillEditorConfig(
-                  placeholder: 'postContent'.tr(),
-                  customStyles: editorStyles,
-                  expands: expands,
-                  minHeight: expands
-                      ? minHeight
-                      : (minHeight ?? (collapsedEmpty ? null : 120)),
-                  padding: padding,
-                  autoFocus: false,
-                  enableInteractiveSelection: true,
-                  onTapOutside: (event, _) =>
-                      FocusManager.instance.primaryFocus?.unfocus(),
-                  embedBuilders: [
-                    _SolianImageEmbedBuilder(state),
-                    const _HorizontalRuleEmbedBuilder(),
-                  ],
-                  unknownEmbedBuilder: const _UnknownEmbedBuilder(),
-                  editorKey: editableTextKey,
-                  // The markdown preview renders code blocks without gutter
-                  // numbers.
-                  showCodeBlockLineNumbers: false,
-                  textSpanBuilder:
-                      (context, node, textOffset, text, style, recognizer) =>
-                          _buildInlineSyntaxSpan(
-                            context: context,
-                            controller: quill,
-                            node: node,
-                            text: text,
-                            style: style,
-                            recognizer: recognizer,
-                          ),
-                  // ignore: experimental_member_use
-                  onKeyPressed: onKeyPressed,
-                  textInputAction: TextInputAction.newline,
-                ),
-              ),
-            ],
-          );
-        },
+      child: QuillEditor(
+        key: editorKey,
+        controller: quill,
+        focusNode: focusNode,
+        scrollController: scrollController,
+        config: QuillEditorConfig(
+          placeholder: 'postContent'.tr(),
+          customStyles: editorStyles,
+          expands: expands,
+          minHeight: expands
+              ? minHeight
+              : (minHeight ?? (collapsedEmpty ? null : 120)),
+          padding: padding,
+          autoFocus: false,
+          enableInteractiveSelection: true,
+          onTapOutside: (event, _) =>
+              FocusManager.instance.primaryFocus?.unfocus(),
+          embedBuilders: [
+            _SolianImageEmbedBuilder(state),
+            const _HorizontalRuleEmbedBuilder(),
+          ],
+          unknownEmbedBuilder: const _UnknownEmbedBuilder(),
+          editorKey: editableTextKey,
+          // The markdown preview renders code blocks without gutter
+          // numbers.
+          showCodeBlockLineNumbers: false,
+          textSpanBuilder:
+              (context, node, textOffset, text, style, recognizer) =>
+                  _buildInlineSyntaxSpan(
+                    context: context,
+                    controller: quill,
+                    node: node,
+                    text: text,
+                    style: style,
+                    recognizer: recognizer,
+                  ),
+          // ignore: experimental_member_use
+          onKeyPressed: onKeyPressed,
+          textInputAction: TextInputAction.newline,
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:island/auth/login_controller.dart';
+import 'package:island/auth/totp_setup_dialog.dart';
 import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/auth_api.dart';
@@ -41,6 +42,17 @@ class RegisterScreen extends HookConsumerWidget {
     final phoneCode = useTextEditingController();
 
     Future<void> finish(LkmAuthResult result) async {
+      if (result.setupRequired && result.tempToken != null) {
+        await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => TotpSetupDialog(authResult: result),
+        );
+        if (!context.mounted) return;
+        if (ref.read(loginControllerProvider).signedIn)
+          Navigator.of(context).pop(true);
+        return;
+      }
       if (result.tokens != null) {
         await ref
             .read(loginControllerProvider.notifier)
@@ -66,13 +78,13 @@ class RegisterScreen extends HookConsumerWidget {
       try {
         await action();
       } on ApiException catch (failure) {
-        error.value = failure.message;
+        if (context.mounted) error.value = failure.message;
       } on ApiTransportException catch (failure) {
-        error.value = failure.message;
+        if (context.mounted) error.value = failure.message;
       } catch (failure) {
-        error.value = '$failure';
+        if (context.mounted) error.value = '$failure';
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 

@@ -41,7 +41,7 @@ ResponseBody _jsonBody(
 
 ApiClient _clientWith(
   ResponseBody Function(RequestOptions options) handler, {
-  String serverUrl = 'https://lkm-ahz.ltd',
+  String serverUrl = 'https://community.example',
   Future<String?> Function()? tokenProvider,
   List<RequestOptions>? recorded,
 }) {
@@ -59,8 +59,8 @@ void main() {
   group('normalizeApiBase', () {
     test('appends the API prefix to a bare host', () {
       expect(
-        normalizeApiBase('https://lkm-ahz.ltd'),
-        'https://lkm-ahz.ltd/api/v1',
+        normalizeApiBase('https://community.example'),
+        'https://community.example/api/v1',
       );
     });
 
@@ -73,14 +73,14 @@ void main() {
 
     test('does not duplicate an already qualified base', () {
       expect(
-        normalizeApiBase('https://lkm-ahz.ltd/api/v1/'),
-        'https://lkm-ahz.ltd/api/v1',
+        normalizeApiBase('https://community.example/api/v1/'),
+        'https://community.example/api/v1',
       );
     });
 
     test('rejects empty and scheme-less input', () {
       expect(() => normalizeApiBase('  '), throwsArgumentError);
-      expect(() => normalizeApiBase('lkm-ahz.ltd'), throwsArgumentError);
+      expect(() => normalizeApiBase('community.example'), throwsArgumentError);
     });
   });
 
@@ -168,7 +168,7 @@ void main() {
       );
       final dio = Dio()..httpClientAdapter = adapter;
       final client = ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd',
+        serverUrl: 'https://community.example',
         dio: dio,
         tokenProvider: () async => 'token-abc',
       );
@@ -178,7 +178,7 @@ void main() {
       expect(seen.single.headers['Authorization'], 'Bearer token-abc');
       expect(
         seen.single.uri.toString(),
-        'https://lkm-ahz.ltd/api/v1/auth/me',
+        'https://community.example/api/v1/auth/me',
       );
       client.close();
     });

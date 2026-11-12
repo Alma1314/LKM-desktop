@@ -58,7 +58,7 @@ ApiPage<LkmNotification> _page(
 Future<ProviderContainer> _container(_FakeNotifications fake) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final session = ApiSession(prefs: prefs, serverUrl: 'https://lkm-ahz.ltd');
+  final session = ApiSession(prefs: prefs, serverUrl: 'https://community.example');
   await session.adopt(
     const LkmTokenPair(accessToken: 'access', refreshToken: 'refresh'),
   );

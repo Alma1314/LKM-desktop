@@ -24,7 +24,10 @@ String localeToLanguageCode(Locale locale) {
 
 const kTokenPairStoreKey = 'dyn_user_tk';
 
-const kNetworkServerDefault = 'https://api.solian.app';
+const kNetworkServerDefault = String.fromEnvironment(
+  'NETWORK_SERVER_URL',
+  defaultValue: 'http://127.0.0.1:8000',
+);
 const kNetworkServerStoreKey = 'app_server_url';
 
 /// LKM-service 后端地址。
@@ -32,7 +35,10 @@ const kNetworkServerStoreKey = 'app_server_url';
 /// 与上面的 Solian 地址分开存放，因为两套后端在本仓库里共存到迁移收口
 /// （见 `docs/桌面端接入后端方案.md` P4）：共用同一个 key 会让任一侧改地址时
 /// 把另一侧也指到错的服务器上。用户只填域名，`/api/v1` 由 `ApiClient` 补。
-const kLkmServerDefault = 'https://lkm-ahz.ltd';
+const kLkmServerDefault = String.fromEnvironment(
+  'LKM_SERVER_URL',
+  defaultValue: 'http://127.0.0.1:8000',
+);
 const kLkmServerStoreKey = 'lkm_api_server_url';
 
 /// Product multi-tenant id for Solian (Island).

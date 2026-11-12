@@ -44,6 +44,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:island/activity/activity_rpc.dart';
 import 'package:island/core/audio.dart';
 import 'package:island/core/config.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/network.dart';
 import 'package:island/core/websocket.dart';
 import 'package:island/auth/stargate_post_login.dart';
@@ -181,6 +182,7 @@ class AppWrapper extends HookConsumerWidget {
           }
         }
       }
+
       unawaited(enforceDefaultIcon());
       return () {
         cancelled = true;
@@ -617,6 +619,7 @@ class AppWrapper extends HookConsumerWidget {
       final ntySubs = setupNotificationListener(context, ref);
       final sharingService = SharingIntentService();
       final deeplinkService = DeeplinkService();
+      deeplinkService.configureSiteUrl(() => ref.read(lkmServerUrlProvider));
       sharingService.setWidgetRef(ref);
       sharingService.initialize();
       deeplinkService.initialize(

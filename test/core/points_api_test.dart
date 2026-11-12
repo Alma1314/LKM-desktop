@@ -45,7 +45,7 @@ ResponseBody _envelope(Object? data) =>
 
 PointsApi _api(_Adapter adapter) => PointsApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );

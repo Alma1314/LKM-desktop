@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:island/auth/login_controller.dart';
+import 'package:island/auth/totp_setup_dialog.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/auth_api.dart';
 import 'package:island/route.gr.dart';
@@ -13,7 +14,7 @@ import 'package:island/shared/widgets/alert.dart';
 ///
 /// `register` is deliberately outside [LoginMethod]: registration is not a
 /// challenge (the server returns tokens straight from `/auth/reg/email/verify`).
-enum _LoginMode { password, code, passkey, register }
+enum _LoginMode { password, code, passkey, register, magic }
 
 /// Login for LKM-service, driven by the server's challenge: the screen renders
 /// whatever factor the challenge names next, so a new factor (device trust,
@@ -79,7 +80,28 @@ class _LoginContentState extends ConsumerState<LoginContent> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              if (state.oauthTempToken != null)
+              if (state.setup != null) ...[
+                _primaryButton(
+                  busy: state.busy,
+                  label: 'authFlow.totpSetupTitle'.tr(),
+                  onPressed: () async {
+                    final done = await showDialog<bool>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => TotpSetupDialog(authResult: state.setup),
+                    );
+                    if (mounted && done != true)
+                      await ref.read(loginControllerProvider.notifier).cancel();
+                  },
+                ),
+                TextButton(
+                  onPressed: state.busy
+                      ? null
+                      : () =>
+                            ref.read(loginControllerProvider.notifier).cancel(),
+                  child: Text('cancel'.tr()),
+                ),
+              ] else if (state.oauthTempToken != null)
                 ..._oauthTotpFields(state)
               else if (!state.hasChallenge) ...[
                 _modeSelector(state.busy),
@@ -150,30 +172,23 @@ class _LoginContentState extends ConsumerState<LoginContent> {
   }
 
   Widget _modeSelector(bool busy) {
-    return SegmentedButton<_LoginMode>(
-      segments: [
-        ButtonSegment(
-          value: _LoginMode.password,
-          label: Text('lkmMethodPassword'.tr()),
-        ),
-        ButtonSegment(
-          value: _LoginMode.code,
-          label: Text('lkmMethodCode'.tr()),
-        ),
-        ButtonSegment(
-          value: _LoginMode.passkey,
-          label: Text('lkmMethodPasskey'.tr()),
-        ),
-        ButtonSegment(
-          value: _LoginMode.register,
-          label: Text('lkmMethodRegister'.tr()),
-        ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final (mode, label) in [
+          (_LoginMode.password, 'lkmMethodPassword'),
+          (_LoginMode.code, 'lkmMethodCode'),
+          (_LoginMode.passkey, 'lkmMethodPasskey'),
+          (_LoginMode.register, 'lkmMethodRegister'),
+          (_LoginMode.magic, 'authFlow.modeMagic'),
+        ])
+          ChoiceChip(
+            label: Text(label.tr()),
+            selected: _mode == mode,
+            onSelected: busy ? null : (_) => setState(() => _mode = mode),
+          ),
       ],
-      selected: {_mode},
-      showSelectedIcon: false,
-      onSelectionChanged: busy
-          ? null
-          : (selection) => setState(() => _mode = selection.first),
     );
   }
 
@@ -181,6 +196,31 @@ class _LoginContentState extends ConsumerState<LoginContent> {
   List<Widget> _entryFields(LoginState state) {
     final controller = ref.read(loginControllerProvider.notifier);
     switch (_mode) {
+      case _LoginMode.magic:
+        return [
+          _field(
+            controller: _email,
+            label: 'lkmEmailLabel'.tr(),
+            icon: Icons.alternate_email,
+          ),
+          TextButton(
+            onPressed: state.busy
+                ? null
+                : () => controller.requestMagicLink(_email.text),
+            child: Text('authFlow.sendCode'.tr()),
+          ),
+          _field(
+            controller: _code,
+            label: 'authFlow.magicLinkLabel'.tr(),
+            icon: Icons.link,
+          ),
+          const SizedBox(height: 16),
+          _primaryButton(
+            busy: state.busy,
+            label: 'lkmSignInAction'.tr(),
+            onPressed: () => controller.verifyMagicLink(_code.text),
+          ),
+        ];
       case _LoginMode.password:
         return [
           _field(
@@ -289,7 +329,8 @@ class _LoginContentState extends ConsumerState<LoginContent> {
     return [
       _field(
         controller: _code,
-        label: 'lkmTotpLabel'.tr(),
+        label: (state.recoveryMode ? 'lkmRecoveryCodeLabel' : 'lkmTotpLabel')
+            .tr(),
         icon: Icons.shield_outlined,
         onSubmitted: () => controller.submitOauthTotp(_code.text),
       ),
@@ -298,6 +339,12 @@ class _LoginContentState extends ConsumerState<LoginContent> {
         busy: state.busy,
         label: 'lkmVerifyAction'.tr(),
         onPressed: () => controller.submitOauthTotp(_code.text),
+      ),
+      TextButton(
+        onPressed: state.busy ? null : controller.toggleRecoveryMode,
+        child: Text(
+          (state.recoveryMode ? 'lkmTotpLabel' : 'lkmRecoveryCodeLabel').tr(),
+        ),
       ),
       TextButton(
         onPressed: state.busy ? null : controller.cancel,

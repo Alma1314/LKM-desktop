@@ -64,7 +64,7 @@ Future<TreeholeApi> _api(_Adapter adapter) async {
   final prefs = await SharedPreferences.getInstance();
   return TreeholeApi(
     ApiClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = adapter,
     ),
     prefs,

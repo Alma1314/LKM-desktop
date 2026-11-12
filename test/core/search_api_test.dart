@@ -36,7 +36,7 @@ ResponseBody _ok(Object? data) => ResponseBody.fromString(
 
 SearchApi _api(_Adapter adapter) => SearchApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );

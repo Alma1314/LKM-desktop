@@ -52,18 +52,45 @@ Future<SharedPreferences> _prefs() async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test(
+    'logout carries the captured bearer after clearing local credentials',
+    () async {
+      final prefs = await _prefs();
+      final router = _Router((options) {
+        expect(options.path, '/auth/logout');
+        expect(options.headers['Authorization'], 'Bearer access-1');
+        expect(prefs.getString(kLkmTokenPairStoreKey), isNull);
+        return _envelope(null);
+      });
+      final session = ApiSession(
+        prefs: prefs,
+        serverUrl: 'https://example.com',
+        dio: Dio()..httpClientAdapter = router,
+      );
+      await session.adopt(
+        const LkmTokenPair(accessToken: 'access-1', refreshToken: 'refresh-1'),
+      );
+      await session.signOut();
+      expect(router.requests.length, 1);
+      expect(session.isSignedIn, isFalse);
+    },
+  );
+
   test('adopt persists the pair and serves a fresh access token', () async {
     final prefs = await _prefs();
     final calls = _Router((_) => _envelope({'access_token': 'x'}));
     final session = ApiSession(
       prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = calls,
       refreshDio: Dio()..httpClientAdapter = calls,
     );
 
     await session.adopt(
-      LkmTokenPair(accessToken: 'access-1', accessExpiresAt: DateTime.now().add(const Duration(hours: 1))),
+      LkmTokenPair(
+        accessToken: 'access-1',
+        accessExpiresAt: DateTime.now().add(const Duration(hours: 1)),
+      ),
     );
 
     expect(session.isSignedIn, isTrue);
@@ -76,40 +103,43 @@ void main() {
     session.client.close();
   });
 
-  test('an expired access token rotates the pair once and persists it', () async {
-    final prefs = await _prefs();
-    final router = _Router((options) {
-      expect(options.path, contains('/auth/refresh'));
-      expect(options.data, {'refresh_token': 'refresh-1'});
-      return _envelope({
-        'access_token': _jwt(const Duration(hours: 1)),
-        'refresh_token': _jwt(const Duration(days: 7)),
+  test(
+    'an expired access token rotates the pair once and persists it',
+    () async {
+      final prefs = await _prefs();
+      final router = _Router((options) {
+        expect(options.path, contains('/auth/refresh'));
+        expect(options.data, {'refresh_token': 'refresh-1'});
+        return _envelope({
+          'access_token': _jwt(const Duration(hours: 1)),
+          'refresh_token': _jwt(const Duration(days: 7)),
+        });
       });
-    });
-    final session = ApiSession(
-      prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
-      dio: Dio()..httpClientAdapter = router,
-      refreshDio: Dio()..httpClientAdapter = router,
-    );
+      final session = ApiSession(
+        prefs: prefs,
+        serverUrl: 'https://community.example',
+        dio: Dio()..httpClientAdapter = router,
+        refreshDio: Dio()..httpClientAdapter = router,
+      );
 
-    await session.adopt(
-      LkmTokenPair(
-        accessToken: 'access-old',
-        refreshToken: 'refresh-1',
-        accessExpiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
-        refreshExpiresAt: DateTime.now().add(const Duration(days: 7)),
-      ),
-    );
+      await session.adopt(
+        LkmTokenPair(
+          accessToken: 'access-old',
+          refreshToken: 'refresh-1',
+          accessExpiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: DateTime.now().add(const Duration(days: 7)),
+        ),
+      );
 
-    final token = await session.currentAccessToken();
+      final token = await session.currentAccessToken();
 
-    expect(token, isNotNull);
-    expect(token, isNot('access-old'));
-    expect(router.requests, hasLength(1));
-    expect(prefs.getString(kLkmTokenPairStoreKey), contains(token!));
-    session.client.close();
-  });
+      expect(token, isNotNull);
+      expect(token, isNot('access-old'));
+      expect(router.requests, hasLength(1));
+      expect(prefs.getString(kLkmTokenPairStoreKey), contains(token!));
+      session.client.close();
+    },
+  );
 
   test('concurrent expiries share one rotation', () async {
     final prefs = await _prefs();
@@ -121,7 +151,7 @@ void main() {
     );
     final session = ApiSession(
       prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = router,
       refreshDio: Dio()..httpClientAdapter = router,
     );
@@ -157,7 +187,7 @@ void main() {
     );
     final session = ApiSession(
       prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = router,
       refreshDio: Dio()..httpClientAdapter = router,
     );
@@ -191,7 +221,7 @@ void main() {
     });
     final session = ApiSession(
       prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = router,
       refreshDio: Dio()..httpClientAdapter = router,
     );
@@ -233,7 +263,7 @@ void main() {
     );
     final session = ApiSession(
       prefs: prefs,
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       dio: Dio()..httpClientAdapter = router,
       refreshDio: Dio()..httpClientAdapter = router,
     );

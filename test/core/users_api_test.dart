@@ -36,7 +36,7 @@ ResponseBody _ok(Object? data) => ResponseBody.fromString(
 
 UsersApi _api(_Adapter adapter) => UsersApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );
@@ -44,7 +44,7 @@ UsersApi _api(_Adapter adapter) => UsersApi(
 const _profile = {
   'user_id': '11111111-1111-1111-1111-111111111111',
   'nickname': '阿尔玛',
-  'avatar': 'https://lkm-ahz.ltd/a.png',
+  'avatar': 'https://community.example/a.png',
   'role': 'member',
   'contact_links': <Object>[],
 };
@@ -63,7 +63,7 @@ void main() {
     );
     expect(profile.displayName, '阿尔玛');
     expect(profile.role, 'member');
-    expect(profile.avatar, 'https://lkm-ahz.ltd/a.png');
+    expect(profile.avatar, 'https://community.example/a.png');
   });
 
   test('reads a profile by username', () async {

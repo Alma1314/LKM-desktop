@@ -87,6 +87,7 @@ class ComposeState {
   /// Text of [contentController] at the last successful sync. Used to diff
   /// external changes so the editor caret lands after the edit.
   String _lastSyncedText;
+  late Delta _lastSyncedDelta;
 
   ComposeState({
     required this.titleController,
@@ -132,6 +133,7 @@ class ComposeState {
         ),
       ),
     );
+    _lastSyncedDelta = contentQuillController.document.toDelta();
     contentController.addListener(_importFromContent);
     contentQuillController.addListener(_exportFromQuill);
   }
@@ -221,6 +223,7 @@ class ComposeState {
       );
     }
     _lastSyncedText = newText;
+    _lastSyncedDelta = contentQuillController.document.toDelta();
     _syncingContent = false;
   }
 
@@ -228,9 +231,12 @@ class ComposeState {
   /// the editor changes.
   void _exportFromQuill() {
     if (_syncingContent) return;
-    final markdown = quillDeltaToMarkdown(
-      contentQuillController.document.toDelta(),
-    );
+    final delta = contentQuillController.document.toDelta();
+    // Selection/readOnly notifications are not edits. Re-exporting them would
+    // normalize (or lose) source-only Markdown before the user changes content.
+    if (delta == _lastSyncedDelta) return;
+    _lastSyncedDelta = delta;
+    final markdown = quillDeltaToMarkdown(delta);
     _syncingContent = true;
     _lastSyncedText = markdown;
     contentController.text = markdown;

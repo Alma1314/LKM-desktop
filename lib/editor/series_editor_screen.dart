@@ -64,6 +64,7 @@ class _EditorState extends ConsumerState<_Editor> {
     'path': path.text,
     'title': compose.titleController.text,
     'content': compose.contentController.text,
+    'baseContent': savedContent,
   };
 
   @override
@@ -133,6 +134,8 @@ class _EditorState extends ConsumerState<_Editor> {
 
   Future<void> save() async {
     final current = document;
+    // Keep the draft even when path validation, conflict checks or the network fail.
+    await store.save(current);
     BlogApi.validatePath(path.text);
     if (series.text.trim().isEmpty)
       throw StateError('seriesEditor.seriesRequired'.tr());
@@ -161,7 +164,9 @@ class _EditorState extends ConsumerState<_Editor> {
           ),
         );
     savedContent = current['content'] as String;
-    await store.save(current, snapshot: true);
+    if (!paths.contains(current['path']))
+      paths = [...paths, current['path'] as String];
+    await store.save({...current, 'baseContent': savedContent}, snapshot: true);
     if (mounted) setState(() {});
   }
 
@@ -169,9 +174,15 @@ class _EditorState extends ConsumerState<_Editor> {
     final content = await ref
         .read(lkmApiSessionProvider)
         .run(() => api.content(series.text, name));
-    await store.save(document);
+    await store.save(document, snapshot: true);
     loading = true;
-    id = '${series.text}/$name';
+    id =
+        store
+                .documents()
+                .where((d) => d['series'] == series.text && d['path'] == name)
+                .firstOrNull?['id']
+            as String? ??
+        '${series.text}/$name';
     path.text = name;
     compose.titleController.text =
         RegExp(r'^# +(.+)$', multiLine: true).firstMatch(content)?.group(1) ??
@@ -180,6 +191,29 @@ class _EditorState extends ConsumerState<_Editor> {
     savedContent = content;
     loading = false;
     await store.save(document, snapshot: true);
+  }
+
+  Future<void> openLocal(Map<String, dynamic> selected) async {
+    await store.save(document);
+    loading = true;
+    id = selected['id'] as String;
+    series.text = selected['series'] as String;
+    path.text = selected['path'] as String;
+    compose.titleController.text = selected['title'] as String;
+    compose.contentController.text = selected['content'] as String;
+    savedContent = selected['baseContent'] as String?;
+    paths = [];
+    if (series.text.isNotEmpty && path.text.isNotEmpty) {
+      final remote = await ref
+          .read(lkmApiSessionProvider)
+          .run(() => api.detail(series.text));
+      paths = remote.paths;
+      // Never replace the saved baseline with current remote text:
+      // that would silently approve overwriting another device's edit.
+      // Legacy drafts with no baseline must explicitly reopen the file.
+    }
+    loading = false;
+    setState(() {});
   }
 
   Future<void> image() async {
@@ -366,7 +400,7 @@ class _EditorState extends ConsumerState<_Editor> {
                   child: Text('seriesEditor.load'.tr()),
                 ),
                 OutlinedButton(
-                  onPressed: busy
+                  onPressed: busy || savedContent != null
                       ? null
                       : () => run(() async {
                           final title = compose.titleController.text.trim();
@@ -416,30 +450,7 @@ class _EditorState extends ConsumerState<_Editor> {
                                 ),
                               );
                           if (selected == null || !mounted) return;
-                          await store.save(document);
-                          loading = true;
-                          id = selected['id'] as String;
-                          series.text = selected['series'] as String;
-                          path.text = selected['path'] as String;
-                          compose.titleController.text =
-                              selected['title'] as String;
-                          compose.contentController.text =
-                              selected['content'] as String;
-                          savedContent = null;
-                          if (series.text.isNotEmpty && path.text.isNotEmpty) {
-                            // A restored local draft must be opened explicitly against current remote content.
-                            final remote = await ref
-                                .read(lkmApiSessionProvider)
-                                .run(() => api.detail(series.text));
-                            if (remote.paths.contains(path.text))
-                              savedContent = await ref
-                                  .read(lkmApiSessionProvider)
-                                  .run(
-                                    () => api.content(series.text, path.text),
-                                  );
-                          }
-                          loading = false;
-                          setState(() {});
+                          await openLocal(selected);
                         }),
                   child: Text('seriesEditor.documents'.tr()),
                 ),

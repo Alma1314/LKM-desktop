@@ -513,15 +513,21 @@ Future<void> openExternalLinkWithContainer(
     return;
   }
   final routePath = lkmLinkToRoutePath(url);
+  final launchMode =
+      routePath != null &&
+          !kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android
+      ? LaunchMode.inAppBrowserView
+      : LaunchMode.externalApplication;
   if (routePath != null) {
     final router = container.read(routerProvider);
     if (tryNavigateToRoutePath(router, routePath)) {
-      // Solian links (custom scheme or https://lkm-ahz.ltd) map onto in-app
+      // Solian links (custom scheme or https://community.example) map onto in-app
       // routes — open them here instead of handing them to the OS/browser.
       return;
     }
     // The page isn't implemented in-app — hand it to the browser via its
-    // browser-safe Solian host on Android to avoid re-entering the app.
+    // configured website using a browser view on Android to avoid re-entry.
     url = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
         ? lkmLinkBrowserUrl(url) ?? url
         : lkmLinkWebUrl(url) ?? url;
@@ -541,7 +547,7 @@ Future<void> openExternalLinkWithContainer(
   hideLoadingModal(context);
 
   if (result.trustLevel == DomainTrustLevel.verified) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    await launchUrl(url, mode: launchMode);
     return;
   }
 
@@ -553,6 +559,6 @@ Future<void> openExternalLinkWithContainer(
   );
 
   if (decision == DomainTrustDecision.proceed) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    await launchUrl(url, mode: launchMode);
   }
 }

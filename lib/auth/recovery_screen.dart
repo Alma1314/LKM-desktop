@@ -39,6 +39,8 @@ class RecoveryScreen extends HookConsumerWidget {
 
     final txnId = useState<String?>(null);
     final tempToken = useState<String?>(null);
+    final totpVerified = useState(false);
+    final recoveryVerified = useState(false);
 
     Future<void> run(Future<void> Function() action) async {
       if (busy.value) return;
@@ -47,13 +49,13 @@ class RecoveryScreen extends HookConsumerWidget {
       try {
         await action();
       } on ApiException catch (failure) {
-        error.value = failure.message;
+        if (context.mounted) error.value = failure.message;
       } on ApiTransportException catch (failure) {
-        error.value = failure.message;
+        if (context.mounted) error.value = failure.message;
       } catch (failure) {
-        error.value = '$failure';
+        if (context.mounted) error.value = '$failure';
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -70,7 +72,10 @@ class RecoveryScreen extends HookConsumerWidget {
     }
 
     void takeOutcome(LkmRecoveryOutcome outcome) {
-      if (outcome.requires2fa && outcome.tempToken != null) {
+      if (!context.mounted) return;
+      if (outcome.requires2fa) {
+        if (outcome.tempToken == null || outcome.txnId == null)
+          throw StateError('Missing recovery transaction');
         txnId.value = outcome.txnId;
         tempToken.value = outcome.tempToken;
         stage.value = 2;
@@ -94,6 +99,7 @@ class RecoveryScreen extends HookConsumerWidget {
               byEmail: mode.value == _RecoveryMode.email,
             );
       }
+      if (!context.mounted) return;
       stage.value = 1;
       info.value = 'authFlow.codeSentTo'.tr(args: [contact.text.trim()]);
     });
@@ -134,16 +140,27 @@ class RecoveryScreen extends HookConsumerWidget {
         error.value = 'authFlow.errorEmptyCode'.tr();
         return;
       }
-      await ref
-          .read(authApiProvider)
-          .verifyTotp(tempToken: temp, code: totp.text);
-      await ref
-          .read(authApiProvider)
-          .verifyRecoveryTotp(txnId: txn, tempToken: temp);
+      final api = ref.read(authApiProvider);
+      if (!totpVerified.value) {
+        final value = totp.text.trim();
+        final isCode = RegExp(r'^\d{6}$').hasMatch(value);
+        await api.verifyTotp(
+          tempToken: temp,
+          code: isCode ? value : null,
+          recoveryCode: isCode ? null : value,
+        );
+        if (!context.mounted) return;
+        totpVerified.value = true;
+      }
+      if (!recoveryVerified.value) {
+        await api.verifyRecoveryTotp(txnId: txn, tempToken: temp);
+        if (!context.mounted) return;
+        recoveryVerified.value = true;
+      }
       await ref
           .read(authApiProvider)
           .completeRecovery(txnId: txn, newPassword: password.text);
-      stage.value = 3;
+      if (context.mounted) stage.value = 3;
     });
 
     return AppScaffold(
@@ -355,8 +372,9 @@ class _TotpStep extends StatelessWidget {
         TextField(
           controller: totp,
           enabled: !busy,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: 'authFlow.totpCode'.tr()),
+          decoration: InputDecoration(
+            labelText: 'authFlow.totpOrRecovery'.tr(),
+          ),
         ),
         if (error != null) ...[
           const SizedBox(height: 12),

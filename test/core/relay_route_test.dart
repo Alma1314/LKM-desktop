@@ -187,9 +187,10 @@ void main() {
         ),
       );
 
+      await prefs.setString(kNetworkServerStoreKey, 'https://relay-origin.example');
       expect(await written(prefs), [
         '[relay] Config: route=local region=can dials=127.0.0.1:12443 '
-            'carries=api.solian.app:443 certificate=verified',
+            'carries=relay-origin.example:443 certificate=verified',
         '[relay] Destination 127.0.0.1:12443 resolves to 127.0.0.1',
       ]);
     });

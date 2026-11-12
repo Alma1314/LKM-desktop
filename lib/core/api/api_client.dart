@@ -1,9 +1,11 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 /// The path prefix every LKM-service business endpoint lives under.
 ///
 /// The settings screen asks the user for a host only (e.g.
-/// `https://lkm-ahz.ltd` or `http://127.0.0.1:8000`); this suffix is appended
+/// `https://community.example` or `http://127.0.0.1:8000`); this suffix is appended
 /// here so a mistyped/duplicated prefix on the user side is the only thing that
 /// can go wrong, and [normalizeApiBase] already tolerates that.
 const String kApiPathPrefix = '/api/v1';
@@ -211,7 +213,7 @@ class ApiClient {
     );
   }
 
-  /// Fully qualified base URL, e.g. `https://lkm-ahz.ltd/api/v1`.
+  /// Fully qualified base URL, e.g. `https://community.example/api/v1`.
   final String baseUrl;
 
   final Dio _dio;
@@ -221,6 +223,34 @@ class ApiClient {
   /// Escape hatch for the rare caller that needs Dio itself (raw download,
   /// upload progress, `ResponseType.stream`). Prefer the typed helpers.
   Dio get dio => _dio;
+
+  /// Raw file content still uses the service's JSON error envelope on failure.
+  Future<Uint8List> getBytes(String path) async {
+    final response = await _send('GET', path, responseType: ResponseType.bytes);
+    final bytes = response.data;
+    if (bytes is! List<int>)
+      throw _shapeError('GET', path, 'Expected file bytes');
+    final jsonError =
+        response.headers.value('content-disposition') == null &&
+        (response.headers.value('content-type') ?? '').contains(
+          'application/json',
+        );
+    if (jsonError) {
+      Object? body;
+      try {
+        body = jsonDecode(utf8.decode(bytes));
+      } on FormatException {
+        // Let the common HTTP status mapping describe malformed error responses.
+      }
+      if (body is Map && body['code'] is int) {
+        response.data = body;
+        _unwrap(response, 'GET', path);
+        throw _shapeError('GET', path, 'Expected file, received JSON envelope');
+      }
+    }
+    _unwrap(response, 'GET', path);
+    return Uint8List.fromList(bytes);
+  }
 
   Future<Object?> get(
     String path, {
@@ -430,6 +460,7 @@ class ApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
     CancelToken? cancelToken,
+    ResponseType? responseType,
   }) async {
     try {
       return await _dio.request<dynamic>(
@@ -441,6 +472,7 @@ class ApiClient {
           method: method,
           validateStatus: (_) => true,
           headers: headers,
+          responseType: responseType,
         ),
       );
     } on DioException catch (error) {

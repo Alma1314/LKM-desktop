@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -36,7 +37,7 @@ Future<LkmAuthResult> runGithubLogin(AuthApi api) async {
     if (!launched) {
       throw const OAuthLoopbackException('无法打开浏览器完成 GitHub 登录');
     }
-    final code = await _waitForCode(server);
+    final code = await waitForOAuthCode(server);
     return await api.exchangeDesktopCode(code: code, verifier: verifier);
   } finally {
     await server.close(force: true);
@@ -64,7 +65,7 @@ Future<bool> runGithubBind(AuthApi api) async {
     if (!launched) {
       throw const OAuthLoopbackException('无法打开浏览器完成 GitHub 绑定');
     }
-    return await _waitForCode(server) == 'bound';
+    return await waitForOAuthCode(server) == 'bound';
   } finally {
     await server.close(force: true);
   }
@@ -79,31 +80,43 @@ String _verifier() {
 String _challenge(String verifier) =>
     sha256.convert(utf8.encode(verifier)).toString();
 
-/// Serves exactly one callback request, closes the browser tab, and returns
-/// the `code` query parameter. The server is closed by the caller.
-Future<String> _waitForCode(HttpServer server) async {
-  final HttpRequest request;
+/// Ignores unrelated requests (e.g. favicon) without extending the deadline.
+Future<String> waitForOAuthCode(HttpServer server) async {
+  final requests = StreamIterator(server);
+  final deadline = DateTime.now().add(const Duration(minutes: 3));
   try {
-    request = await server.first.timeout(const Duration(minutes: 3));
-  } on Object {
+    while (await requests.moveNext().timeout(
+      deadline.difference(DateTime.now()),
+    )) {
+      final request = requests.current;
+      final uri = request.uri;
+      if (request.method != 'GET' ||
+          uri.path != '/callback' ||
+          (!uri.queryParameters.containsKey('code') &&
+              !uri.queryParameters.containsKey('error'))) {
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+        continue;
+      }
+      request.response.headers.contentType = ContentType.html;
+      final error = uri.queryParameters['error'];
+      final code = uri.queryParameters['code'];
+      request.response.write(
+        '<html><body style="font-family:sans-serif"><p>'
+        '${error == null && code != null && code.isNotEmpty ? '授权已完成，可以返回 LKM 桌面端。' : '授权失败，请返回 LKM 桌面端重试。'}'
+        '</p></body></html>',
+      );
+      await request.response.close();
+      if (error != null && error.isNotEmpty)
+        throw OAuthLoopbackException(error);
+      if (code == null || code.isEmpty)
+        throw const OAuthLoopbackException('GitHub 回调缺少授权码');
+      return code;
+    }
+    throw const OAuthLoopbackException('授权回调已关闭');
+  } on TimeoutException {
     throw const OAuthLoopbackException('等待 GitHub 授权回调超时');
+  } finally {
+    await requests.cancel();
   }
-  final uri = request.uri;
-  request.response.headers.contentType = ContentType.html;
-  request.response.write(
-    '<html><body style="font-family:sans-serif">'
-    '<p>授权已完成，可以关闭此页面并返回 LKM 桌面端。</p>'
-    '</body></html>',
-  );
-  await request.response.close();
-
-  final error = uri.queryParameters['error'];
-  if (error != null && error.isNotEmpty) {
-    throw OAuthLoopbackException(error);
-  }
-  final code = uri.queryParameters['code'];
-  if (code == null || code.isEmpty) {
-    throw const OAuthLoopbackException('GitHub 回调缺少授权码');
-  }
-  return code;
 }

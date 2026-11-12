@@ -3,7 +3,27 @@ import 'package:island/core/services/deeplink_service.dart';
 import 'package:island/route.dart';
 
 void main() {
+  setUp(() {
+    DeeplinkService().configureSiteUrl(() => 'https://community.example');
+  });
+  tearDown(() => DeeplinkService().dispose());
   final router = AppRouter();
+
+  test('links follow runtime changes and preserve configured ports', () {
+    var server = 'http://localhost:8088/api?ignored=1#fragment';
+    DeeplinkService().configureSiteUrl(() => server);
+    expect(
+      lkmLinkWebUrl(Uri.parse('lkm://posts/123')).toString(),
+      'http://localhost:8088/posts/123',
+    );
+    expect(isLkmWebUri(Uri.parse('http://localhost:8089/posts/123')), isFalse);
+    server = 'https://another.example';
+    expect(
+      buildChatRoomShareUrl(scope: 'a', slug: 'b').toString(),
+      'https://another.example/chat/a/b',
+    );
+    expect(isLkmWebUri(Uri.parse('http://localhost:8088/posts/123')), isFalse);
+  });
 
   group('isKnownInAppRoutePath', () {
     test('accepts every concrete in-app route', () {
@@ -57,32 +77,32 @@ void main() {
   test('lkmLinkWebUrl maps custom-scheme links to the web app', () {
     expect(
       lkmLinkWebUrl(Uri.parse('lkm://posts/123'))?.toString(),
-      'https://lkm-ahz.ltd/posts/123',
+      'https://community.example/posts/123',
+    );
+    expect(
+      lkmLinkWebUrl(Uri.parse('lkm://posts/123?tab=comments'))?.toString(),
+      'https://community.example/posts/123?tab=comments',
     );
     expect(
       lkmLinkWebUrl(
-        Uri.parse('lkm://posts/123?tab=comments'),
+        Uri.parse('https://community.example/posts/123'),
       )?.toString(),
-      'https://lkm-ahz.ltd/posts/123?tab=comments',
-    );
-    expect(
-      lkmLinkWebUrl(Uri.parse('https://lkm-ahz.ltd/posts/123'))?.toString(),
-      'https://lkm-ahz.ltd/posts/123',
+      'https://community.example/posts/123',
     );
     expect(lkmLinkWebUrl(Uri.parse('https://example.com/x')), isNull);
-    expect(lkmLinkWebUrl(Uri.parse('https://api.lkm-ahz.ltd/x')), isNull);
+    expect(lkmLinkWebUrl(Uri.parse('https://api.community.example/x')), isNull);
   });
 
-  test('lkmLinkBrowserUrl avoids Android app-link re-entry', () {
+  test('lkmLinkBrowserUrl preserves the configured host', () {
     expect(
       lkmLinkBrowserUrl(Uri.parse('lkm://posts/123'))?.toString(),
-      'https://www.lkm-ahz.ltd/posts/123',
+      'https://community.example/posts/123',
     );
     expect(
       lkmLinkBrowserUrl(
-        Uri.parse('https://lkm-ahz.ltd/nonexistent'),
+        Uri.parse('https://community.example/nonexistent'),
       )?.toString(),
-      'https://www.lkm-ahz.ltd/nonexistent',
+      'https://community.example/nonexistent',
     );
     expect(lkmLinkBrowserUrl(Uri.parse('https://example.com/x')), isNull);
   });

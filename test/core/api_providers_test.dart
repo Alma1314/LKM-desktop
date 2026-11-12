@@ -71,7 +71,7 @@ void main() {
 
       final error = container
           .read(lkmServerUrlProvider.notifier)
-          .setServer('lkm-ahz.ltd');
+          .setServer('community.example');
 
       expect(error, isNotNull);
       expect(container.read(lkmServerUrlProvider), kLkmServerDefault);
@@ -91,7 +91,7 @@ void main() {
       );
 
       final probe = await LkmServerProbe.check(
-        'https://lkm-ahz.ltd',
+        'https://community.example',
         dio: _dio(adapter),
       );
 
@@ -101,7 +101,7 @@ void main() {
       expect(probe.dependencies['db'], 'up');
       expect(
         adapter.requests.single.uri.toString(),
-        'https://lkm-ahz.ltd/api/v1/health',
+        'https://community.example/api/v1/health',
       );
     });
 
@@ -116,7 +116,7 @@ void main() {
       );
 
       final probe = await LkmServerProbe.check(
-        'https://lkm-ahz.ltd',
+        'https://community.example',
         dio: _dio(adapter),
       );
 

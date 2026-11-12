@@ -31,6 +31,9 @@ android {
 
     defaultConfig {
         applicationId = "ltd.lkmahz.desktop"
+        manifestPlaceholders["lkmAppLinkHost"] = providers.gradleProperty("LKM_APP_LINK_HOST")
+            .orElse(providers.environmentVariable("LKM_APP_LINK_HOST"))
+            .orElse("localhost").get()
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26

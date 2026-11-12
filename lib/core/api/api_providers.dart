@@ -22,7 +22,7 @@ class LkmServerUrlNotifier extends Notifier<String> {
     try {
       normalizeApiBase(candidate);
     } on ArgumentError {
-      return '请输入完整的地址，例如 https://lkm-ahz.ltd';
+      return '请输入完整的地址，例如 https://community.example';
     }
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(kLkmServerStoreKey, candidate);

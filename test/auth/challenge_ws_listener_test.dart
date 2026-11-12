@@ -155,6 +155,7 @@ void main() {
 
     listener.handleSocketState(const WebSocketState.connected());
     await waitForRequests(1);
+    await waitForEvents(1);
     listener.handleSocketState(const WebSocketState.disconnected());
     listener.handleSocketState(const WebSocketState.connected());
     await waitForRequests(2);

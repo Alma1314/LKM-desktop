@@ -64,7 +64,7 @@ void main() {
     Uri? captured;
     final fake = _FakeWsChannel();
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd/api/v1',
+      serverUrl: 'https://community.example/api/v1',
       tokenProvider: () => 'tok',
       connect: (uri) {
         captured = uri;
@@ -76,7 +76,7 @@ void main() {
     client.connect();
 
     expect(captured!.scheme, 'wss');
-    expect(captured!.host, 'lkm-ahz.ltd');
+    expect(captured!.host, 'community.example');
     expect(captured!.path, '/api/v1/ws/events');
     expect(captured!.queryParameters['token'], 'tok');
     expect(captured!.queryParameters['channels'], 'upload,notify');
@@ -85,7 +85,7 @@ void main() {
   test('signed out means no socket is opened', () async {
     var attempts = 0;
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       tokenProvider: () => null,
       connect: (_) {
         attempts += 1;
@@ -103,7 +103,7 @@ void main() {
   test('answers a server ping with pong', () async {
     final fake = _FakeWsChannel();
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       tokenProvider: () => 'tok',
       connect: (_) => fake,
     );
@@ -122,7 +122,7 @@ void main() {
     var token = 'tok-old';
     final fake = _FakeWsChannel();
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       tokenProvider: () => token,
       connect: (_) => fake,
     );
@@ -145,7 +145,7 @@ void main() {
   test('decodes push events and drops frames without an event name', () async {
     final fake = _FakeWsChannel();
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       tokenProvider: () => 'tok',
       connect: (_) => fake,
     );
@@ -173,7 +173,7 @@ void main() {
     var attempts = 0;
     final channels = <_FakeWsChannel>[];
     final client = LkmWsClient(
-      serverUrl: 'https://lkm-ahz.ltd',
+      serverUrl: 'https://community.example',
       tokenProvider: () => 'tok',
       reconnectBaseDelay: const Duration(milliseconds: 10),
       connect: (_) {

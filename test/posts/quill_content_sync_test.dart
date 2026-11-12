@@ -29,6 +29,21 @@ SnPost _post(String id, String content) {
 }
 
 void main() {
+  test('selection and readOnly changes preserve exact source Markdown', () {
+    const source = '---\ntitle: Original\n---\n\n#  Heading\n\n<Widget />\n';
+    final state = ComposeLogic.createState();
+    addTearDown(() => ComposeLogic.dispose(state));
+    state.contentController.text = source;
+    state.contentQuillController.updateSelection(
+      const TextSelection.collapsed(offset: 1),
+      ChangeSource.local,
+    );
+    state.contentQuillController.readOnly = true;
+    state.contentQuillController.readOnly = false;
+    expect(state.contentController.text, source);
+    state.contentQuillController.replaceText(0, 0, 'Edited ', null);
+    expect(state.contentController.text, contains('Edited'));
+  });
   test('custom sticker/realm syntax survives the markdown round trip', () {
     const markdown = 'Hi @alice, check :realm+tech: and :sticker+fire:!';
     final exported = quillDeltaToMarkdown(markdownToQuillDelta(markdown));
@@ -147,7 +162,7 @@ void main() {
     expect(state.contentController.text, contains('just a normal sentence'));
   });
 
-test('pasting inline markdown keeps the rest of the line', () async {
+  test('pasting inline markdown keeps the rest of the line', () async {
     TestWidgetsFlutterBinding.ensureInitialized();
     const clipboard = '**bold**';
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

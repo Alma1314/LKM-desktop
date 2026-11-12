@@ -43,7 +43,7 @@ FeedPage _page(List<String> ids, {String? next}) =>
 Future<ProviderContainer> _container(_FakeTimeline fake) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final session = ApiSession(prefs: prefs, serverUrl: 'https://lkm-ahz.ltd');
+  final session = ApiSession(prefs: prefs, serverUrl: 'https://community.example');
   final container = ProviderContainer(
     overrides: [
       lkmApiSessionProvider.overrideWithValue(session),

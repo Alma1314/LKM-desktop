@@ -241,7 +241,7 @@ class MarkdownTextContent extends HookConsumerWidget {
   final MarkdownHeadingRegistry? headingAnchors;
 
   /// Whether a paragraph that is nothing but a Solian post link
-  /// (`https://lkm-ahz.ltd/posts/<id>`, `lkm://posts/<id>`) renders as an
+  /// (`https://community.example/posts/<id>`, `lkm://posts/<id>`) renders as an
   /// inline [PostLinkEmbed] preview.
   ///
   /// Off by default: surfaces that already draw a post card — a quoted reply, a

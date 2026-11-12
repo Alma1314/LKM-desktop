@@ -252,18 +252,7 @@ class FilesApi {
 
   /// Streams the bytes through the authenticated `/content` endpoint.
   Future<Uint8List> downloadBytes(String fileId) async {
-    try {
-      final response = await _client.dio.get<dynamic>(
-        '/files/$fileId/content',
-        options: Options(responseType: ResponseType.bytes),
-      );
-      final data = response.data;
-      if (data is List<int>) return Uint8List.fromList(data);
-      if (data is Uint8List) return data;
-      return Uint8List(0);
-    } on DioException catch (error) {
-      throw ApiTransportException('下载失败', cause: error);
-    }
+    return _client.getBytes('/files/$fileId/content');
   }
 
   /// Uploads [bytes] and returns the registered row (status `pending`).

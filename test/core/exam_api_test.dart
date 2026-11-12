@@ -40,7 +40,7 @@ ResponseBody _envelope(Object? data) =>
     _json({'code': 0, 'message': 'ok', 'data': data});
 
 ApiClient _client(_Adapter adapter) => ApiClient(
-  serverUrl: 'https://lkm-ahz.ltd',
+  serverUrl: 'https://community.example',
   dio: Dio()..httpClientAdapter = adapter,
 );
 

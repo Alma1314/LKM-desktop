@@ -7,13 +7,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:passkeys/authenticator.dart';
 import 'package:passkeys/types.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:island/auth/totp_setup_dialog.dart';
 
 import 'package:island/auth/login_controller.dart';
 import 'package:island/auth/oauth_desktop.dart';
 import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/auth_api.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
 
@@ -43,14 +44,15 @@ class AccountSecurityScreen extends HookConsumerWidget {
           api.passkeyCredentials(),
           api.me(),
         ]);
+        if (!context.mounted) return;
         settings.value = results[0] as LkmAccountSettings;
         credentials.value = results[1] as List<LkmPasskeyCredential>;
         me.value = results[2] as LkmAccount;
         nickname.text = me.value?.nickname ?? '';
       } catch (failure) {
-        error.value = _describe(failure);
+        if (context.mounted) error.value = _describe(failure);
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -66,9 +68,9 @@ class AccountSecurityScreen extends HookConsumerWidget {
       try {
         await action();
       } catch (failure) {
-        error.value = _describe(failure);
+        if (context.mounted) error.value = _describe(failure);
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
@@ -154,7 +156,7 @@ class AccountSecurityScreen extends HookConsumerWidget {
       if (enable) {
         final result = await showDialog<bool>(
           context: context,
-          builder: (_) => const _TotpSetupDialog(),
+          builder: (_) => const TotpSetupDialog(),
         );
         if (result == true) await load();
         return;
@@ -237,12 +239,29 @@ class AccountSecurityScreen extends HookConsumerWidget {
 
     Future<void> deletePasskey(LkmPasskeyCredential credential) =>
         run(() async {
-          if (settings.value?.has2fa == true) {
+          final api = ref.read(authApiProvider);
+          final session = ref.read(lkmApiSessionProvider);
+          // Let the server's trust window decide when to prompt, rather than
+          // collecting a fresh code for every deletion.
+          try {
+            await session.run(() => api.deletePasskey(credential.id));
+          } on ApiException catch (failure) {
+            if (failure.code != ApiCode.mfaRequired) rethrow;
+            if (!context.mounted) return;
+            if (settings.value?.has2fa != true) {
+              await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const TotpSetupDialog(),
+              );
+              await load();
+              return;
+            }
             final values = await _askTwoFactor(context);
             if (values == null) return;
-            final stepped = await ref
-                .read(authApiProvider)
-                .stepUpTotp(code: values.$1, recoveryCode: values.$2);
+            final stepped = await session.run(
+              () => api.stepUpTotp(code: values.$1, recoveryCode: values.$2),
+            );
             if (stepped.hasTokens) {
               await ref
                   .read(loginControllerProvider.notifier)
@@ -255,8 +274,8 @@ class AccountSecurityScreen extends HookConsumerWidget {
                     ),
                   );
             }
+            await session.run(() => api.deletePasskey(credential.id));
           }
-          await ref.read(authApiProvider).deletePasskey(credential.id);
           await load();
         });
 
@@ -535,136 +554,6 @@ Future<(String?, String?)?> _askTwoFactor(BuildContext context) async {
   if (result == null || result.isEmpty) return null;
   final digits = RegExp(r'^\d{6}$').hasMatch(result);
   return digits ? (result, null) : (null, result);
-}
-
-class _TotpSetupDialog extends HookConsumerWidget {
-  const _TotpSetupDialog();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final setup = useState<LkmTotpSetup?>(null);
-    final completed = useState<LkmTotpSetupComplete?>(null);
-    final code = useTextEditingController();
-    final busy = useState(false);
-    final error = useState<String?>(null);
-
-    useEffect(() {
-      Future.microtask(() async {
-        try {
-          setup.value = await ref.read(authApiProvider).beginTotpSetup();
-        } catch (failure) {
-          error.value = _describe(failure);
-        }
-      });
-      return null;
-    }, const []);
-
-    Future<void> verify() async {
-      if (busy.value) return;
-      busy.value = true;
-      error.value = null;
-      try {
-        final result = await ref
-            .read(authApiProvider)
-            .completeTotpSetup(code.text);
-        completed.value = result;
-      } catch (failure) {
-        error.value = _describe(failure);
-      } finally {
-        busy.value = false;
-      }
-    }
-
-    Future<void> confirm() async {
-      busy.value = true;
-      try {
-        await ref.read(authApiProvider).confirmTotpRecoveryCodes();
-        if (context.mounted) Navigator.pop(context, true);
-      } catch (failure) {
-        error.value = _describe(failure);
-      } finally {
-        busy.value = false;
-      }
-    }
-
-    return AlertDialog(
-      title: Text('authFlow.totpSetupTitle'.tr()),
-      content: SingleChildScrollView(
-        child: completed.value != null
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('authFlow.recoveryCodesHint'.tr()),
-                  const SizedBox(height: 8),
-                  for (final item in completed.value!.recoveryCodes)
-                    SelectableText(item),
-                  if (error.value != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      error.value!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ],
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (setup.value != null) ...[
-                    Center(
-                      child: QrImageView(
-                        data: setup.value!.qrCodeUri,
-                        size: 180,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SelectableText(
-                      setup.value!.secret,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  TextField(
-                    controller: code,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'authFlow.totpCode'.tr(),
-                    ),
-                  ),
-                  if (error.value != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      error.value!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy.value ? null : () => Navigator.pop(context),
-          child: Text('cancel'.tr()),
-        ),
-        if (completed.value == null)
-          FilledButton(
-            onPressed: busy.value || setup.value == null ? null : verify,
-            child: Text('authFlow.verify'.tr()),
-          )
-        else
-          FilledButton(
-            onPressed: busy.value ? null : confirm,
-            child: Text('authFlow.saved'.tr()),
-          ),
-      ],
-    );
-  }
 }
 
 String _describe(Object failure) {

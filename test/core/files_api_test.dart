@@ -46,6 +46,64 @@ const _fileRow = {
 };
 
 void main() {
+  test(
+    'download rejects business errors and HTTP errors instead of saving them',
+    () async {
+      for (final status in [200, 403]) {
+        final adapter = _Adapter(
+          (_) => ResponseBody.fromString(
+            jsonEncode({
+              'code': ApiCode.forbidden,
+              'message': 'Denied',
+              'data': null,
+            }),
+            status,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          ),
+        );
+        final api = FilesApi(
+          ApiClient(
+            serverUrl: 'https://example.com',
+            dio: Dio()..httpClientAdapter = adapter,
+          ),
+        );
+        await expectLater(
+          api.downloadBytes('f1'),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.code,
+              'code',
+              ApiCode.forbidden,
+            ),
+          ),
+        );
+      }
+    },
+  );
+
+  test('a JSON attachment is preserved as file content', () async {
+    final content = jsonEncode({'code': 2, 'message': 'data, not an error'});
+    final adapter = _Adapter(
+      (_) => ResponseBody.fromString(
+        content,
+        200,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+          'content-disposition': ['attachment; filename=data.json'],
+        },
+      ),
+    );
+    final api = FilesApi(
+      ApiClient(
+        serverUrl: 'https://example.com',
+        dio: Dio()..httpClientAdapter = adapter,
+      ),
+    );
+    expect(utf8.decode(await api.downloadBytes('f1')), content);
+  });
+
   test('MIME filtering scans later pages before paginating matches', () async {
     final adapter = _Adapter((options) {
       final page = options.queryParameters['page'] as int;
@@ -111,7 +169,7 @@ void main() {
     });
     final files = FilesApi(
       ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd',
+        serverUrl: 'https://community.example',
         dio: Dio()..httpClientAdapter = api,
       ),
       putClient: Dio()..httpClientAdapter = put,
@@ -159,7 +217,7 @@ void main() {
     });
     final files = FilesApi(
       ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd',
+        serverUrl: 'https://community.example',
         dio: Dio()..httpClientAdapter = api,
       ),
       putClient: Dio()..httpClientAdapter = _Adapter((_) => _json({})),
@@ -190,14 +248,14 @@ void main() {
   test('previewUrl strips the API prefix and points at the preview route', () {
     final files = FilesApi(
       ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd/api/v1',
+        serverUrl: 'https://community.example/api/v1',
         dio: Dio()..httpClientAdapter = _Adapter((_) => _json({})),
       ),
     );
 
     expect(
       files.previewUrl('f1'),
-      'https://lkm-ahz.ltd/api/v1/files/f1/preview',
+      'https://community.example/api/v1/files/f1/preview',
     );
   });
 
@@ -228,7 +286,7 @@ void main() {
     );
     final files = FilesApi(
       ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd',
+        serverUrl: 'https://community.example',
         dio: Dio()..httpClientAdapter = api,
       ),
     );
@@ -258,7 +316,7 @@ void main() {
     });
     final files = FilesApi(
       ApiClient(
-        serverUrl: 'https://lkm-ahz.ltd',
+        serverUrl: 'https://community.example',
         dio: Dio()..httpClientAdapter = api,
       ),
     );

@@ -133,8 +133,8 @@ const double _kGroupMaxWidth = 720;
 /// invisible, so the ink flips with the brightness while the hue stays put.
 Color _liveColor(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF6FD39A)
-        : const Color(0xFF2E7D48);
+    ? const Color(0xFF6FD39A)
+    : const Color(0xFF2E7D48);
 
 EdgeInsets _pageGutter(BuildContext context, {double vertical = 0}) {
   final width = MediaQuery.sizeOf(context).width;
@@ -549,10 +549,7 @@ class _DeviceRow extends StatelessWidget {
                           color: colorScheme.tertiary,
                         ),
                       ],
-                      if (device.isOnline) ...[
-                        const Gap(6),
-                        const _LiveDot(),
-                      ],
+                      if (device.isOnline) ...[const Gap(6), const _LiveDot()],
                     ],
                   ),
                   const Gap(3),
@@ -634,12 +631,7 @@ class _SessionTile extends HookConsumerWidget {
         InkWell(
           onTap: () => detailsExpanded.value = !detailsExpanded.value,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              _kRowGutter + depth * 16,
-              12,
-              8,
-              12,
-            ),
+            padding: EdgeInsets.fromLTRB(_kRowGutter + depth * 16, 12, 8, 12),
             child: Row(
               children: [
                 if (hasChildren)
@@ -870,7 +862,6 @@ class _DeviceDetailSheet extends HookConsumerWidget {
         longitudes.reduce((a, b) => a + b) / longitudes.length,
       );
     }, [sessionsWithLocation]);
-
 
     Future<void> logoutSession(String sessionId) async {
       final confirm = await showConfirmAlert(
@@ -1169,8 +1160,7 @@ class _LocationBand extends StatelessWidget {
                 TileLayer(
                   retinaMode: true,
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName:
-                      'Phientist/1.0 (+https://lkm-ahz.ltd)',
+                  userAgentPackageName: 'LKM-Desktop/1.0',
                 ),
                 RichAttributionWidget(
                   popupInitialDisplayDuration: const Duration(seconds: 0),
@@ -1472,8 +1462,9 @@ class AccountSessionSheet extends HookConsumerWidget {
                   logoutAllOtherSessions: logoutAllOtherSessions,
                   ref: ref,
                   selectedType: sessionType,
-                  onTypeChanged: (type) =>
-                      ref.read(sessionTypeFilterProvider.notifier).setType(type),
+                  onTypeChanged: (type) => ref
+                      .read(sessionTypeFilterProvider.notifier)
+                      .setType(type),
                 ),
               ],
             ),
@@ -1819,8 +1810,7 @@ class _SessionsTab extends StatelessWidget {
                 child: Text(
                   [
                     'authSessionsCount'.plural(sessions.length),
-                    if (online > 0)
-                      'friendsOnlineCount'.tr(args: ['$online']),
+                    if (online > 0) 'friendsOnlineCount'.tr(args: ['$online']),
                   ].join('  ·  '),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -1837,10 +1827,7 @@ class _SessionsTab extends StatelessWidget {
             child: _GroupBox(
               children: [
                 for (final session in deviceSessions)
-                  _SessionTile(
-                    session: session,
-                    logoutSession: logoutSession,
-                  ),
+                  _SessionTile(session: session, logoutSession: logoutSession),
               ],
             ),
           ),
@@ -1858,10 +1845,7 @@ class _SessionsTab extends StatelessWidget {
             child: _GroupBox(
               children: [
                 for (final session in browserSessions)
-                  _SessionTile(
-                    session: session,
-                    logoutSession: logoutSession,
-                  ),
+                  _SessionTile(session: session, logoutSession: logoutSession),
               ],
             ),
           ),
@@ -1875,9 +1859,7 @@ class _SessionsTab extends StatelessWidget {
                 onPressed: logoutAllOtherSessions,
                 icon: const Icon(Symbols.logout, size: 18),
                 label: Text('authLogoutAllOtherSessions'.tr()),
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.error,
-                ),
+                style: TextButton.styleFrom(foregroundColor: colorScheme.error),
               ),
             ),
           ),

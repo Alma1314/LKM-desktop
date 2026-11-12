@@ -30,7 +30,9 @@ class DocumentStore {
       ),
     );
     if (snapshot &&
-        (history.isEmpty || history.first['content'] != document['content'])) {
+        (history.isEmpty ||
+            history.first['content'] != document['content'] ||
+            history.first['title'] != document['title'])) {
       history.insert(0, {
         'content': document['content'],
         'title': document['title'],

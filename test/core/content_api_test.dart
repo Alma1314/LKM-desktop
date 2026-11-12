@@ -39,7 +39,7 @@ ResponseBody _envelope(Object? data) =>
 
 ContentApi _api(_Adapter adapter) => ContentApi(
   ApiClient(
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: Dio()..httpClientAdapter = adapter,
   ),
 );
@@ -89,7 +89,7 @@ void main() {
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
-    expect(request.uri.toString(), 'https://lkm-ahz.ltd/graphql/v1');
+    expect(request.uri.toString(), 'https://community.example/graphql/v1');
     expect((request.data as Map)['variables'], {'id': _graphItem['id']});
     expect((request.data as Map)['query'], contains('contentItem'));
 
@@ -204,7 +204,7 @@ void main() {
     final state = await _api(adapter).viewerState(_graphItem['id'] as String);
 
     final request = adapter.requests.single;
-    expect(request.uri.toString(), 'https://lkm-ahz.ltd/graphql/v1');
+    expect(request.uri.toString(), 'https://community.example/graphql/v1');
     expect((request.data as Map)['variables'], {'contentId': _graphItem['id']});
     expect(state!.liked, isTrue);
     expect(state.favorited, isFalse);
@@ -318,7 +318,7 @@ void main() {
 
     expect(
       adapter.requests.single.uri.toString(),
-      'https://lkm-ahz.ltd/graphql/v1',
+      'https://community.example/graphql/v1',
     );
     expect(boards.map((b) => b.id), ['b1', 'b2']);
     expect(boards.first.isActive, isTrue);

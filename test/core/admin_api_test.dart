@@ -67,7 +67,7 @@ String _token({Duration ttl = const Duration(hours: 1), String id = ''}) {
 }
 
 ApiClient _client(_Adapter adapter) => ApiClient(
-  serverUrl: 'https://lkm-ahz.ltd',
+  serverUrl: 'https://community.example',
   dio: Dio()..httpClientAdapter = adapter,
 );
 

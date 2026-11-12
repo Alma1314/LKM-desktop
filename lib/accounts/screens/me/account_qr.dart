@@ -94,7 +94,9 @@ class AccountQrScreen extends HookConsumerWidget {
     }
 
     final account = user.value!;
-    final profileUrl = 'https://lkm-ahz.ltd/accounts/${account.name}';
+    final profileUrl = DeeplinkService().siteOrigin
+        .replace(pathSegments: ['accounts', account.name])
+        .toString();
     final transferWallet = wallet.value;
     final requestData = activeTransferRequest.value;
     final transferQrData = requestData != null
@@ -1267,8 +1269,7 @@ String? _resolveScannedAccountName(String rawValue) {
   final uri = Uri.tryParse(value);
   if (uri != null) {
     final segments = uri.pathSegments;
-    final isLkmHost =
-        uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd');
+    final isLkmHost = isLkmWebUri(uri);
     if (isLkmHost && segments.length >= 2 && segments.first == 'accounts') {
       final name = segments[1].trim();
       return name.isEmpty ? null : name;

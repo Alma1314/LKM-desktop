@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:island/core/services/event_bus.dart';
+import 'package:island/core/config.dart';
 import 'package:protocol_handler/protocol_handler.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -19,6 +20,13 @@ class DeeplinkService {
     'ltd.lkmahz.desktop/deeplink',
   );
   void Function(Uri uri)? _onDeepLink;
+  String Function()? _siteUrl;
+
+  /// Reads the currently selected deployment, including changes in settings.
+  Uri get siteOrigin =>
+      Uri.parse('${Uri.parse(_siteUrl?.call() ?? kLkmServerDefault).origin}/');
+
+  void configureSiteUrl(String Function() readUrl) => _siteUrl = readUrl;
 
   void initialize({required void Function(Uri uri) onDeepLink}) {
     _onDeepLink = onDeepLink;
@@ -74,6 +82,7 @@ class DeeplinkService {
     _lkmDeepLinkSub?.cancel();
     _lkmDeepLinkSub = null;
     _onDeepLink = null;
+    _siteUrl = null;
 
     if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
       _nativeChannel.setMethodCallHandler(null);
@@ -103,7 +112,7 @@ String? parseWalletTransferRequestId(String rawValue) {
       segments[0] == 'transfer' &&
       segments[1] == 'requests';
   final isWebWalletTransferRequest =
-      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
+      isLkmWebUri(uri) &&
       segments.length >= 3 &&
       segments[0] == 'wallet' &&
       segments[1] == 'transfer' &&
@@ -136,7 +145,7 @@ String? parseAuthQrChallengeId(String rawValue) {
       segments.length == 2 &&
       segments[0] == 'qr';
   final isWebQrLogin =
-      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
+      isLkmWebUri(uri) &&
       segments.length >= 3 &&
       segments[0] == 'auth' &&
       segments[1] == 'qr';
@@ -167,9 +176,7 @@ String? parseWalletOrderId(String rawValue) {
       (uri.host == 'orders' || uri.host == 'order') &&
       segments.length == 1;
   final isWebOrder =
-      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
-      segments.length >= 2 &&
-      segments[0] == 'orders';
+      isLkmWebUri(uri) && segments.length >= 2 && segments[0] == 'orders';
 
   if (isLkmOrder) {
     final id = segments[0].trim();
@@ -204,7 +211,7 @@ PhysicalPassportDeepLink? parsePhysicalPassportDeepLink(String rawValue) {
 
   final isLkmPhpass = uri.scheme == 'lkm' && uri.host == 'phpass';
   final isWebPhpass =
-      (uri.host == 'lkm-ahz.ltd' || uri.host.endsWith('.lkm-ahz.ltd')) &&
+      isLkmWebUri(uri) &&
       uri.pathSegments.isNotEmpty &&
       uri.pathSegments[0] == 'phpass';
 
@@ -246,13 +253,13 @@ class _ProtocolListener implements ProtocolListener {
 }
 
 /// True when [uri] points at the LKM web app itself — its routes map 1:1
-/// onto in-app routes. Subdomains (api., nt., fs., …) serve other apps and
-/// are NOT in-app routes.
+/// onto in-app routes. Scheme, host and port must match the selected deployment.
 bool isLkmWebUri(Uri uri) =>
-    (uri.scheme == 'http' || uri.scheme == 'https') && uri.host == 'lkm-ahz.ltd';
+    (uri.scheme == 'http' || uri.scheme == 'https') &&
+    uri.origin == DeeplinkService().siteOrigin.origin;
 
 /// Converts a LKM link — either the `lkm://host/path` custom scheme or
-/// the web app URL `https://lkm-ahz.ltd/path` — into the matching in-app route
+/// the web app URL `https://community.example/path` — into the matching in-app route
 /// path (`/host/path` and `/path` respectively). Returns null when [uri] is
 /// not a LKM link.
 String? lkmLinkToRoutePath(Uri uri) {
@@ -265,7 +272,7 @@ String? lkmLinkToRoutePath(Uri uri) {
   } else {
     return null;
   }
-  // Normalize trailing slashes so `https://lkm-ahz.ltd/orders/123/` matches
+  // Normalize trailing slashes so `https://community.example/orders/123/` matches
   // the `/orders/:id` route instead of the 404 catch-all.
   if (path.length > 1 && path.endsWith('/')) {
     path = path.substring(0, path.length - 1);
@@ -279,7 +286,7 @@ String? lkmLinkToRoutePath(Uri uri) {
 }
 
 /// Normalizes a raw action URI to an in-app route path. Handles
-/// `lkm://…`, `https://lkm-ahz.ltd/…` and bare `/…` paths. Returns null
+/// `lkm://…`, `https://community.example/…` and bare `/…` paths. Returns null
 /// when the value should be opened externally instead.
 String? actionUriToRoutePath(String rawValue) {
   final value = rawValue.trim();
@@ -289,29 +296,25 @@ String? actionUriToRoutePath(String rawValue) {
   return lkmLinkToRoutePath(uri);
 }
 
-/// The `https://lkm-ahz.ltd/…` web URL equivalent of a LKM link, for
+/// The `https://community.example/…` web URL equivalent of a LKM link, for
 /// opening in the browser when the app doesn't implement the route in-app.
-/// Returns [uri] itself for `https://lkm-ahz.ltd/…` links and null for
+/// Returns [uri] itself for `https://community.example/…` links and null for
 /// anything else.
 Uri? lkmLinkWebUrl(Uri uri) {
   if (isLkmWebUri(uri)) return uri;
   if (uri.scheme != 'lkm') return null;
   final path = uri.path.isEmpty ? '' : uri.path;
-  final webUrl = Uri.https('lkm-ahz.ltd', '${uri.host}$path');
+  final webUrl = DeeplinkService().siteOrigin.replace(
+    path: '/${uri.host}$path',
+  );
   return uri.queryParameters.isEmpty
       ? webUrl
       : webUrl.replace(queryParameters: uri.queryParameters);
 }
 
-/// Returns a LKM web URL on a host that is not claimed by the Android app.
-///
-/// Android app links can route `lkm-ahz.ltd` back into this app even when the
-/// caller explicitly requests an external application. Use this URL when a
-/// LKM route is not implemented in-app and must be opened in a browser.
-Uri? lkmLinkBrowserUrl(Uri uri) {
-  final webUrl = lkmLinkWebUrl(uri);
-  return webUrl?.replace(host: 'www.lkm-ahz.ltd');
-}
+/// Returns the configured web URL without inventing an alternate host.
+/// Android callers use a browser view to avoid app-link re-entry.
+Uri? lkmLinkBrowserUrl(Uri uri) => lkmLinkWebUrl(uri);
 
 /// True when [path] resolves to a concrete route in [router]'s tree — i.e.
 /// anything other than the 404 catch-all. Use to guard `navigatePath` so
@@ -338,9 +341,8 @@ bool tryNavigateToRoutePath(StackRouter router, String path) {
 /// Handles an action URI consistently across notifications and deep links.
 ///
 /// Concrete in-app routes are navigated in-app. Unknown LKM routes are
-/// opened on the web; Android uses `www.lkm-ahz.ltd` to avoid re-entering the
-/// app through its verified app link. Other external URLs are passed through
-/// unchanged.
+/// opened on the configured website; Android uses a browser view to avoid
+/// app-link re-entry. Other external URLs are passed through unchanged.
 Future<bool> handleActionUri(StackRouter router, String rawValue) async {
   final routePath = actionUriToRoutePath(rawValue);
   if (routePath != null && tryNavigateToRoutePath(router, routePath)) {
@@ -348,7 +350,7 @@ Future<bool> handleActionUri(StackRouter router, String rawValue) async {
   }
 
   final uri = rawValue.trim().startsWith('/')
-      ? Uri.tryParse('https://lkm-ahz.ltd${rawValue.trim()}')
+      ? DeeplinkService().siteOrigin.resolve(rawValue.trim())
       : Uri.tryParse(rawValue.trim());
   if (uri == null) return false;
 
@@ -360,14 +362,16 @@ Future<bool> handleActionUri(StackRouter router, String rawValue) async {
 
   return launchUrlString(
     launchUri.toString(),
-    mode: LaunchMode.externalApplication,
+    mode: !kIsWeb && Platform.isAndroid && lkmWebUrl != null
+        ? LaunchMode.inAppBrowserView
+        : LaunchMode.externalApplication,
   );
 }
 
-/// The web URL of a shareable chat room: `https://lkm-ahz.ltd/chat/<scope>/<slug>`
+/// The web URL of a shareable chat room: `https://community.example/chat/<scope>/<slug>`
 /// where [scope] is the owner account name or the realm slug.
 Uri buildChatRoomShareUrl({required String scope, required String slug}) =>
-    Uri.https('lkm-ahz.ltd', 'chat/$scope/$slug');
+    DeeplinkService().siteOrigin.replace(pathSegments: ['chat', scope, slug]);
 
 class ChatRoomShareLink {
   final String scope;
@@ -377,12 +381,11 @@ class ChatRoomShareLink {
 }
 
 /// The path segments of a LKM link, however it arrives: the web app URL
-/// (`https://lkm-ahz.ltd/...`, `www.lkm-ahz.ltd`) or the `lkm://host/...`
+/// on the configured origin or the `lkm://host/...`
 /// custom scheme, whose authority becomes the first segment. Returns null when
 /// [uri] is not a LKM link at all.
 ///
-/// Subdomains are deliberately left out: `api.`, `nt.` and `fs.lkm-ahz.ltd`
-/// serve other apps, not the routes these segments are read for.
+/// Other origins are deliberately left out, including unconfigured aliases.
 List<String>? lkmLinkPathSegments(Uri uri) {
   if (uri.scheme == 'lkm') {
     // `lkm://chat/room/slug` puts `chat` in the authority, so the path is
@@ -393,14 +396,13 @@ List<String>? lkmLinkPathSegments(Uri uri) {
     if (path.startsWith('//')) path = path.substring(1);
     return Uri.parse(path).pathSegments.where((s) => s.isNotEmpty).toList();
   }
-  if ((uri.scheme == 'http' || uri.scheme == 'https') &&
-      (uri.host == 'lkm-ahz.ltd' || uri.host == 'www.lkm-ahz.ltd')) {
+  if (isLkmWebUri(uri)) {
     return uri.pathSegments.where((s) => s.isNotEmpty).toList();
   }
   return null;
 }
 
-/// The post id in a LKM post link — `https://lkm-ahz.ltd/posts/<id>` or
+/// The post id in a LKM post link — `https://community.example/posts/<id>` or
 /// `lkm://posts/<id>`. Returns null for anything else, or for an empty id.
 String? parsePostLinkId(Uri uri) {
   final segments = lkmLinkPathSegments(uri);
@@ -417,7 +419,7 @@ String? parsePostLinkId(Uri uri) {
 ChatRoomShareLink? parseChatRoomShareLink(String rawValue) {
   final value = rawValue.trim();
   final uri = value.startsWith('/')
-      ? Uri.tryParse('https://lkm-ahz.ltd$value')
+      ? DeeplinkService().siteOrigin.resolve(value)
       : Uri.tryParse(value);
   if (uri == null) return null;
 
@@ -430,4 +432,3 @@ ChatRoomShareLink? parseChatRoomShareLink(String rawValue) {
   if (scope.isEmpty || slug.isEmpty) return null;
   return ChatRoomShareLink(scope: scope, slug: slug);
 }
-

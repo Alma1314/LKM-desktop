@@ -88,7 +88,7 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
   final dio = Dio()..httpClientAdapter = adapter;
   final session = ApiSession(
     prefs: prefs,
-    serverUrl: 'https://lkm-ahz.ltd',
+    serverUrl: 'https://community.example',
     dio: dio,
     refreshDio: dio,
   );
@@ -99,8 +99,7 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
       lkmDeviceIdProvider.overrideWith((ref) async => 'device-test'),
       // Identity translator: assertions compare keys, not rendered copy.
       authTranslatorProvider.overrideWithValue((key, args) => key),
-      if (ceremony != null)
-        passkeyCeremonyProvider.overrideWithValue(ceremony),
+      if (ceremony != null) passkeyCeremonyProvider.overrideWithValue(ceremony),
     ],
   );
   addTearDown(container.dispose);
@@ -110,6 +109,57 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('mandatory setup is handed off without adopting a session', () async {
+    final setup = await _setup(
+      (options) => _envelope(
+        options.path == '/auth/challenge'
+            ? _challenge
+            : {
+                'status': 'setup_required',
+                'setup_required': true,
+                'requires_2fa': true,
+                'temp_token': 'setup-only',
+                'user_id': 'u-1',
+                'account_level': 'admin',
+              },
+      ),
+    );
+    final controller = setup.container.read(loginControllerProvider.notifier);
+    await controller.beginPassword('alma');
+    await controller.submitPassword('secret');
+    final state = setup.container.read(loginControllerProvider);
+    expect(state.setup?.tempToken, 'setup-only');
+    expect(state.oauthTempToken, isNull);
+    expect(state.challenge, isNull);
+    expect(setup.container.read(lkmApiSessionProvider).isSignedIn, isFalse);
+  });
+
+  test(
+    'magic link uses query endpoints and adopts tokens without a 2FA prompt',
+    () async {
+      final setup = await _setup((options) {
+        if (options.path == '/auth/login/magic-link/request') {
+          expect(options.queryParameters, {'email': 'alma@example.com'});
+          return _envelope(null);
+        }
+        if (options.path == '/auth/login/magic-link/verify') {
+          expect(options.queryParameters, {'token': 'magic-token'});
+          return _envelope(_complete);
+        }
+        return _envelope(_me);
+      });
+      final controller = setup.container.read(loginControllerProvider.notifier);
+      await controller.requestMagicLink(' alma@example.com ');
+      await controller.verifyMagicLink(
+        'https://example.com/auth/login/magic-link/verify?token=magic-token',
+      );
+      final state = setup.container.read(loginControllerProvider);
+      expect(state.signedIn, isTrue);
+      expect(state.oauthTempToken, isNull);
+      expect(state.setup, isNull);
+    },
+  );
 
   test('opening a password challenge shows the password factor', () async {
     final setup = await _setup((_) => _envelope(_challenge));
@@ -268,7 +318,8 @@ void main() {
   test('email registration signs the account in', () async {
     final setup = await _setup((options) {
       if (options.path.contains('/auth/me')) return _envelope(_me);
-      if (options.path.contains('/reg/email/verify')) return _envelope(_complete);
+      if (options.path.contains('/reg/email/verify'))
+        return _envelope(_complete);
       return _envelope({'message': 'sent'});
     });
     final controller = setup.container.read(loginControllerProvider.notifier);
@@ -336,12 +387,13 @@ void main() {
             'challenge_id': 'wac-1',
             'public_key': {
               'challenge': 'abc',
-              'rpId': 'lkm-ahz.ltd',
+              'rpId': 'community.example',
               'allowCredentials': const [],
             },
           });
         }
-        if (options.path.contains('/passkey/complete')) return _envelope(_complete);
+        if (options.path.contains('/passkey/complete'))
+          return _envelope(_complete);
         return _envelope({
           ..._challenge,
           'factors': [
@@ -372,23 +424,20 @@ void main() {
   });
 
   test('a cancelled ceremony keeps the challenge open', () async {
-    final setup = await _setup(
-      (options) {
-        if (options.path.contains('/passkey/start')) {
-          return _envelope({
-            'challenge_id': 'wac-1',
-            'public_key': {'challenge': 'abc', 'rpId': 'lkm-ahz.ltd'},
-          });
-        }
+    final setup = await _setup((options) {
+      if (options.path.contains('/passkey/start')) {
         return _envelope({
-          ..._challenge,
-          'factors': [
-            {'kind': 'passkey', 'hint': null},
-          ],
+          'challenge_id': 'wac-1',
+          'public_key': {'challenge': 'abc', 'rpId': 'community.example'},
         });
-      },
-      ceremony: (_) async => throw Exception('user cancelled'),
-    );
+      }
+      return _envelope({
+        ..._challenge,
+        'factors': [
+          {'kind': 'passkey', 'hint': null},
+        ],
+      });
+    }, ceremony: (_) async => throw Exception('user cancelled'));
     final controller = setup.container.read(loginControllerProvider.notifier);
 
     await controller.beginPasskey('alma');

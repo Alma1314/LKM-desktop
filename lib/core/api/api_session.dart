@@ -36,8 +36,7 @@ class LkmTokenPair {
   final DateTime? accessExpiresAt;
   final DateTime? refreshExpiresAt;
 
-  bool get hasRefreshToken =>
-      refreshToken != null && refreshToken!.isNotEmpty;
+  bool get hasRefreshToken => refreshToken != null && refreshToken!.isNotEmpty;
 
   bool accessIsUsable(DateTime now) => _usable(accessExpiresAt, now);
 
@@ -118,7 +117,9 @@ DateTime? decodeJwtExpiry(String token) {
   final parts = token.split('.');
   if (parts.length < 2) return null;
   try {
-    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+    final payload = utf8.decode(
+      base64Url.decode(base64Url.normalize(parts[1])),
+    );
     final map = jsonDecode(payload);
     if (map is! Map) return null;
     final exp = map['exp'];
@@ -184,7 +185,7 @@ class ApiSession {
 
   final SharedPreferences _prefs;
 
-  /// Normalized base URL, e.g. `https://lkm-ahz.ltd/api/v1`.
+  /// Normalized base URL, e.g. `https://community.example/api/v1`.
   final String serverUrl;
 
   late final Dio _dio;
@@ -234,7 +235,11 @@ class ApiSession {
     await _prefs.remove(kLkmTokenPairStoreKey);
     if (!revoke || access == null || access.isEmpty) return;
     try {
-      await _client.post('/auth/logout');
+      // Local state is already cleared; carry the captured credential explicitly.
+      await _client.post(
+        '/auth/logout',
+        headers: {'Authorization': 'Bearer $access'},
+      );
     } catch (_) {
       // Local sign-out must succeed even when the server is unreachable.
     }
@@ -356,9 +361,7 @@ class ApiSession {
 
   bool _isFresh(DateTime? expiresAt) {
     if (expiresAt == null) return true;
-    return expiresAt.isAfter(
-      DateTime.now().add(kLkmTokenRefreshWindow),
-    );
+    return expiresAt.isAfter(DateTime.now().add(kLkmTokenRefreshWindow));
   }
 
   Future<void> _persist(LkmTokenPair pair) =>
