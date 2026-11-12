@@ -6196,5 +6196,28 @@
     "metric_memory_system_mb": "系統記憶體（MB）",
     "metric_thread_count": "執行緒數"
   },
-  "starHope": {"signIn": "登入後使用 StarHope"}
+  "starHope": {"signIn": "登入後使用 StarHope"},
+  "home": {
+    "personal": "個人看板",
+    "questions": "懸賞問答",
+    "projects": "招募專案",
+    "columns": "精選專欄文章",
+    "competitions": "競賽",
+    "leaderboard": "本週活躍榜",
+    "welcome": "歡迎來到理科迷",
+    "signIn": "登入後可查看積分、證書和個人內容。下方社群內容無需登入即可瀏覽。",
+    "bounty": "剩餘 {} 積分 · {}",
+    "projectDetail": "{} · {}",
+    "columnDetail": "{} · {}",
+    "competitionUpcoming": "即將開始 · {} · {} 分鐘",
+    "competitionOpen": "進行中 · {} · {} 分鐘",
+    "certificates": "已獲得證書",
+    "files": "檔案庫",
+    "empty": "暫無符合條件的內容",
+    "loadFailed": "此區塊載入失敗",
+    "viewAll": "查看全部"
+  },
+  "legalDocument": {
+    "language": "本文以簡體中文提供。"
+  }
 }

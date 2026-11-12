@@ -6344,5 +6344,28 @@
     "metric_memory_system_mb": "系统内存（MB）",
     "metric_thread_count": "线程数"
   },
-  "starHope": {"signIn": "登录后使用 StarHope"}
+  "starHope": {"signIn": "登录后使用 StarHope"},
+  "home": {
+    "personal": "个人看板",
+    "questions": "悬赏问答",
+    "projects": "招募项目",
+    "columns": "精选专栏文章",
+    "competitions": "竞赛",
+    "leaderboard": "本周活跃榜",
+    "welcome": "欢迎来到理科迷",
+    "signIn": "登录后可查看积分、证书和个人内容。下方社区内容无需登录即可浏览。",
+    "bounty": "剩余 {} 积分 · {}",
+    "projectDetail": "{} · {}",
+    "columnDetail": "{} · {}",
+    "competitionUpcoming": "即将开始 · {} · {} 分钟",
+    "competitionOpen": "进行中 · {} · {} 分钟",
+    "certificates": "已获得证书",
+    "files": "文件库",
+    "empty": "暂无符合条件的内容",
+    "loadFailed": "此区块加载失败",
+    "viewAll": "查看全部"
+  },
+  "legalDocument": {
+    "language": "本文以简体中文提供。"
+  }
 }

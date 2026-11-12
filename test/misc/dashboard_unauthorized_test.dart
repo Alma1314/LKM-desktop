@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:island/accounts/account_pod.dart';
 import 'package:island/core/config.dart';
 import 'package:island/misc/dashboard/dash.dart';
+import 'package:island/misc/dashboard/community_cards.dart';
+import 'package:island/points/points_pod.dart';
+import 'package:island/core/api/api_client.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
@@ -16,9 +20,7 @@ class _SignedOutUserInfo extends UserInfoNotifier {
   Future<SnAccount?> build() async => null;
 }
 
-Widget _wrap({
-  required Brightness brightness,
-}) {
+Widget _wrap({required Brightness brightness}) {
   return EasyLocalization(
     supportedLocales: const [Locale('en', 'US')],
     path: 'assets/i18n',
@@ -47,7 +49,14 @@ Future<void> _pump(
   required Size size,
   required Brightness brightness,
 }) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    kAppDashboardConfig: jsonEncode({
+      'vertical_layouts': [],
+      'horizontal_layouts': [],
+      'show_clock_and_countdown': false,
+      'show_search_bar': true,
+    }),
+  });
   final prefs = await SharedPreferences.getInstance();
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -58,6 +67,10 @@ Future<void> _pump(
         overrides: [
           sharedPreferencesProvider.overrideWith((ref) => prefs),
           userInfoProvider.overrideWith(_SignedOutUserInfo.new),
+          dashboardEntriesProvider.overrideWith((ref, kind) async => []),
+          lkmPointsLeaderboardProvider.overrideWith(
+            (ref, period) async => const ApiPage.empty(),
+          ),
         ],
         child: _wrap(brightness: brightness),
       ),
@@ -71,43 +84,57 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      kAppDashboardConfig: jsonEncode({
+        'vertical_layouts': [],
+        'horizontal_layouts': [],
+        'show_clock_and_countdown': false,
+        'show_search_bar': true,
+      }),
+    });
     await EasyLocalization.ensureInitialized();
   });
 
-  testWidgets('guest dashboard greets with the mascot sticker and a login CTA',
-      (tester) async {
-    await _pump(tester, size: const Size(400, 800), brightness: Brightness.light);
+  testWidgets(
+    'guest dashboard greets with the mascot sticker and a login CTA',
+    (tester) async {
+      await _pump(
+        tester,
+        size: const Size(400, 800),
+        brightness: Brightness.light,
+      );
 
-    // The resident mascot waves hello instead of a generic person icon.
-    expect(
-      find.byWidgetPredicate(
-        (w) =>
-            w is Image &&
-            w.image is AssetImage &&
-            (w.image as AssetImage).assetName ==
-                'assets/images/stickers/hello.webp',
-      ),
-      findsOneWidget,
-    );
-    expect(find.textContaining('Solar Network'), findsOneWidget);
-    // Subcopy comes from the catalog, not a hardcoded English string.
-    expect(find.textContaining('personalized dashboard'), findsOneWidget);
-    expect(find.byIcon(Symbols.login), findsOneWidget);
-    expect(find.text('Login'), findsOneWidget);
-  });
+      // The resident mascot waves hello instead of a generic person icon.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is AssetImage &&
+              (w.image as AssetImage).assetName ==
+                  'assets/images/stickers/hello.webp',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('LKM'), findsOneWidget);
+      // Subcopy comes from the catalog, not a hardcoded English string.
+      expect(find.textContaining('Public community sections'), findsOneWidget);
+      expect(find.byIcon(Symbols.login), findsOneWidget);
+      expect(find.text('Login'), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'guest view renders in dark mode and the wide layout without errors',
-      (tester) async {
-    await _pump(
-      tester,
-      size: const Size(1200, 800),
-      brightness: Brightness.dark,
-    );
+    'guest view renders in dark mode and the wide layout without errors',
+    (tester) async {
+      await _pump(
+        tester,
+        size: const Size(1200, 800),
+        brightness: Brightness.dark,
+      );
 
-    expect(tester.takeException(), isNull);
-    expect(find.textContaining('Solar Network'), findsOneWidget);
-    expect(find.text('Login'), findsOneWidget);
-  });
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('LKM'), findsOneWidget);
+      expect(find.text('Login'), findsOneWidget);
+    },
+  );
 }

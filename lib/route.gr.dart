@@ -104,6 +104,7 @@ import 'package:island/thoughts/screens/thoughts.dart' as _i67;
 import 'package:island/wallets/transaction_detail.dart' as _i68;
 import 'package:island/wallets/wallet.dart' as _i71;
 import 'package:island/starhope/starhope_screen.dart' as _i95;
+import 'package:island/misc/legal_document.dart' as _i96;
 import 'package:island/treehole/treehole_screen.dart' as _i79;
 import 'package:material_ui/material_ui.dart' as _i73;
 import 'package:solar_network_sdk/solar_network_sdk.dart' as _i74;
@@ -2352,18 +2353,30 @@ class PointsRoute extends _i72.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i82.HubScreen]
-class HubRoute extends _i72.PageRouteInfo<void> {
-  const HubRoute({List<_i72.PageRouteInfo>? children})
-    : super(HubRoute.name, initialChildren: children);
-
+class HubRoute extends _i72.PageRouteInfo<HubRouteArgs> {
+  HubRoute({int initialTab = 0, List<_i72.PageRouteInfo>? children})
+    : super(
+        HubRoute.name,
+        args: HubRouteArgs(initialTab: initialTab),
+        rawQueryParams: {'tab': initialTab},
+        initialChildren: children,
+      );
   static const String name = 'HubRoute';
-
   static _i72.PageInfo page = _i72.PageInfo(
     name,
     builder: (data) {
-      return const _i82.HubScreen();
+      final args = data.argsAs<HubRouteArgs>(
+        orElse: () =>
+            HubRouteArgs(initialTab: data.queryParams.getInt('tab', 0)),
+      );
+      return _i82.HubScreen(initialTab: args.initialTab);
     },
   );
+}
+
+class HubRouteArgs {
+  const HubRouteArgs({this.initialTab = 0});
+  final int initialTab;
 }
 
 /// generated route for
@@ -3711,4 +3724,35 @@ class StarHopeRoute extends _i72.PageRouteInfo<void> {
     name,
     builder: (data) => const _i95.StarHopeScreen(),
   );
+}
+
+/// generated route for
+/// [_i96.LegalDocumentScreen]
+class LegalDocumentRoute extends _i72.PageRouteInfo<LegalDocumentRouteArgs> {
+  LegalDocumentRoute({
+    required String document,
+    List<_i72.PageRouteInfo>? children,
+  }) : super(
+         LegalDocumentRoute.name,
+         args: LegalDocumentRouteArgs(document: document),
+         rawPathParams: {'document': document},
+         initialChildren: children,
+       );
+  static const String name = 'LegalDocumentRoute';
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<LegalDocumentRouteArgs>(
+        orElse: () => LegalDocumentRouteArgs(
+          document: data.inheritedPathParams.getString('document'),
+        ),
+      );
+      return _i96.LegalDocumentScreen(document: args.document);
+    },
+  );
+}
+
+class LegalDocumentRouteArgs {
+  const LegalDocumentRouteArgs({required this.document});
+  final String document;
 }

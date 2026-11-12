@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:auto_route/auto_route.dart';
+import 'package:island/route.gr.dart';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -90,43 +92,43 @@ class AboutContent extends HookConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: theme.colorScheme.outlineVariant),
                   ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Image.asset('assets/icons/icon.webp'),
                       ),
-                      child: Image.asset('assets/icons/icon.webp'),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          info.appName,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            info.appName,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'aboutScreenVersionInfo'.tr(
-                            args: [info.version, info.buildNumber],
+                          const SizedBox(height: 2),
+                          Text(
+                            'aboutScreenVersionInfo'.tr(
+                              args: [info.version, info.buildNumber],
+                            ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        ],
+                      ),
+                    ],
+                  ),
                 )
               else
                 const SizedBox(height: 4),
@@ -164,7 +166,9 @@ class AboutContent extends HookConsumerWidget {
                     FutureBuilder<String>(
                       future: udid.getDeviceName(),
                       builder: (context, snapshot) {
-                        final value = snapshot.hasData ? snapshot.data! : 'unknown'.tr();
+                        final value = snapshot.hasData
+                            ? snapshot.data!
+                            : 'unknown'.tr();
                         return _buildInfoItem(
                           context,
                           icon: Symbols.label,
@@ -192,13 +196,17 @@ class AboutContent extends HookConsumerWidget {
                     context,
                     icon: Symbols.privacy_tip,
                     title: 'aboutScreenPrivacyPolicyTitle'.tr(),
-                    onTap: () => launchURL('https://solsynth.dev/terms/privacy-policy'),
+                    onTap: () => context.router.push(
+                      LegalDocumentRoute(document: 'privacy'),
+                    ),
                   ),
                   _buildListTile(
                     context,
                     icon: Symbols.description,
                     title: 'aboutScreenTermsOfServiceTitle'.tr(),
-                    onTap: () => launchURL('https://solsynth.dev/terms/user-agreement'),
+                    onTap: () => context.router.push(
+                      LegalDocumentRoute(document: 'terms'),
+                    ),
                   ),
                   _buildListTile(
                     context,
@@ -231,7 +239,9 @@ class AboutContent extends HookConsumerWidget {
                     icon: Symbols.copyright,
                     title: 'aboutScreenLicenseTitle'.tr(),
                     subtitle: 'aboutScreenLicenseContent'.tr(),
-                    onTap: () => launchURL('https://github.com/Solsynth/Solian/blob/v3/LICENSE.txt'),
+                    onTap: () => launchURL(
+                      'https://github.com/Solsynth/Solian/blob/v3/LICENSE.txt',
+                    ),
                   ),
                   if (kIsWeb || !(Platform.isMacOS || Platform.isIOS))
                     _buildListTile(
@@ -361,8 +371,12 @@ class AboutContent extends HookConsumerWidget {
           title: Text(title),
           subtitle: subtitle != null ? Text(subtitle) : null,
           isThreeLine: multipleLines,
-          trailing: const Icon(Symbols.chevron_right).padding(top: multipleLines ? 8 : 0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          trailing: const Icon(
+            Symbols.chevron_right,
+          ).padding(top: multipleLines ? 8 : 0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           onTap: onTap,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           minLeadingWidth: 24,

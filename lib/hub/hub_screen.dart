@@ -25,11 +25,15 @@ import 'package:island/shared/widgets/app_scaffold.dart';
 /// projects and boards in one place.
 @RoutePage()
 class HubScreen extends HookConsumerWidget {
-  const HubScreen({super.key});
+  const HubScreen({super.key, @QueryParam('tab') this.initialTab = 0});
+  final int initialTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controller = useMaterialTabController(initialLength: 4);
+    final controller = useMaterialTabController(
+      initialLength: 4,
+      initialIndex: initialTab.clamp(0, 3),
+    );
 
     void refreshAll() {
       ref.invalidate(qaQuestionsProvider);

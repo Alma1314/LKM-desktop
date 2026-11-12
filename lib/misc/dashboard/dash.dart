@@ -10,12 +10,10 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:island/accounts/widgets/account/account_name.dart';
 import 'package:island/accounts/widgets/account/friends_overview.dart';
 import 'package:island/chat/pods/chat_room.dart';
 import 'package:island/chat/pods/chat_summary.dart';
 import 'package:island/accounts/event_calendar.dart';
-import 'package:island/accounts/account_pod.dart';
 import 'package:island/chat/widgets/chat_room_list_tile.dart';
 import 'package:island/core/services/event_bus.dart';
 import 'package:island/core/services/responsive.dart';
@@ -35,6 +33,10 @@ import 'package:slide_countdown/slide_countdown.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:island/misc/dashboard/dash_customize.dart';
 import 'package:island/misc/dashboard/dashboard_layout.dart';
+import 'package:island/misc/dashboard/community_cards.dart';
+import 'package:island/core/api/api_providers.dart';
+import 'package:island/community/user_pod.dart';
+import 'package:island/core/network.dart' show tokenProvider;
 import 'package:island/misc/dashboard/weather.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/theme.dart';
@@ -114,6 +116,18 @@ class DashboardRenderer {
   // Map individual card IDs to widgets
   static Widget buildCard(String cardId, WidgetRef ref) {
     switch (cardId) {
+      case 'personal':
+        ref.watch(lkmMeProvider);
+        return ref.watch(lkmApiSessionProvider).isSignedIn
+            ? const PersonalDashboardCard()
+            : _UnauthorizedCard(isWide: isWideScreen(ref.context));
+      case 'questions':
+      case 'projects':
+      case 'columns':
+      case 'competitions':
+        return CommunityDashboardCard(kind: cardId);
+      case 'leaderboard':
+        return const DashboardLeaderboardCard();
       case 'checkIn':
         return CheckInWidget(margin: EdgeInsets.zero);
       case 'fortuneGraph':
@@ -150,27 +164,16 @@ class DashboardGrid extends HookConsumerWidget {
     // content, so it never permanently eats the viewport.
     final topBand = MediaQuery.sizeOf(context).height * _kTopBand;
 
-    final userInfo = ref.watch(userInfoProvider);
-
-    // Check if user is authenticated
-    final isAuthenticated = userInfo.value != null;
-
     return Stack(
       children: [
         Container(
-          padding: isAuthenticated
-              ? EdgeInsets.only(top: devicePadding.top)
-              : EdgeInsets.zero,
-          child: isAuthenticated
-              ? (isWide
-                    // Desktop: one scroll, so the band can rest the
-                    // search bar near vertical center by default.
-                    ? _DashboardGridWide(topBand: topBand)
-                    : _DashboardGridNarrowScroll(topBand: topBand))
-              : Center(child: _UnauthorizedCard(isWide: isWide)),
+          padding: EdgeInsets.only(top: devicePadding.top),
+          child: isWide
+              ? _DashboardGridWide(topBand: topBand)
+              : _DashboardGridNarrowScroll(topBand: topBand),
         ),
         // Customize button (positioned for wide screens only)
-        if (isWide && isAuthenticated)
+        if (isWide)
           Positioned(
             bottom: _kGutterExpanded - 8,
             right: _kGutterExpanded - 8,
@@ -219,7 +222,6 @@ class _DashboardGridWide extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userInfo = ref.watch(userInfoProvider);
     final appSettings = ref.watch(appSettingsProvider);
     final scrollController = useScrollController();
     final canScrollDown = useState(false);
@@ -229,11 +231,6 @@ class _DashboardGridWide extends HookConsumerWidget {
     final showSearch = appSettings.dashboardConfig?.showSearchBar ?? true;
 
     final List<Widget> cards = [];
-
-    // Always include account unactivated card if user is not activated
-    if (userInfo.value != null && userInfo.value?.activatedAt == null) {
-      cards.add(const AccountUnactivatedCard());
-    }
 
     // Desktop waterfall: individual cards from horizontalLayouts (migrated).
     final cardIds = DashboardLayout.resolveCardLayouts(
@@ -438,15 +435,9 @@ class _DashboardGridNarrow extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userInfo = ref.watch(userInfoProvider);
     final appSettings = ref.watch(appSettingsProvider);
 
     final List<Widget> children = [];
-
-    // Always include account unactivated card if user is not activated
-    if (userInfo.value != null && userInfo.value?.activatedAt == null) {
-      children.add(AccountUnactivatedCard());
-    }
 
     // Mobile single-column: individual cards from verticalLayouts.
     final cardIds = DashboardLayout.resolveCardLayouts(
@@ -508,10 +499,9 @@ class ClockCard extends HookConsumerWidget {
     final time = useState(DateTime.now());
     final timer = useRef<Timer?>(null);
     final appSettings = ref.watch(appSettingsProvider);
-    final userInfo = ref.watch(userInfoProvider);
 
     // Only fetch countdowns if user is authenticated
-    final isAuthenticated = userInfo.value != null;
+    final isAuthenticated = ref.watch(tokenProvider) != null;
     final query = isAuthenticated
         ? EventCountdownQuery(
             username: 'me',
@@ -1265,7 +1255,7 @@ class _UnauthorizedCard extends HookConsumerWidget {
               ),
               const Gap(24),
               Text(
-                'welcomeToSolarNetwork'.tr(),
+                'home.welcome'.tr(),
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface,
@@ -1277,7 +1267,7 @@ class _UnauthorizedCard extends HookConsumerWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 320),
                 child: Text(
-                  'loginToAccessDashboard'.tr(),
+                  'home.signIn'.tr(),
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     height: 1.5,

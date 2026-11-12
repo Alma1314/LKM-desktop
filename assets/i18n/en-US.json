@@ -6379,5 +6379,28 @@
     "metric_memory_system_mb": "System memory (MB)",
     "metric_thread_count": "Threads"
   },
-  "starHope": {"signIn": "Sign in to use StarHope"}
+  "starHope": {"signIn": "Sign in to use StarHope"},
+  "home": {
+    "personal": "My overview",
+    "questions": "Bounty questions",
+    "projects": "Recruiting projects",
+    "columns": "Featured column articles",
+    "competitions": "Competitions",
+    "leaderboard": "Weekly activity",
+    "welcome": "Welcome to LKM",
+    "signIn": "Sign in for your points, certificates and personal content. Public community sections are available below.",
+    "bounty": "{} points available · {}",
+    "projectDetail": "{} · {}",
+    "columnDetail": "{} · {}",
+    "competitionUpcoming": "Upcoming · {} · {} min",
+    "competitionOpen": "Open · {} · {} min",
+    "certificates": "Earned certificates",
+    "files": "File library",
+    "empty": "No matching content yet",
+    "loadFailed": "Could not load this section",
+    "viewAll": "View all"
+  },
+  "legalDocument": {
+    "language": "This document is provided in Simplified Chinese."
+  }
 }

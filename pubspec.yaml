@@ -239,6 +239,7 @@ flutter:
     - assets/i18n/zh-CN.json
     - assets/i18n/zh-TW.json
     - assets/webf/starhope/
+    - assets/legal/
     - assets/images/
     - assets/images/check-in/
     - assets/images/oidc/

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'
@@ -11,6 +12,9 @@ import 'package:island/accounts/screens/me/account_qr.dart';
 import 'package:island/core/config.dart';
 import 'package:island/discovery/explore.dart';
 import 'package:island/misc/dashboard/dash.dart';
+import 'package:island/misc/dashboard/community_cards.dart';
+import 'package:island/points/points_pod.dart';
+import 'package:island/core/api/api_client.dart';
 import 'package:island/misc/tabs_screen.dart';
 import 'package:island/route.dart';
 import 'package:island/route.gr.dart';
@@ -37,13 +41,25 @@ Future<void> _pumpApp(
   WidgetTester tester,
   Map<String, Object> prefsValues,
 ) async {
-  SharedPreferences.setMockInitialValues(prefsValues);
+  SharedPreferences.setMockInitialValues({
+    kAppDashboardConfig: jsonEncode({
+      'vertical_layouts': [],
+      'horizontal_layouts': [],
+      'show_clock_and_countdown': false,
+      'show_search_bar': true,
+    }),
+    ...prefsValues,
+  });
   final prefs = await SharedPreferences.getInstance();
 
   _container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       userInfoProvider.overrideWith(_SignedOutUserInfo.new),
+      dashboardEntriesProvider.overrideWith((ref, kind) async => []),
+      lkmPointsLeaderboardProvider.overrideWith(
+        (ref, period) async => const ApiPage.empty(),
+      ),
     ],
   );
   addTearDown(_container.dispose);
@@ -469,40 +485,39 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
-  testWidgets(
-    'the iOS glass bar is never handed a tab it does not carry',
-    (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      tester.view.physicalSize = const Size(420, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+  testWidgets('the iOS glass bar is never handed a tab it does not carry', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    tester.view.physicalSize = const Size(420, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
-      await _pumpApp(tester, const {});
-      final tabs = _router.innerRouterOf<TabsRouter>(TabsRoute.name)!;
+    await _pumpApp(tester, const {});
+    final tabs = _router.innerRouterOf<TabsRouter>(TabsRoute.name)!;
 
-      // Carried by the default bottom bar: the glass bar paints it.
-      tabs.setActiveIndex(4);
-      await tester.pumpAndSettle();
-      final chatBar = tester.widget<NativeGlassNavBar>(
-        find.byType(NativeGlassNavBar),
-      );
-      expect(chatBar.currentIndex, 2);
+    // Carried by the default bottom bar: the glass bar paints it.
+    tabs.setActiveIndex(4);
+    await tester.pumpAndSettle();
+    final chatBar = tester.widget<NativeGlassNavBar>(
+      find.byType(NativeGlassNavBar),
+    );
+    expect(chatBar.currentIndex, 2);
 
-      // Thoughts is opt-in for the bottom bar. The native bar is a real
-      // `UITabBarController` that echoes the index it is given back through
-      // `onTap`, so handing it a fallback index 0 does not mean "nothing
-      // selected" — it means Dashboard, and the echo sent the shell there.
-      tabs.setActiveIndex(9);
-      await tester.pumpAndSettle();
-      expect(_router.currentPath, '/thoughts');
-      expect(
-        find.byType(NativeGlassNavBar),
-        findsNothing,
-        reason: 'an uncarried tab must not build a native bar',
-      );
+    // Thoughts is opt-in for the bottom bar. The native bar is a real
+    // `UITabBarController` that echoes the index it is given back through
+    // `onTap`, so handing it a fallback index 0 does not mean "nothing
+    // selected" — it means Dashboard, and the echo sent the shell there.
+    tabs.setActiveIndex(9);
+    await tester.pumpAndSettle();
+    expect(_router.currentPath, '/thoughts');
+    expect(
+      find.byType(NativeGlassNavBar),
+      findsNothing,
+      reason: 'an uncarried tab must not build a native bar',
+    );
 
-      await _teardown(tester);
-      debugDefaultTargetPlatformOverride = null;
-    },
-  );
+    await _teardown(tester);
+    debugDefaultTargetPlatformOverride = null;
+  });
 }

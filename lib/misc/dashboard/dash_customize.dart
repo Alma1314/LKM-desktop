@@ -17,6 +17,15 @@ class DashboardCustomizationSheet extends HookConsumerWidget {
     BuildContext context,
   ) {
     final metadata = <String, Map<String, dynamic>>{
+      for (final card in [
+        ('personal', Symbols.account_circle),
+        ('questions', Symbols.help_center),
+        ('projects', Symbols.rocket_launch),
+        ('columns', Symbols.article),
+        ('competitions', Symbols.trophy),
+        ('leaderboard', Symbols.bar_chart),
+      ])
+        card.$1: {'name': 'home.${card.$1}'.tr(), 'icon': card.$2},
       'checkIn': {
         'name': 'dashboardCardCheckIn'.tr(),
         'icon': Symbols.check_circle,
@@ -28,10 +37,6 @@ class DashboardCustomizationSheet extends HookConsumerWidget {
       'fortuneCard': {
         'name': 'dashboardCardFortune'.tr(),
         'icon': Symbols.lightbulb,
-      },
-      'postFeatured': {
-        'name': 'dashboardCardFeaturedPosts'.tr(),
-        'icon': Symbols.article,
       },
       'friendsOverview': {
         'name': 'dashboardCardFriends'.tr(),
