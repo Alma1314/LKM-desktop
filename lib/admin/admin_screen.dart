@@ -1,3 +1,7 @@
+import 'package:island/admin/admin_dashboard_tab.dart';
+import 'package:island/admin/admin_users_tab.dart';
+import 'package:island/admin/admin_bot_tab.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/editor/series_editor_screen.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -81,7 +85,12 @@ class AdminScreen extends HookConsumerWidget {
           if (tabs.isEmpty) {
             return Center(child: Text('adminPanel.noPermission'.tr()));
           }
-          return _AdminBody(tabs: tabs);
+          return _AdminBody(
+            key: ValueKey(
+              '${ref.watch(lkmServerUrlProvider)}:${info.id}:${info.permissions.join(',')}',
+            ),
+            tabs: tabs,
+          );
         },
       ),
     );
@@ -93,45 +102,61 @@ class _AdminTab {
 
   final String labelKey;
   final IconData icon;
-  final Widget Function() builder;
+  final Widget Function(ValueChanged<String> onOpen) builder;
 }
 
 List<_AdminTab> _tabsFor(AdminSessionInfo info) => [
-  _AdminTab('seriesEditor.documents', Symbols.edit_document, SeriesEditorScreen.new),
+  if (info.can('admin.dashboard'))
+    _AdminTab(
+      'adminMore.dashboard',
+      Symbols.dashboard,
+      (open) => AdminDashboardTab(onOpen: open),
+    ),
+  if (info.can('admin.users_manage'))
+    _AdminTab('adminMore.users', Symbols.group, (_) => const AdminUsersTab()),
+  if (info.can('admin.users_review'))
+    _AdminTab(
+      'adminMore.admission',
+      Symbols.how_to_reg,
+      (_) => const AdminAdmissionTab(),
+    ),
+  _AdminTab(
+    'seriesEditor.documents',
+    Symbols.edit_document,
+    (_) => const SeriesEditorScreen(),
+  ),
   if (info.can('admin.moderation_manage'))
     _AdminTab(
       'adminPanel.tabModeration',
       Symbols.gavel,
-      AdminRulesTab.new,
+      (_) => const AdminRulesTab(),
     ),
   if (info.can('admin.content_review'))
     _AdminTab(
       'adminPanel.tabContent',
       Symbols.article,
-      AdminContentTab.new,
+      (_) => const AdminContentTab(),
     ),
   if (info.can('admin.reports_view'))
     _AdminTab(
       'adminPanel.tabReports',
       Symbols.flag,
-      AdminReportsTab.new,
+      (_) => const AdminReportsTab(),
     ),
   if (info.can('files.review'))
     _AdminTab(
       'adminPanel.tabFiles',
       Symbols.folder,
-      AdminFilesTab.new,
+      (_) => const AdminFilesTab(),
     ),
   if (info.can('admin.events_manage'))
-    _AdminTab(
-      'adminPanel.tabDlq',
-      Symbols.inbox,
-      AdminDlqTab.new,
-    ),
+    _AdminTab('adminPanel.tabDlq', Symbols.inbox, (_) => const AdminDlqTab()),
+  if (info.can('admin.bot_panel'))
+    _AdminTab('adminMore.bot', Symbols.smart_toy, (_) => const AdminBotTab()),
 ];
 
 class _AdminBody extends HookConsumerWidget {
-  const _AdminBody({required this.tabs});
+  const _AdminBody({super.key, required this.tabs});
 
   final List<_AdminTab> tabs;
 
@@ -152,7 +177,13 @@ class _AdminBody extends HookConsumerWidget {
         Expanded(
           child: TabBarView(
             controller: controller,
-            children: [for (final tab in tabs) tab.builder()],
+            children: [
+              for (final tab in tabs)
+                tab.builder((key) {
+                  final index = tabs.indexWhere((tab) => tab.labelKey == key);
+                  if (index >= 0) controller.animateTo(index);
+                }),
+            ],
           ),
         ),
       ],

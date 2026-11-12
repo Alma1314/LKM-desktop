@@ -18,6 +18,7 @@ Future<T?> runAdminAction<T>(
   WidgetRef ref,
   Future<T> Function() action,
 ) async {
+  final api = ref.read(adminApiProvider);
   try {
     return await action();
   } on ApiException catch (error) {
@@ -27,13 +28,19 @@ Future<T?> runAdminAction<T>(
       context: context,
       builder: (_) => const _MfaDialog(),
     );
-    if (code == null || code.isEmpty) return null;
+    if (code == null ||
+        code.isEmpty ||
+        !context.mounted ||
+        !identical(ref.read(adminApiProvider), api))
+      return null;
     try {
-      await ref.read(adminApiProvider).verify2fa(code);
+      await api.verify2fa(code);
     } on ApiException catch (verifyError) {
       if (context.mounted) showSnackBar(verifyError.message);
       return null;
     }
+    if (!context.mounted || !identical(ref.read(adminApiProvider), api))
+      return null;
     return await action();
   }
 }
@@ -56,9 +63,7 @@ class _MfaDialog extends HookConsumerWidget {
             controller: controller,
             autofocus: true,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'adminPanel.mfaCode'.tr(),
-            ),
+            decoration: InputDecoration(labelText: 'adminPanel.mfaCode'.tr()),
             onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
           ),
         ],
@@ -69,8 +74,7 @@ class _MfaDialog extends HookConsumerWidget {
           child: Text('cancel'.tr()),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.of(context).pop(controller.text.trim()),
+          onPressed: () => Navigator.of(context).pop(controller.text.trim()),
           child: Text('adminPanel.verify'.tr()),
         ),
       ],
@@ -159,4 +163,58 @@ String adminFileSize(int bytes) {
   if (bytes < 1024) return '$bytes B';
   if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
   return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
+/// Independent loading/errors keep a failing dashboard section usable.
+class AdminSection<T> extends StatelessWidget {
+  const AdminSection({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onRetry,
+    required this.builder,
+    this.onOpen,
+  });
+  final String title;
+  final AsyncValue<T> value;
+  final VoidCallback onRetry;
+  final VoidCallback? onOpen;
+  final Widget Function(T) builder;
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              if (onOpen != null)
+                IconButton(
+                  onPressed: onOpen,
+                  tooltip: 'adminMore.open'.tr(),
+                  icon: const Icon(Symbols.open_in_new),
+                ),
+              IconButton(
+                onPressed: onRetry,
+                tooltip: 'refresh'.tr(),
+                icon: const Icon(Symbols.refresh),
+              ),
+            ],
+          ),
+          value.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => AdminErrorText(error: e, onRetry: onRetry),
+            data: builder,
+          ),
+        ],
+      ),
+    ),
+  );
 }

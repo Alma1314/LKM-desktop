@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
+import 'admin_models.dart';
+export 'admin_models.dart';
 
 /// Keys holding the admin panel's cookie session.
 ///
@@ -337,7 +339,7 @@ class AdminDlqItem {
   );
 }
 
-/// Reads the admin panel's six content blocks and owns its cookie session.
+/// Reads the admin panel and owns its cookie session.
 ///
 /// Lifecycle: [login] stores the `admin_session`/`admin_refresh` pair; every
 /// call then goes out with an explicit `Cookie` header. The access cookie is
@@ -358,10 +360,15 @@ class AdminApi {
 
   bool get isSignedIn => _access != null && _refresh != null;
 
+  // Sessions belong to a deployment. Legacy unscoped pairs cannot safely be
+  // assigned to a server, so restoration deliberately requires a fresh login.
+  String get accessStoreKey => '$kAdminAccessTokenKey:${_client.baseUrl}';
+  String get refreshStoreKey => '$kAdminRefreshTokenKey:${_client.baseUrl}';
+
   /// Loads a persisted pair, if one exists.
   void restore() {
-    _access = _prefs.getString(kAdminAccessTokenKey);
-    _refresh = _prefs.getString(kAdminRefreshTokenKey);
+    _access = _prefs.getString(accessStoreKey);
+    _refresh = _prefs.getString(refreshStoreKey);
     if (_access == null || _refresh == null) _clearLocal();
   }
 
@@ -427,6 +434,110 @@ class AdminApi {
       }
     }
     await _clearRemote();
+  }
+
+  Future<AdminStats> stats() => _authed(
+    () async => AdminStats.fromJson(
+      await _client.getObject('/admin/stats', headers: _headers()),
+    ),
+  );
+
+  Future<List<AdminTrend>> trend() => _authed(
+    () => _client.getList(
+      '/admin/stats/trend',
+      query: {'days': 14},
+      headers: _headers(),
+      parseItem: AdminTrend.fromJson,
+    ),
+  );
+
+  Future<AdminReviewSummary> reviewSummary() => _authed(
+    () async => AdminReviewSummary.fromJson(
+      await _client.getObject('/admin/review-summary', headers: _headers()),
+    ),
+  );
+
+  Future<ApiPage<AdminUser>> users({
+    int page = 1,
+    int limit = 20,
+    String? keyword,
+    bool includePii = false,
+  }) => _authed(
+    () => _client.getPage(
+      '/admin/users',
+      query: {
+        'page': page,
+        'limit': limit,
+        'include_pii': includePii,
+        if (keyword != null && keyword.trim().isNotEmpty)
+          'keyword': keyword.trim(),
+      },
+      headers: _headers(),
+      parseItem: AdminUser.fromJson,
+    ),
+  );
+
+  Future<List<AdmissionUser>> admissionUsers() => _authed(
+    () => _client.getList(
+      '/admin/admission/users',
+      query: {'status': 'pending'},
+      headers: _headers(),
+      parseItem: AdmissionUser.fromJson,
+    ),
+  );
+
+  Future<AdmissionUser> decideAdmission(
+    String id, {
+    required bool approve,
+    String? reason,
+  }) async {
+    final trimmed = reason?.trim();
+    if (!approve && (trimmed == null || trimmed.isEmpty) ||
+        (trimmed?.length ?? 0) > 500) {
+      throw ArgumentError('A rejection requires a reason (1–500 characters)');
+    }
+    final json = await _authed(
+      () => _client.post(
+        '/admin/admission/users/${Uri.encodeComponent(id)}/decision',
+        headers: _headers(),
+        body: {
+          'action': approve ? 'approve' : 'reject',
+          if (trimmed != null && trimmed.isNotEmpty) 'reason': trimmed,
+        },
+      ),
+    );
+    if (json is! Map) throw _shape('POST', '/admin/admission/users/decision');
+    return AdmissionUser.fromJson(Map<String, dynamic>.from(json));
+  }
+
+  Future<AdminBotData> botData(String section) {
+    const sections = {
+      'overview',
+      'platforms',
+      'providers',
+      'config',
+      'plugins',
+      'knowledge',
+      'logs/history',
+    };
+    if (!sections.contains(section)) throw ArgumentError.value(section);
+    return _authed(
+      () async => AdminBotData.fromJson(
+        await _client.getObject('/admin/bot/$section', headers: _headers()),
+      ),
+    );
+  }
+
+  Future<String> botTicket() async {
+    final json = await _authed(
+      () => _client.post('/admin/bot/sso-ticket', headers: _headers()),
+    );
+    if (json is! Map ||
+        json['ticket'] is! String ||
+        (json['ticket'] as String).trim().isEmpty) {
+      throw _shape('POST', '/admin/bot/sso-ticket');
+    }
+    return json['ticket'] as String;
   }
 
   // --- content -------------------------------------------------------------
@@ -738,14 +849,14 @@ class AdminApi {
     }
     _access = access;
     _refresh = refresh;
-    if (access != null) _prefs.setString(kAdminAccessTokenKey, access);
-    if (refresh != null) _prefs.setString(kAdminRefreshTokenKey, refresh);
+    if (access != null) _prefs.setString(accessStoreKey, access);
+    if (refresh != null) _prefs.setString(refreshStoreKey, refresh);
   }
 
   Future<void> _clearRemote() async {
     _clearLocal();
-    await _prefs.remove(kAdminAccessTokenKey);
-    await _prefs.remove(kAdminRefreshTokenKey);
+    await _prefs.remove(accessStoreKey);
+    await _prefs.remove(refreshStoreKey);
   }
 
   void _clearLocal() {

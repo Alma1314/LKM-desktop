@@ -116,8 +116,8 @@ void main() {
     expect(me.can('admin.content_review'), isTrue);
     expect(me.can('admin.bot_panel'), isFalse);
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString(kAdminAccessTokenKey), access);
-    expect(prefs.getString(kAdminRefreshTokenKey), 'refresh-1');
+    expect(prefs.getString(api.accessStoreKey), access);
+    expect(prefs.getString(api.refreshStoreKey), 'refresh-1');
   });
 
   test('a failed login surfaces the server message and keeps no session', () async {
@@ -172,8 +172,8 @@ void main() {
     });
     final api = await _api(adapter);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kAdminAccessTokenKey, expired);
-    await prefs.setString(kAdminRefreshTokenKey, 'refresh-old');
+    await prefs.setString(api.accessStoreKey, expired);
+    await prefs.setString(api.refreshStoreKey, 'refresh-old');
     api.restore();
 
     final rules = await api.rules();
@@ -185,7 +185,7 @@ void main() {
       '/admin/auth/refresh',
       '/admin/moderation/rules',
     ]);
-    expect(prefs.getString(kAdminRefreshTokenKey), 'refresh-new');
+    expect(prefs.getString(api.refreshStoreKey), 'refresh-new');
   });
 
   test('content list filters by type and delete hits the item path', () async {
@@ -219,8 +219,8 @@ void main() {
     });
     final api = await _api(adapter);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kAdminAccessTokenKey, access);
-    await prefs.setString(kAdminRefreshTokenKey, 'r');
+    await prefs.setString(api.accessStoreKey, access);
+    await prefs.setString(api.refreshStoreKey, 'r');
     api.restore();
 
     final page = await api.contentItems(contentType: 'discussion');
@@ -292,8 +292,8 @@ void main() {
     });
     final api = await _api(adapter);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kAdminAccessTokenKey, access);
-    await prefs.setString(kAdminRefreshTokenKey, 'r');
+    await prefs.setString(api.accessStoreKey, access);
+    await prefs.setString(api.refreshStoreKey, 'r');
     api.restore();
 
     final reports = await api.reports(status: 'pending');
@@ -333,8 +333,8 @@ void main() {
     });
     final api = await _api(adapter);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kAdminAccessTokenKey, access);
-    await prefs.setString(kAdminRefreshTokenKey, 'r');
+    await prefs.setString(api.accessStoreKey, access);
+    await prefs.setString(api.refreshStoreKey, 'r');
     api.restore();
 
     final items = await api.dlq(status: 'discarded');
@@ -356,8 +356,8 @@ void main() {
     );
     final api = await _api(adapter);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kAdminAccessTokenKey, access);
-    await prefs.setString(kAdminRefreshTokenKey, 'r');
+    await prefs.setString(api.accessStoreKey, access);
+    await prefs.setString(api.refreshStoreKey, 'r');
     api.restore();
 
     await expectLater(

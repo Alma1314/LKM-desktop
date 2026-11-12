@@ -73,3 +73,61 @@ final adminDlqProvider = FutureProvider.autoDispose
       if (!ref.watch(adminSignedInProvider)) return const [];
       return ref.watch(adminApiProvider).dlq(status: status);
     });
+
+final adminStatsProvider = FutureProvider.autoDispose<AdminStats>((ref) {
+  if (!ref.watch(adminSignedInProvider))
+    throw StateError('Admin session required');
+  return ref.watch(adminApiProvider).stats();
+});
+final adminTrendProvider = FutureProvider.autoDispose<List<AdminTrend>>((ref) {
+  if (!ref.watch(adminSignedInProvider))
+    throw StateError('Admin session required');
+  return ref.watch(adminApiProvider).trend();
+});
+final adminReviewSummaryProvider =
+    FutureProvider.autoDispose<AdminReviewSummary>((ref) {
+      if (!ref.watch(adminSignedInProvider))
+        throw StateError('Admin session required');
+      return ref.watch(adminApiProvider).reviewSummary();
+    });
+
+typedef AdminUserQuery = ({int page, String keyword, bool pii});
+final adminUsersProvider = FutureProvider.autoDispose
+    .family<ApiPage<AdminUser>, AdminUserQuery>((ref, query) {
+      if (!ref.watch(adminSignedInProvider)) return const ApiPage.empty();
+      return ref
+          .watch(adminApiProvider)
+          .users(
+            page: query.page,
+            keyword: query.keyword,
+            includePii: query.pii,
+          );
+    });
+final adminAdmissionProvider = FutureProvider.autoDispose<List<AdmissionUser>>((
+  ref,
+) {
+  if (!ref.watch(adminSignedInProvider)) return const [];
+  return ref.watch(adminApiProvider).admissionUsers();
+});
+final adminRecentUsersProvider = FutureProvider.autoDispose<ApiPage<AdminUser>>(
+  (ref) {
+    if (!ref.watch(adminSignedInProvider)) return const ApiPage.empty();
+    return ref.watch(adminApiProvider).users(limit: 5);
+  },
+);
+final adminRecentContentProvider =
+    FutureProvider.autoDispose<ApiPage<AdminContentItem>>((ref) {
+      if (!ref.watch(adminSignedInProvider)) return const ApiPage.empty();
+      return ref.watch(adminApiProvider).contentItems(limit: 5);
+    });
+final adminRecentReportsProvider =
+    FutureProvider.autoDispose<ApiPage<AdminReport>>((ref) {
+      if (!ref.watch(adminSignedInProvider)) return const ApiPage.empty();
+      return ref.watch(adminApiProvider).reports(limit: 5);
+    });
+final adminBotProvider = FutureProvider.autoDispose
+    .family<AdminBotData, String>((ref, section) {
+      if (!ref.watch(adminSignedInProvider))
+        throw StateError('Admin session required');
+      return ref.watch(adminApiProvider).botData(section);
+    });
