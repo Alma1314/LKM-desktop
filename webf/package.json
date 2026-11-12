@@ -1,0 +1,22 @@
+{
+  "name": "lkm-desktop-webf",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "build": "node build.mjs",
+    "check:asset": "node build.mjs --check",
+    "check": "vue-tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@vitejs/plugin-vue": "6.0.8",
+    "typescript": "6.0.3",
+    "vite": "8.2.1",
+    "vitest": "4.1.10",
+    "vue": "3.5.40",
+    "vue-tsc": "^3.1.0"
+  }
+}

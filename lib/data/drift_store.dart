@@ -47,6 +47,13 @@ class DriftStore {
       }
     }
     await _connection.executor.runCustom('DROP TABLE IF EXISTS app_state');
+    // Durable offline StarHope data must not be replaced by chat cache snapshots.
+    await _connection.executor.runCustom('''
+      CREATE TABLE IF NOT EXISTS starhope_workspaces (
+        scope TEXT PRIMARY KEY,
+        payload TEXT NOT NULL
+      )
+    ''');
     for (final table in _tables) {
       if (table == 'accounts') {
         await _connection.executor.runCustom('''
@@ -365,6 +372,7 @@ class DriftStore {
       'message_mentions',
       'chat_group_rooms',
       'chat_messages',
+      'starhope_workspaces',
       ..._tables,
     }) {
       await _connection.executor.runCustom('DELETE FROM $table');
@@ -372,6 +380,23 @@ class DriftStore {
   }
 
   Future<void> close() => _connection.executor.close();
+
+  Future<String?> readStarHope(String scope) async {
+    await _open();
+    final rows = await _connection.executor.runSelect(
+      'SELECT payload FROM starhope_workspaces WHERE scope = ?', [scope],
+    );
+    return rows.isEmpty ? null : rows.single['payload'] as String;
+  }
+
+  Future<void> saveStarHope(String scope, String payload) async {
+    await _open();
+    await _connection.executor.runCustom(
+      'INSERT INTO starhope_workspaces(scope, payload) VALUES (?, ?) '
+      'ON CONFLICT(scope) DO UPDATE SET payload = excluded.payload',
+      [scope, payload],
+    );
+  }
 }
 
 class _DriftStoreSchema implements QueryExecutorUser {

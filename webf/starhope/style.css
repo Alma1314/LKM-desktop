@@ -1,0 +1,142 @@
+/* Flex layout and native input controls supported by the bundled WebF runtime. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: sans-serif;
+}
+.app {
+  min-height: 100%;
+  background: #f5f5f7;
+  color: #202124;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.top,
+.row,
+.nav,
+.sync,
+.stats {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.top {
+  margin-bottom: 12px;
+}
+h1 {
+  font-size: 24px;
+  margin: 8px 16px 8px 0;
+}
+h2 {
+  font-size: 20px;
+}
+p {
+  line-height: 1.6;
+}
+.card {
+  background: #fff;
+  border: 1px solid #dadce0;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+.stats .card {
+  min-width: 120px;
+  flex-grow: 1;
+}
+button {
+  padding: 10px 14px;
+  margin: 4px 0;
+  background: #eceef6;
+  color: #293375;
+  border: 1px solid #c9cde4;
+  border-radius: 8px;
+  font-size: 14px;
+}
+button.active {
+  background: #33469b;
+  color: #fff;
+  border-color: #33469b;
+}
+button:disabled {
+  opacity: 0.55;
+}
+button:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid #5274d9;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+input,
+textarea {
+  border: 1px solid #aeb4c6;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
+  color: #202124;
+  font-size: 16px;
+}
+textarea {
+  min-height: 80px;
+}
+.text {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.error {
+  padding: 12px;
+  background: #ffe9e7;
+  color: #8f1616;
+  border-radius: 8px;
+}
+.sync {
+  font-size: 13px;
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.feedback {
+  border-left: 3px solid #5274d9;
+  padding-left: 12px;
+  margin: 12px 0;
+}
+.history {
+  display: flex;
+  width: 100%;
+  text-align: left;
+}
+.dark {
+  background: #191b20;
+  color: #e3e5ee;
+}
+.dark .card {
+  background: #252831;
+  border-color: #484c5e;
+}
+.dark input,
+.dark textarea {
+  background: #191b20;
+  color: #e3e5ee;
+  border-color: #80859a;
+}
+.dark button {
+  background: #32394f;
+  color: #e0e5ff;
+  border-color: #68749f;
+}
+.dark button.active {
+  background: #b2c1ff;
+  color: #17234b;
+}

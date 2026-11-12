@@ -6378,5 +6378,6 @@
     "metric_memory_process_mb": "Process memory (MB)",
     "metric_memory_system_mb": "System memory (MB)",
     "metric_thread_count": "Threads"
-  }
+  },
+  "starHope": {"signIn": "Sign in to use StarHope"}
 }

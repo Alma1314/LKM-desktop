@@ -58,6 +58,7 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: MyContentRoute.page, path: '/my/content'),
     AutoRoute(page: MyFollowRoute.page, path: '/my/following'),
     AutoRoute(page: SeriesEditorRoute.page, path: '/editor'),
+    AutoRoute(page: StarHopeRoute.page, path: '/starhope'),
     AutoRoute(page: LibraryRoute.page, path: '/library/files'),
     AutoRoute(page: LibraryFileRoute.page, path: '/library/files/:id'),
     AutoRoute(page: AiConsoleRoute.page, path: '/thoughts/console'),

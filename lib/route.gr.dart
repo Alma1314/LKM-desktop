@@ -103,6 +103,7 @@ import 'package:island/thoughts/screens/ai_console.dart' as _i12;
 import 'package:island/thoughts/screens/thoughts.dart' as _i67;
 import 'package:island/wallets/transaction_detail.dart' as _i68;
 import 'package:island/wallets/wallet.dart' as _i71;
+import 'package:island/starhope/starhope_screen.dart' as _i95;
 import 'package:island/treehole/treehole_screen.dart' as _i79;
 import 'package:material_ui/material_ui.dart' as _i73;
 import 'package:solar_network_sdk/solar_network_sdk.dart' as _i74;
@@ -3698,5 +3699,16 @@ class SeriesEditorRoute extends _i72.PageRouteInfo<void> {
   static _i72.PageInfo page = _i72.PageInfo(
     name,
     builder: (data) => const _i94.SeriesEditorScreen(),
+  );
+}
+
+/// generated route for [_i95.StarHopeScreen]
+class StarHopeRoute extends _i72.PageRouteInfo<void> {
+  const StarHopeRoute({List<_i72.PageRouteInfo>? children})
+    : super(StarHopeRoute.name, initialChildren: children);
+  static const String name = 'StarHopeRoute';
+  static _i72.PageInfo page = _i72.PageInfo(
+    name,
+    builder: (data) => const _i95.StarHopeScreen(),
   );
 }

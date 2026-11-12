@@ -132,6 +132,12 @@ class AppDatabase {
     await (await _store).close();
   }
 
+  Future<String?> readStarHope(String scope) async =>
+      (await _store).readStarHope(scope);
+
+  Future<void> saveStarHope(String scope, String payload) async =>
+      (await _store).saveStarHope(scope, payload);
+
   Future<void> reset() async {
     await _ensureReady();
     await _flushAllPersistence();

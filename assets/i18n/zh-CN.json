@@ -6343,5 +6343,6 @@
     "metric_memory_process_mb": "进程内存（MB）",
     "metric_memory_system_mb": "系统内存（MB）",
     "metric_thread_count": "线程数"
-  }
+  },
+  "starHope": {"signIn": "登录后使用 StarHope"}
 }

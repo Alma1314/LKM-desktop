@@ -182,6 +182,12 @@ class _LkmAccountPage extends HookConsumerWidget {
             onTap: () => context.router.push(const SeriesEditorRoute()),
           ),
           ListTile(
+            leading: const Icon(Symbols.school),
+            trailing: const Icon(Symbols.chevron_right),
+            title: const Text('StarHope'),
+            onTap: () => context.router.push(const StarHopeRoute()),
+          ),
+          ListTile(
             leading: const Icon(Symbols.article),
             trailing: const Icon(Symbols.chevron_right),
             title: Text('authFlow.myContent'.tr()),

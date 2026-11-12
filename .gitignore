@@ -58,3 +58,7 @@ packages/solsynth_express/build/
 
 # Flutter widget preview cache
 .widget_preview/
+
+# WebF build tooling
+webf/node_modules/
+webf/coverage/
