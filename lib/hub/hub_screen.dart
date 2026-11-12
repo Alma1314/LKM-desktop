@@ -1,3 +1,5 @@
+import 'package:island/hub/ask_question_dialog.dart';
+import 'package:island/hub/hub_detail_screen.dart' show ApplyProjectDialog;
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -68,16 +70,18 @@ class HubScreen extends HookConsumerWidget {
                 icon: const Icon(Symbols.rocket_launch),
                 text: 'hub.tabProjects'.tr(),
               ),
-              Tab(
-                icon: const Icon(Symbols.forum),
-                text: 'hub.tabBoards'.tr(),
-              ),
+              Tab(icon: const Icon(Symbols.forum), text: 'hub.tabBoards'.tr()),
             ],
           ),
           Expanded(
             child: TabBarView(
               controller: controller,
-              children: const [_QaTab(), _ColumnsTab(), _ProjectsTab(), _BoardsTab()],
+              children: const [
+                _QaTab(),
+                _ColumnsTab(),
+                _ProjectsTab(),
+                _BoardsTab(),
+              ],
             ),
           ),
         ],
@@ -158,14 +162,8 @@ class _QaTab extends HookConsumerWidget {
               SegmentedButton<String?>(
                 showSelectedIcon: false,
                 segments: [
-                  ButtonSegment(
-                    value: null,
-                    label: Text('hub.qaAll'.tr()),
-                  ),
-                  ButtonSegment(
-                    value: 'help',
-                    label: Text('hub.qaHelp'.tr()),
-                  ),
+                  ButtonSegment(value: null, label: Text('hub.qaAll'.tr())),
+                  ButtonSegment(value: 'help', label: Text('hub.qaHelp'.tr())),
                   ButtonSegment(
                     value: 'volunteer',
                     label: Text('hub.qaVolunteer'.tr()),
@@ -219,10 +217,7 @@ class _QaTab extends HookConsumerWidget {
           child: _AsyncList(
             value: questions,
             onRetry: () => ref.invalidate(
-              qaQuestionsProvider((
-                category: category.value,
-                sort: sort.value,
-              )),
+              qaQuestionsProvider((category: category.value, sort: sort.value)),
             ),
             builder: (page) {
               if (page.items.isEmpty) return const _EmptyHint();
@@ -234,8 +229,7 @@ class _QaTab extends HookConsumerWidget {
                   final q = page.items[index];
                   return _QuestionCard(
                     question: q,
-                    onTap: () =>
-                        context.router.push(QaDetailRoute(id: q.id)),
+                    onTap: () => context.router.push(QaDetailRoute(id: q.id)),
                   );
                 },
               );
@@ -467,25 +461,43 @@ class _ProjectsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projects = ref.watch(projectsProvider);
-    return _AsyncList(
-      value: projects,
-      onRetry: () => ref.invalidate(projectsProvider),
-      builder: (items) {
-        if (items.isEmpty) return const _EmptyHint();
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final project = items[index];
-            return _ProjectCard(
-              project: project,
-              onTap: () =>
-                  context.router.push(ProjectDetailRoute(id: project.id)),
-            );
-          },
-        );
-      },
+    return Column(
+      children: [
+        if (ref.watch(lkmApiSessionProvider).isSignedIn)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => const ApplyProjectDialog(),
+              ),
+              icon: const Icon(Icons.add),
+              label: Text('hub.applyProject'.tr()),
+            ),
+          ),
+        Expanded(
+          child: _AsyncList(
+            value: projects,
+            onRetry: () => ref.invalidate(projectsProvider),
+            builder: (items) {
+              if (items.isEmpty) return const _EmptyHint();
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final project = items[index];
+                  return _ProjectCard(
+                    project: project,
+                    onTap: () =>
+                        context.router.push(ProjectDetailRoute(id: project.id)),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -568,9 +580,7 @@ class _ProjectCard extends StatelessWidget {
               Text(
                 [
                   if (project.applicantName.isNotEmpty) project.applicantName,
-                  'hub.projectMembers'.tr(
-                    args: ['${project.members.length}'],
-                  ),
+                  'hub.projectMembers'.tr(args: ['${project.members.length}']),
                 ].join(' · '),
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
@@ -630,7 +640,9 @@ class _BoardsTab extends ConsumerWidget {
                   right: 16,
                 ),
                 leading: Icon(
-                  row.depth == 0 ? Symbols.forum : Symbols.subdirectory_arrow_right,
+                  row.depth == 0
+                      ? Symbols.forum
+                      : Symbols.subdirectory_arrow_right,
                 ),
                 title: Text(row.board.title),
                 subtitle: row.board.status == 'active'
@@ -663,8 +675,7 @@ class BoardDetailScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(boardFeedProvider(id));
-    final boards =
-        ref.watch(contentBoardsProvider).value ?? const <LkmBoard>[];
+    final boards = ref.watch(contentBoardsProvider).value ?? const <LkmBoard>[];
     LkmBoard? board;
     for (final candidate in boards) {
       if (candidate.id == id) {
@@ -686,11 +697,13 @@ class BoardDetailScreen extends HookConsumerWidget {
     Future<void> toggleFollow() async {
       toggling.value = true;
       try {
-        await ref.read(lkmApiSessionProvider).run(
-          () => ref
-              .read(contentApiProvider)
-              .setBoardFollow(id, follow: !isFollowing),
-        );
+        await ref
+            .read(lkmApiSessionProvider)
+            .run(
+              () => ref
+                  .read(contentApiProvider)
+                  .setBoardFollow(id, follow: !isFollowing),
+            );
         ref.invalidate(followingBoardsProvider);
       } catch (error) {
         if (context.mounted) showSnackBar('$error');
@@ -780,8 +793,7 @@ class BoardDetailScreen extends HookConsumerWidget {
                   ButtonSegment(value: true, label: Text('feedHot'.tr())),
                 ],
                 selected: {hot.value},
-                onSelectionChanged: (selection) =>
-                    hot.value = selection.first,
+                onSelectionChanged: (selection) => hot.value = selection.first,
               ),
             ),
           ),
@@ -867,9 +879,7 @@ class BoardDetailScreen extends HookConsumerWidget {
                                 'hub.itemComments'.tr(
                                   args: ['${item.commentCount}'],
                                 ),
-                                'hub.itemViews'.tr(
-                                  args: ['${item.viewCount}'],
-                                ),
+                                'hub.itemViews'.tr(args: ['${item.viewCount}']),
                               ].join(' · '),
                               style: theme.textTheme.bodySmall,
                             ),
@@ -896,156 +906,10 @@ class BoardDetailScreen extends HookConsumerWidget {
 Future<void> _showAskQuestion(BuildContext context, WidgetRef ref) async {
   final created = await showDialog<bool>(
     context: context,
-    builder: (_) => const _AskQuestionDialog(),
+    builder: (_) => const AskQuestionDialog(),
   );
   if (created == true) {
     ref.invalidate(qaQuestionsProvider);
-  }
-}
-
-class _AskQuestionDialog extends HookConsumerWidget {
-  const _AskQuestionDialog();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final title = useTextEditingController();
-    final situation = useTextEditingController();
-    final content = useTextEditingController();
-    final bounty = useTextEditingController(text: '0');
-    final category = useState('help');
-    final urgent = useState(false);
-    final busy = useState(false);
-    final error = useState<String?>(null);
-
-    Future<void> submit() async {
-      final bountyValue = int.tryParse(bounty.text.trim()) ?? 0;
-      if (title.text.trim().isEmpty ||
-          situation.text.trim().isEmpty ||
-          content.text.trim().isEmpty) {
-        error.value = 'hub.askRequired'.tr();
-        return;
-      }
-      if (bountyValue < 0 || bountyValue > 1000) {
-        error.value = 'hub.bountyRange'.tr();
-        return;
-      }
-      if (urgent.value && bountyValue <= 0) {
-        error.value = 'hub.urgentNeedsBounty'.tr();
-        return;
-      }
-      busy.value = true;
-      error.value = null;
-      try {
-        await ref.read(lkmApiSessionProvider).run(
-          () => ref.read(qaApiProvider).ask(
-            title: title.text.trim(),
-            situation: situation.text.trim(),
-            content: content.text.trim(),
-            category: category.value,
-            bountyPeople: 1,
-            bountyPerPerson: bountyValue,
-            bountyDays: 7,
-            urgent: urgent.value,
-          ),
-        );
-        if (context.mounted) Navigator.of(context).pop(true);
-      } catch (err) {
-        error.value = err is ApiException ? err.message : 'hub.actionFailed'.tr();
-        busy.value = false;
-      }
-    }
-
-    return AlertDialog(
-      title: Text('hub.askQuestion'.tr()),
-      content: SizedBox(
-        width: 460,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: title,
-                decoration: InputDecoration(
-                  labelText: 'hub.askTitle'.tr(),
-                ),
-                maxLength: 200,
-              ),
-              TextField(
-                controller: situation,
-                decoration: InputDecoration(
-                  labelText: 'hub.askSituation'.tr(),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: content,
-                decoration: InputDecoration(
-                  labelText: 'hub.askContent'.tr(),
-                ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: category.value,
-                decoration: InputDecoration(
-                  labelText: 'hub.askCategory'.tr(),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'help',
-                    child: Text('hub.qaHelp'.tr()),
-                  ),
-                  DropdownMenuItem(
-                    value: 'volunteer',
-                    child: Text('hub.qaVolunteer'.tr()),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) category.value = value;
-                },
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: bounty,
-                decoration: InputDecoration(
-                  labelText: 'hub.bountyPerPerson'.tr(),
-                  helperText: 'hub.bountyHint'.tr(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text('hub.askUrgent'.tr()),
-                subtitle: Text('hub.urgentHint'.tr()),
-                value: urgent.value,
-                onChanged: (value) => urgent.value = value,
-              ),
-              if (error.value != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    error.value!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy.value ? null : () => Navigator.of(context).pop(false),
-          child: Text('cancel'.tr()),
-        ),
-        FilledButton(
-          onPressed: busy.value ? null : submit,
-          child: Text(busy.value ? 'hub.submitting'.tr() : 'hub.submit'.tr()),
-        ),
-      ],
-    );
   }
 }
 
@@ -1080,16 +944,22 @@ class _ApplyColumnDialog extends HookConsumerWidget {
       busy.value = true;
       error.value = null;
       try {
-        await ref.read(lkmApiSessionProvider).run(
-          () => ref.read(columnsApiProvider).apply(
-            title: title.text.trim(),
-            description: description.text.trim(),
-            reason: reason.text.trim(),
-          ),
-        );
+        await ref
+            .read(lkmApiSessionProvider)
+            .run(
+              () => ref
+                  .read(columnsApiProvider)
+                  .apply(
+                    title: title.text.trim(),
+                    description: description.text.trim(),
+                    reason: reason.text.trim(),
+                  ),
+            );
         if (context.mounted) Navigator.of(context).pop(true);
       } catch (err) {
-        error.value = err is ApiException ? err.message : 'hub.actionFailed'.tr();
+        error.value = err is ApiException
+            ? err.message
+            : 'hub.actionFailed'.tr();
         busy.value = false;
       }
     }
@@ -1104,9 +974,7 @@ class _ApplyColumnDialog extends HookConsumerWidget {
             children: [
               TextField(
                 controller: title,
-                decoration: InputDecoration(
-                  labelText: 'hub.columnTitle'.tr(),
-                ),
+                decoration: InputDecoration(labelText: 'hub.columnTitle'.tr()),
                 maxLength: 80,
               ),
               TextField(
@@ -1119,9 +987,7 @@ class _ApplyColumnDialog extends HookConsumerWidget {
               ),
               TextField(
                 controller: reason,
-                decoration: InputDecoration(
-                  labelText: 'hub.columnReason'.tr(),
-                ),
+                decoration: InputDecoration(labelText: 'hub.columnReason'.tr()),
                 maxLines: 3,
                 maxLength: 500,
               ),

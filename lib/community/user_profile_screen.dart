@@ -1,3 +1,4 @@
+import 'package:island/points/points_pod.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -27,11 +28,9 @@ final _userContentProvider = FutureProvider.autoDispose
     ) {
       final session = ref.watch(lkmApiSessionProvider);
       return session.run(
-        () => ref.watch(contentApiProvider).items(
-          authorId: key.userId,
-          contentType: key.type,
-          pageSize: 50,
-        ),
+        () => ref
+            .watch(contentApiProvider)
+            .items(authorId: key.userId, contentType: key.type, pageSize: 50),
       );
     });
 
@@ -76,6 +75,13 @@ class _ProfileBody extends HookConsumerWidget {
     final signedIn = ref.watch(lkmApiSessionProvider).isSignedIn;
     final me = ref.watch(lkmMeProvider).value;
     final isSelf = me != null && me.id == profile.userId;
+    final leaderboard = ref.watch(lkmPointsLeaderboardProvider('total')).value;
+    final entry = leaderboard?.items
+        .where((e) => e.userId == profile.userId)
+        .firstOrNull;
+    final balance = isSelf
+        ? ref.watch(lkmPointsBalanceProvider).value?.balance
+        : entry?.balance;
     final follow = ref.watch(followProvider(profile.userId));
     final followNotifier = ref.read(followProvider(profile.userId).notifier);
 
@@ -106,6 +112,16 @@ class _ProfileBody extends HookConsumerWidget {
                 label: Text(profile.role),
                 visualDensity: VisualDensity.compact,
               ),
+              if (balance != null)
+                Text('${'contribution.currentPoints'.tr()}: $balance')
+              else
+                Text('migration34.pointsUnknown'.tr()),
+              if (entry != null && entry.title.isNotEmpty)
+                Chip(
+                  label: Text(
+                    'contributionData.leaderboard.titles.${entry.title}'.tr(),
+                  ),
+                ),
               if (signedIn && !isSelf) ...[
                 const SizedBox(height: 16),
                 follow.isLoading
@@ -180,9 +196,8 @@ class _ProfilePosts extends ConsumerWidget {
                     [item.authorName, _formatDate(item.createdAt)].join(' · '),
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.router.push(
-                    ContentDetailRoute(id: item.id),
-                  ),
+                  onTap: () =>
+                      context.router.push(ContentDetailRoute(id: item.id)),
                 );
               },
             ),
@@ -234,11 +249,11 @@ class _ProfileProjects extends ConsumerWidget {
                 for (final application in items)
                   if (application.status != 'approved')
                     ListTile(
-                    title: Text(application.title),
-                    subtitle: Text(
-                      '${application.status} · ${application.summary}',
+                      title: Text(application.title),
+                      subtitle: Text(
+                        '${application.status} · ${application.summary}',
+                      ),
                     ),
-                  ),
               ],
             ),
         ],
@@ -303,9 +318,8 @@ class _ProfileColumns extends ConsumerWidget {
                   title: Text(item.title),
                   subtitle: Text(item.columnTitle),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.router.push(
-                    ContentDetailRoute(id: item.id),
-                  ),
+                  onTap: () =>
+                      context.router.push(ContentDetailRoute(id: item.id)),
                 );
               },
             ),

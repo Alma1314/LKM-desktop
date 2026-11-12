@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'api_client.dart';
 
 /// One question row from `/content/qa/questions`.
@@ -71,9 +73,10 @@ class QaQuestion {
       bountyDistributed: _asInt(json['bounty_distributed']),
       urgent: json['urgent'] == true,
       answerCount: _asInt(json['answer_count']),
-      createdAt: (DateTime.tryParse('${json['created_at'] ?? ''}') ??
-              DateTime.fromMillisecondsSinceEpoch(0))
-          .toLocal(),
+      createdAt:
+          (DateTime.tryParse('${json['created_at'] ?? ''}') ??
+                  DateTime.fromMillisecondsSinceEpoch(0))
+              .toLocal(),
       bountyExpiresAt: DateTime.tryParse(
         '${json['bounty_expires_at'] ?? ''}',
       )?.toLocal(),
@@ -120,9 +123,10 @@ class QaAnswer {
       authorName: '${json['author_name'] ?? ''}',
       content: '${json['content'] ?? ''}',
       isAccepted: json['is_accepted'] == true,
-      createdAt: (DateTime.tryParse('${json['created_at'] ?? ''}') ??
-              DateTime.fromMillisecondsSinceEpoch(0))
-          .toLocal(),
+      createdAt:
+          (DateTime.tryParse('${json['created_at'] ?? ''}') ??
+                  DateTime.fromMillisecondsSinceEpoch(0))
+              .toLocal(),
     );
   }
 }
@@ -187,6 +191,25 @@ class QaApi {
     return QaQuestion.fromJson(Map<String, dynamic>.from(json));
   }
 
+  Future<String> uploadImage(
+    String questionId, {
+    required String imageId,
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final result = await _client.postForm(
+      '/content/qa/questions/$questionId/images',
+      form: FormData.fromMap({
+        'image_id': imageId,
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      }),
+    );
+    if (result is! Map || result['url'] is! String) {
+      throw _shape('POST', '/content/qa/questions/$questionId/images');
+    }
+    return result['url'] as String;
+  }
+
   Future<QaAnswer> answer(String questionId, String content) async {
     final json = await _client.post(
       '/content/qa/questions/$questionId/answers',
@@ -210,9 +233,7 @@ class QaApi {
   }
 
   Future<QaQuestion> close(String questionId) async {
-    final json = await _client.post(
-      '/content/qa/questions/$questionId/close',
-    );
+    final json = await _client.post('/content/qa/questions/$questionId/close');
     if (json is! Map) {
       throw _shape('POST', '/content/qa/questions/$questionId/close');
     }

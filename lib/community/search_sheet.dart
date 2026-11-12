@@ -27,12 +27,7 @@ const _contentTypeFor = {
   'columns': 'column_post',
   'files': 'library_file',
 };
-const _detailTypes = {
-  'discussion',
-  'article',
-  'column_post',
-  'blog_post',
-};
+const _detailTypes = {'discussion', 'article', 'column_post', 'blog_post'};
 
 String _typeLabel(String type) => switch (type) {
   'posts' => 'searchMore.posts'.tr(),
@@ -75,6 +70,8 @@ class LkmSearchSheet extends HookConsumerWidget {
       final query = raw.trim();
       final id = ++requestId.value;
       if (query.isEmpty) {
+        loading.value = false;
+        loadingMore.value = false;
         results.value = const [];
         page.value = 1;
         pages.value = 1;
@@ -89,11 +86,13 @@ class LkmSearchSheet extends HookConsumerWidget {
       error.value = null;
       try {
         final result = await session.run(
-          () => ref.read(searchApiProvider).search(
-            query,
-            contentType: _contentTypeFor[type.value],
-            page: toPage,
-          ),
+          () => ref
+              .read(searchApiProvider)
+              .search(
+                query,
+                contentType: _contentTypeFor[type.value],
+                page: toPage,
+              ),
         );
         if (!context.mounted || id != requestId.value) return;
         results.value = toPage == 1

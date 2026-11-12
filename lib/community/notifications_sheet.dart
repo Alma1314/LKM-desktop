@@ -187,19 +187,20 @@ Future<void> _open(
 ) async {
   await ref.read(communityNotificationsProvider.notifier).markRead(item);
   final rawUrl = item.payload['url'];
-  final route = parseFeedRoute(rawUrl is String ? rawUrl : null);
+  final route = parseFeedRoute(
+    rawUrl is String ? rawUrl : null,
+    serverHost: ref.read(lkmServerUrlProvider),
+  );
   if (route != null && context.mounted) {
     final router = context.router;
     Navigator.of(context).pop();
-    router.push(
-      switch (route.kind) {
-        FeedRouteKind.content => ContentDetailRoute(id: route.id),
-        FeedRouteKind.qa => QaDetailRoute(id: route.id),
-        FeedRouteKind.project => ProjectDetailRoute(id: route.id),
-        FeedRouteKind.file => LibraryFileRoute(id: route.id),
-        FeedRouteKind.treehole => TreeholeRoute(),
-      },
-    );
+    router.push(switch (route.kind) {
+      FeedRouteKind.content => ContentDetailRoute(id: route.id),
+      FeedRouteKind.qa => QaDetailRoute(id: route.id),
+      FeedRouteKind.project => ProjectDetailRoute(id: route.id),
+      FeedRouteKind.file => LibraryFileRoute(id: route.id),
+      FeedRouteKind.treehole => TreeholeRoute(),
+    });
     return;
   }
   final target = resolveFeedUrl(

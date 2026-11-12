@@ -1,3 +1,8 @@
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:island/treehole/local_store.dart';
+import 'package:island/treehole/settings_sheet.dart';
+import 'package:island/core/config.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -24,10 +29,29 @@ class TreeholeScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final local = TreeholeLocalStore(
+      ref.watch(sharedPreferencesProvider),
+      ref.watch(lkmServerUrlProvider),
+    );
+    final preferences = useState(local.read());
+    final base = Theme.of(context);
+    final mode = preferences.value['theme'];
+    final dark =
+        mode == 'dark' ||
+        (mode != 'light' && base.brightness == Brightness.dark);
+    final palette = preferences.value['contrast'] == true
+        ? (dark
+              ? const ColorScheme.highContrastDark()
+              : const ColorScheme.highContrastLight())
+        : ColorScheme.fromSeed(
+            seedColor: base.colorScheme.primary,
+            brightness: dark ? Brightness.dark : Brightness.light,
+          );
     final controller = useMaterialTabController(initialLength: 5);
 
     void refreshAll() {
       ref.invalidate(treeholeLettersProvider);
+      ref.invalidate(treeholeRankLettersProvider);
       ref.invalidate(treeholeBottlesProvider);
       ref.invalidate(treeholeWishesProvider);
       ref.invalidate(treeholeConversationsProvider);
@@ -71,15 +95,29 @@ class TreeholeScreen extends HookConsumerWidget {
         isScrollControlled: true,
         builder: (_) => const TreeholeLetterSheet(),
       );
-      if (letter != null) ref.invalidate(treeholeLettersProvider);
+      if (letter != null) {
+        ref.invalidate(treeholeLettersProvider);
+        ref.invalidate(treeholeRankLettersProvider);
+      }
     }
 
-    return AppScaffold(
+    final screen = AppScaffold(
       isNoBackground: false,
       appBar: AppBar(
         leading: const AutoLeadingButton(),
         title: Text('treehole'.tr()),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'settings'.tr(),
+            onPressed: () async {
+              await showDialog<void>(
+                context: context,
+                builder: (_) => const TreeholeSettingsSheet(),
+              );
+              if (context.mounted) preferences.value = local.read();
+            },
+          ),
           IconButton(
             tooltip: 'refresh'.tr(),
             onPressed: refreshAll,
@@ -102,31 +140,38 @@ class TreeholeScreen extends HookConsumerWidget {
         builder: (context, _) {
           final index = controller.index;
           return index == _inboxTab
-            ? const SizedBox.shrink()
-            : FloatingActionButton.extended(
-                onPressed: compose,
-                icon: const Icon(Symbols.edit_square),
-                label: Text(
-                  switch (index) {
+              ? const SizedBox.shrink()
+              : FloatingActionButton.extended(
+                  onPressed: compose,
+                  icon: const Icon(Symbols.edit_square),
+                  label: Text(switch (index) {
                     1 => 'treeholeThrowBottle'.tr(),
                     2 => 'treeholeMakeWish'.tr(),
                     _ => 'treeholeWriteLetter'.tr(),
-                  },
-                ),
-              );
+                  }),
+                );
         },
       ),
       body: TabBarView(
         controller: controller,
         children: [
-          TreeholeLettersView(
-            onReplied: () => controller.animateTo(_inboxTab),
-          ),
+          TreeholeLettersView(onReplied: () => controller.animateTo(_inboxTab)),
           const TreeholeBottlesView(),
           const TreeholeWishesView(),
           const TreeholeInboxView(),
           const TreeholeLettersView(scope: 'mine'),
         ],
+      ),
+    );
+    return Theme(
+      data: base.copyWith(colorScheme: palette),
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(
+            (preferences.value['scale'] as num? ?? 1).toDouble(),
+          ),
+        ),
+        child: screen,
       ),
     );
   }

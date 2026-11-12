@@ -1,3 +1,6 @@
+import 'package:island/shared/widgets/content/markdown_remote_image.dart';
+import 'package:island/community/my_content_screen.dart'
+    show myApplicationsProvider;
 import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -33,7 +36,9 @@ class QaDetailScreen extends HookConsumerWidget {
         ref.invalidate(qaQuestionProvider(id));
       } catch (err) {
         if (context.mounted) {
-          showSnackBar(err is ApiException ? err.message : 'hub.actionFailed'.tr());
+          showSnackBar(
+            err is ApiException ? err.message : 'hub.actionFailed'.tr(),
+          );
         }
       }
     }
@@ -117,14 +122,22 @@ class QaDetailScreen extends HookConsumerWidget {
                 const SizedBox(height: 8),
                 _SectionBox(child: MarkdownTextContent(content: q.content)),
               ],
+              for (final image in q.images)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: MarkdownRemoteImage(
+                    uri: Uri.parse(
+                      ref.watch(lkmServerUrlProvider),
+                    ).resolve(image),
+                  ),
+                ),
               if (isAsker && q.isOpen) ...[
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
                   child: OutlinedButton.icon(
-                    onPressed: () => mutate(
-                      () async => ref.read(qaApiProvider).close(q.id),
-                    ),
+                    onPressed: () =>
+                        mutate(() async => ref.read(qaApiProvider).close(q.id)),
                     icon: const Icon(Symbols.lock),
                     label: Text('hub.closeQuestion'.tr()),
                   ),
@@ -156,8 +169,7 @@ class QaDetailScreen extends HookConsumerWidget {
                       answer.authorId != q.authorId &&
                       acceptedCount < q.bountyPeople,
                   onAccept: () => mutate(
-                    () async =>
-                        ref.read(qaApiProvider).accept(q.id, answer.id),
+                    () async => ref.read(qaApiProvider).accept(q.id, answer.id),
                   ),
                 ),
               if (signedIn && !isAsker && q.isOpen) ...[
@@ -287,11 +299,7 @@ class _AnswerComposer extends HookWidget {
 /// One column and its published posts.
 @RoutePage()
 class ColumnDetailScreen extends HookConsumerWidget {
-  const ColumnDetailScreen({
-    super.key,
-    required this.id,
-    this.title,
-  });
+  const ColumnDetailScreen({super.key, required this.id, this.title});
 
   final String id;
   final String? title;
@@ -350,9 +358,7 @@ class ColumnDetailScreen extends HookConsumerWidget {
                           _formatDateTime(post.publishedAt!),
                         'hub.itemViews'.tr(args: ['${post.viewCount}']),
                         'hub.itemLikes'.tr(args: ['${post.likeCount}']),
-                        'hub.itemComments'.tr(
-                          args: ['${post.commentCount}'],
-                        ),
+                        'hub.itemComments'.tr(args: ['${post.commentCount}']),
                       ].join(' · '),
                       style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
@@ -403,7 +409,7 @@ class ProjectDetailScreen extends HookConsumerWidget {
               tooltip: 'hub.applyProject'.tr(),
               onPressed: () => showDialog<void>(
                 context: context,
-                builder: (_) => const _ApplyProjectDialog(),
+                builder: (_) => const ApplyProjectDialog(),
               ),
               icon: const Icon(Symbols.rocket_launch),
             ),
@@ -445,10 +451,7 @@ class ProjectDetailScreen extends HookConsumerWidget {
                       color: theme.colorScheme.secondary,
                     ),
                   for (final tag in p.tags)
-                    _Chip(
-                      text: tag,
-                      color: theme.colorScheme.primary,
-                    ),
+                    _Chip(text: tag, color: theme.colorScheme.primary),
                 ],
               ),
               const SizedBox(height: 12),
@@ -483,7 +486,10 @@ class ProjectDetailScreen extends HookConsumerWidget {
               _TextBlock(title: 'hub.projectBackground', text: p.background),
               _TextBlock(title: 'hub.projectGoals', text: p.goals),
               _TextBlock(title: 'hub.projectDescription', text: p.description),
-              _TextBlock(title: 'hub.projectRequirements', text: p.requirements),
+              _TextBlock(
+                title: 'hub.projectRequirements',
+                text: p.requirements,
+              ),
               _TextBlock(title: 'hub.projectTeam', text: p.teamIntro),
               if (p.recruitingRoles.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -506,6 +512,46 @@ class ProjectDetailScreen extends HookConsumerWidget {
                   ],
                 ),
               ],
+              if (signedIn)
+                _SectionBox(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'authFlow.myApplications'.tr(),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      ...ref
+                          .watch(myApplicationsProvider)
+                          .when(
+                            loading: () => [const LinearProgressIndicator()],
+                            error: (e, _) => [
+                              Text('$e'),
+                              TextButton(
+                                onPressed: () =>
+                                    ref.invalidate(myApplicationsProvider),
+                                child: Text('retry'.tr()),
+                              ),
+                            ],
+                            data: (items) => items.isEmpty
+                                ? [Text('authFlow.empty'.tr())]
+                                : [
+                                    for (final app in items)
+                                      ListTile(
+                                        title: Text(app.title),
+                                        subtitle: Text(
+                                          [
+                                            app.status,
+                                            if (app.reviewNote != null)
+                                              app.reviewNote!,
+                                          ].join(' · '),
+                                        ),
+                                      ),
+                                  ],
+                          ),
+                    ],
+                  ),
+                ),
               if (p.members.isNotEmpty) ...[
                 const Divider(height: 32),
                 Text(
@@ -545,12 +591,7 @@ class ProjectDetailScreen extends HookConsumerWidget {
                     child: ExpansionTile(
                       title: Text(report.title),
                       subtitle: Text(report.date),
-                      childrenPadding: const EdgeInsets.fromLTRB(
-                        16,
-                        0,
-                        16,
-                        16,
-                      ),
+                      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       expandedCrossAxisAlignment: CrossAxisAlignment.start,
                       children: [Text(report.content)],
                     ),
@@ -594,14 +635,15 @@ class _TextBlock extends StatelessWidget {
   }
 }
 
-class _ApplyProjectDialog extends HookConsumerWidget {
-  const _ApplyProjectDialog();
+class ApplyProjectDialog extends HookConsumerWidget {
+  const ApplyProjectDialog();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final title = useTextEditingController();
     final summary = useTextEditingController();
     final description = useTextEditingController();
+    final members = useTextEditingController();
     final busy = useState(false);
     final error = useState<String?>(null);
 
@@ -612,19 +654,40 @@ class _ApplyProjectDialog extends HookConsumerWidget {
         error.value = 'hub.askRequired'.tr();
         return;
       }
+      final claims = <Map<String, String>>[];
+      for (final line
+          in members.text.split('\n').where((l) => l.trim().isNotEmpty)) {
+        final fields = line.split('|').map((s) => s.trim()).toList();
+        if (fields.length != 2 ||
+            fields.any((s) => s.isEmpty || s.length > 100) ||
+            claims.length >= 50) {
+          error.value = 'migration34.memberClaims'.tr();
+          return;
+        }
+        claims.add({'display_name': fields[0], 'role_in_project': fields[1]});
+      }
       busy.value = true;
       error.value = null;
       try {
-        await ref.read(lkmApiSessionProvider).run(
-          () => ref.read(projectsApiProvider).apply(
-            title: title.text.trim(),
-            summary: summary.text.trim(),
-            description: description.text.trim(),
-          ),
-        );
+        await ref
+            .read(lkmApiSessionProvider)
+            .run(
+              () => ref
+                  .read(projectsApiProvider)
+                  .apply(
+                    title: title.text.trim(),
+                    summary: summary.text.trim(),
+                    description: description.text.trim(),
+                    memberClaims: claims,
+                  ),
+            );
+        ref.invalidate(myApplicationsProvider);
         if (context.mounted) Navigator.of(context).pop();
       } catch (err) {
-        error.value = err is ApiException ? err.message : 'hub.actionFailed'.tr();
+        if (!context.mounted) return;
+        error.value = err is ApiException
+            ? err.message
+            : 'hub.actionFailed'.tr();
         busy.value = false;
       }
     }
@@ -637,11 +700,17 @@ class _ApplyProjectDialog extends HookConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text('migration34.applicationNote'.tr()),
+              TextField(
+                controller: members,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'migration34.memberClaims'.tr(),
+                ),
+              ),
               TextField(
                 controller: title,
-                decoration: InputDecoration(
-                  labelText: 'hub.projectTitle'.tr(),
-                ),
+                decoration: InputDecoration(labelText: 'hub.projectTitle'.tr()),
                 maxLength: 100,
               ),
               TextField(

@@ -193,10 +193,16 @@ class ProjectsApi {
     required String title,
     required String summary,
     required String description,
+    List<Map<String, String>> memberClaims = const [],
   }) async {
     await _client.post(
       '/projects/applications',
-      body: {'title': title, 'summary': summary, 'description': description},
+      body: {
+        'title': title,
+        'summary': summary,
+        'description': description,
+        if (memberClaims.isNotEmpty) 'member_claims': memberClaims,
+      },
     );
   }
 }

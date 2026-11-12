@@ -5,7 +5,7 @@
 /// later, a WebView).
 String? resolveFeedUrl(String? url, String? serverHost) {
   final raw = url?.trim();
-  if (raw == null || raw.isEmpty) return null;
+  if (raw == null || raw.isEmpty || raw.startsWith('//')) return null;
   if (raw.startsWith('/')) {
     if (serverHost == null || serverHost.isEmpty) return null;
     return '$serverHost$raw';
@@ -28,9 +28,21 @@ class FeedRouteTarget {
 /// Notification payloads carry the website's paths (`/content/posts/{id}`,
 /// `/qa/{id}`, …); anything external or unrecognised returns null so callers
 /// keep the old behaviour of opening it in the browser.
-FeedRouteTarget? parseFeedRoute(String? url) {
-  final raw = url?.trim();
-  if (raw == null || raw.isEmpty || !raw.startsWith('/')) return null;
+FeedRouteTarget? parseFeedRoute(String? url, {String? serverHost}) {
+  var raw = url?.trim();
+  if (raw == null || raw.isEmpty || raw.startsWith('//')) return null;
+  if (!raw.startsWith('/')) {
+    final uri = Uri.tryParse(raw);
+    final server = Uri.tryParse(serverHost ?? '');
+    if (uri == null ||
+        server == null ||
+        !uri.hasAuthority ||
+        !server.hasAuthority ||
+        !['http', 'https'].contains(uri.scheme) ||
+        uri.origin != server.origin)
+      return null;
+    raw = uri.path;
+  }
   final path = raw.split('#').first.split('?').first;
   final segments = path.split('/').where((s) => s.isNotEmpty).toList();
   if (segments.isEmpty) return null;
@@ -45,15 +57,15 @@ FeedRouteTarget? parseFeedRoute(String? url) {
 
   final contentId =
       idOf(const ['content', 'posts']) ?? idOf(const ['forum', 'post']);
-  if (contentId != null) return FeedRouteTarget(FeedRouteKind.content, contentId);
+  if (contentId != null)
+    return FeedRouteTarget(FeedRouteKind.content, contentId);
   final qaId = idOf(const ['qa']);
   if (qaId != null) return FeedRouteTarget(FeedRouteKind.qa, qaId);
   final projectId = idOf(const ['projects']);
   if (projectId != null) {
     return FeedRouteTarget(FeedRouteKind.project, projectId);
   }
-  final fileId =
-      idOf(const ['files']) ?? idOf(const ['library', 'files']);
+  final fileId = idOf(const ['files']) ?? idOf(const ['library', 'files']);
   if (fileId != null) return FeedRouteTarget(FeedRouteKind.file, fileId);
   if (segments.first == 'treehole') {
     return const FeedRouteTarget(FeedRouteKind.treehole, '');

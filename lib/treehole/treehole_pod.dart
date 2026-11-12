@@ -21,7 +21,16 @@ final treeholeLettersProvider = FutureProvider.autoDispose
 
 final treeholeBottlesProvider =
     FutureProvider.autoDispose<List<LkmTreeholeBottle>>((ref) {
-      return ref.watch(treeholeApiProvider).bottles();
+      final api = ref.watch(treeholeApiProvider);
+      return () async {
+        final all = <LkmTreeholeBottle>[];
+        for (var page = 1; ; page++) {
+          final rows = await api.bottles(page: page);
+          all.addAll(rows);
+          if (rows.length < 100) break;
+        }
+        return all;
+      }();
     });
 
 final treeholeWishesProvider =
@@ -32,4 +41,20 @@ final treeholeWishesProvider =
 final treeholeConversationsProvider =
     FutureProvider.autoDispose<List<LkmTreeholeConversation>>((ref) {
       return ref.watch(treeholeApiProvider).conversations();
+    });
+
+final treeholeRankLettersProvider =
+    FutureProvider.autoDispose<List<LkmTreeholeLetter>>((ref) async {
+      final api = ref.watch(treeholeApiProvider);
+      final all = <LkmTreeholeLetter>[];
+      for (var page = 1; ; page++) {
+        final items = await api.letters(
+          scope: 'public',
+          page: page,
+          limit: 100,
+        );
+        all.addAll(items);
+        if (items.length < 100) break;
+      }
+      return all;
     });

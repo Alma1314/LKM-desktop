@@ -1,3 +1,4 @@
+import 'package:island/treehole/local_store.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -25,7 +26,18 @@ class TreeholeLettersView extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wallScope = useState('public');
     final effective = scope ?? wallScope.value;
-    final letters = ref.watch(treeholeLettersProvider(effective));
+    final raw = effective.startsWith('rank')
+        ? ref.watch(treeholeRankLettersProvider)
+        : ref.watch(treeholeLettersProvider(effective));
+    final letters = effective.startsWith('rank')
+        ? raw.whenData(
+            (items) => rankTreeholeLetters(
+              items,
+              DateTime.now(),
+              effective == 'rankToday' ? 1 : 7,
+            ),
+          )
+        : raw;
 
     return Column(
       children: [
@@ -34,19 +46,30 @@ class TreeholeLettersView extends HookConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: SegmentedButton<String>(
-                segments: [
-                  ButtonSegment(
-                    value: 'public',
-                    label: Text('treeholePrivacyPublic'.tr()),
-                  ),
-                  ButtonSegment(
-                    value: 'random',
-                    label: Text('treeholeRandom'.tr()),
-                  ),
-                ],
-                selected: {wallScope.value},
-                onSelectionChanged: (value) => wallScope.value = value.first,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'rankToday',
+                      label: Text('migration34.today'.tr()),
+                    ),
+                    ButtonSegment(
+                      value: 'rankWeek',
+                      label: Text('migration34.week'.tr()),
+                    ),
+                    ButtonSegment(
+                      value: 'public',
+                      label: Text('treeholePrivacyPublic'.tr()),
+                    ),
+                    ButtonSegment(
+                      value: 'random',
+                      label: Text('treeholeRandom'.tr()),
+                    ),
+                  ],
+                  selected: {wallScope.value},
+                  onSelectionChanged: (value) => wallScope.value = value.first,
+                ),
               ),
             ),
           ),
@@ -55,8 +78,13 @@ class TreeholeLettersView extends HookConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => _TreeholeError(
               error: error,
-              onRetry: () =>
-                  ref.invalidate(treeholeLettersProvider(effective)),
+              onRetry: () {
+                if (effective.startsWith('rank')) {
+                  ref.invalidate(treeholeRankLettersProvider);
+                } else {
+                  ref.invalidate(treeholeLettersProvider(effective));
+                }
+              },
             ),
             data: (items) => items.isEmpty
                 ? Center(child: Text('treeholeNoLetters'.tr()))
@@ -64,10 +92,8 @@ class TreeholeLettersView extends HookConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => _LetterCard(
-                      letter: items[index],
-                      onReplied: onReplied,
-                    ),
+                    itemBuilder: (context, index) =>
+                        _LetterCard(letter: items[index], onReplied: onReplied),
                   ),
           ),
         ),
@@ -98,13 +124,14 @@ class _LetterCard extends HookConsumerWidget {
       } catch (failure) {
         if (context.mounted) showSnackBar('$failure');
       } finally {
-        busy.value = false;
+        if (context.mounted) busy.value = false;
       }
     }
 
     Future<void> react(String kind) => run(() async {
       await api.toggleReaction(letter.id, kind);
       ref.invalidate(treeholeLettersProvider);
+      ref.invalidate(treeholeRankLettersProvider);
     });
 
     Future<void> reply() async {
@@ -142,6 +169,7 @@ class _LetterCard extends HookConsumerWidget {
         builder: (_) => TreeholeLetterSheet(letter: letter),
       );
       ref.invalidate(treeholeLettersProvider);
+      ref.invalidate(treeholeRankLettersProvider);
     }
 
     Future<void> remove() async {
@@ -155,6 +183,7 @@ class _LetterCard extends HookConsumerWidget {
       await run(() async {
         await api.deleteLetter(letter.id);
         ref.invalidate(treeholeLettersProvider);
+        ref.invalidate(treeholeRankLettersProvider);
         ref.invalidate(treeholeConversationsProvider);
       });
     }
@@ -192,9 +221,7 @@ class _LetterCard extends HookConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: Icon(
-                      letter.privacy == 'self'
-                          ? Symbols.lock
-                          : Symbols.shuffle,
+                      letter.privacy == 'self' ? Symbols.lock : Symbols.shuffle,
                       size: 14,
                       color: muted,
                     ),
@@ -224,11 +251,13 @@ class _LetterCard extends HookConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 scheduled
-                    ? 'treeholeScheduledAt'.tr(args: [
-                        formatTreeholeTime(
-                          letter.scheduledAt ?? letter.createdAt,
-                        ),
-                      ])
+                    ? 'treeholeScheduledAt'.tr(
+                        args: [
+                          formatTreeholeTime(
+                            letter.scheduledAt ?? letter.createdAt,
+                          ),
+                        ],
+                      )
                     : 'treeholeSealed'.tr(),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.tertiary,
@@ -376,10 +405,7 @@ class _TreeholeError extends StatelessWidget {
         children: [
           Text('$error', textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onRetry,
-            child: Text('retry'.tr()),
-          ),
+          OutlinedButton(onPressed: onRetry, child: Text('retry'.tr())),
         ],
       ),
     );
