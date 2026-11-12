@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:island/community/compose_sheet.dart';
 import 'package:island/community/content_detail_pod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
@@ -650,8 +651,8 @@ class _BoardsTab extends ConsumerWidget {
 
 // ---------------------------------------------------------------- Board detail
 
-/// Posts inside one board. The board id comes from the route; the title is the
-/// one the hub already had, so the page renders without a second lookup.
+/// Posts inside one board: sub-board links, 最新/热门 ordering and the
+/// follow/compose actions the website's board page offers.
 @RoutePage()
 class BoardDetailScreen extends HookConsumerWidget {
   const BoardDetailScreen({super.key, required this.id, this.title = ''});
@@ -661,110 +662,231 @@ class BoardDetailScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = useState<List<LkmContentItem>>(const []);
-    final page = useState(1);
-    final hasMore = useState(false);
-    final loading = useState(true);
-    final error = useState<String?>(null);
+    final feed = ref.watch(boardFeedProvider(id));
+    final boards =
+        ref.watch(contentBoardsProvider).value ?? const <LkmBoard>[];
+    LkmBoard? board;
+    for (final candidate in boards) {
+      if (candidate.id == id) {
+        board = candidate;
+        break;
+      }
+    }
+    final children = boards
+        .where((entry) => entry.parentId == id)
+        .toList(growable: false);
+    final signedIn = ref.watch(lkmApiSessionProvider).isSignedIn;
+    final following = ref.watch(followingBoardsProvider);
+    final isFollowing =
+        following.value?.any((entry) => entry.boardId == id) == true;
+    final hot = useState(false);
+    final toggling = useState(false);
+    final theme = Theme.of(context);
 
-    Future<void> load(int nextPage, {required bool replace}) async {
-      loading.value = true;
-      error.value = null;
+    Future<void> toggleFollow() async {
+      toggling.value = true;
       try {
-        final session = ref.read(lkmApiSessionProvider);
-        final result = await session.run(
+        await ref.read(lkmApiSessionProvider).run(
           () => ref
               .read(contentApiProvider)
-              .items(boardId: id, page: nextPage),
+              .setBoardFollow(id, follow: !isFollowing),
         );
-        items.value = replace
-            ? result.items
-            : [...items.value, ...result.items];
-        page.value = result.page;
-        hasMore.value = result.hasMore;
-      } catch (err) {
-        error.value = '$err';
+        ref.invalidate(followingBoardsProvider);
+      } catch (error) {
+        if (context.mounted) showSnackBar('$error');
       } finally {
-        loading.value = false;
+        if (context.mounted) toggling.value = false;
       }
     }
 
-    useEffect(() {
-      load(1, replace: true);
-      return null;
-    }, [id]);
+    Future<void> compose() async {
+      final created = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => LkmComposeSheet(initialBoardId: id),
+      );
+      if (created == null || !context.mounted) return;
+      ref.invalidate(boardFeedProvider(id));
+      context.router.push(ContentDetailRoute(id: created));
+    }
 
-    final theme = Theme.of(context);
+    final heading = title?.isNotEmpty == true
+        ? title!
+        : board?.title.isNotEmpty == true
+        ? board!.title
+        : 'hub.tabBoards'.tr();
+
     return AppScaffold(
       isNoBackground: false,
       appBar: AppBar(
         leading: const AutoLeadingButton(),
-        title: Text(title?.isNotEmpty == true ? title! : 'hub.tabBoards'.tr()),
-      ),
-      body: error.value != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('hub.loadFailed'.tr()),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => load(1, replace: true),
-                    child: Text('refresh'.tr()),
-                  ),
-                ],
+        title: Text(heading),
+        actions: [
+          if (signedIn)
+            IconButton(
+              tooltip: isFollowing
+                  ? 'hub.boardFollowing'.tr()
+                  : 'hub.boardFollow'.tr(),
+              onPressed: toggling.value ? null : toggleFollow,
+              icon: Icon(
+                isFollowing ? Symbols.star : Symbols.star_border,
+                color: isFollowing ? theme.colorScheme.primary : null,
               ),
-            )
-          : loading.value && items.value.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : items.value.isEmpty
-          ? const _EmptyHint()
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              itemCount: items.value.length + (hasMore.value ? 1 : 0),
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                if (index >= items.value.length) {
-                  return Center(
-                    child: TextButton(
-                      onPressed: loading.value
-                          ? null
-                          : () => load(page.value + 1, replace: false),
-                      child: Text('hub.loadMore'.tr()),
-                    ),
-                  );
-                }
-                final item = items.value[index];
-                return Card(
-                  margin: EdgeInsets.zero,
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    title: Text(
-                      item.title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+            ),
+          if (signedIn)
+            IconButton(
+              tooltip: 'lkmComposeTitle'.tr(),
+              onPressed: compose,
+              icon: const Icon(Symbols.edit_square),
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (children.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final child in children)
+                      ActionChip(
+                        avatar: const Icon(
+                          Symbols.subdirectory_arrow_right,
+                          size: 18,
+                        ),
+                        label: Text(child.title),
+                        onPressed: () => context.router.push(
+                          BoardDetailRoute(id: child.id, title: child.title),
+                        ),
                       ),
+                  ],
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text('hub.sortNewest'.tr()),
+                  ),
+                  ButtonSegment(value: true, label: Text('feedHot'.tr())),
+                ],
+                selected: {hot.value},
+                onSelectionChanged: (selection) =>
+                    hot.value = selection.first,
+              ),
+            ),
+          ),
+          Expanded(
+            child: feed.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('hub.loadFailed'.tr()),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$error',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
                     ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        [
-                          item.authorName,
-                          _formatDate(item.createdAt),
-                          'hub.itemComments'.tr(
-                            args: ['${item.commentCount}'],
+                    TextButton(
+                      onPressed: () => ref.invalidate(boardFeedProvider(id)),
+                      child: Text('refresh'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+              data: (items) {
+                if (items.isEmpty) return const _EmptyHint();
+                final ordered = orderBoardItems(items, hot: hot.value);
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(boardFeedProvider(id));
+                    await ref.read(boardFeedProvider(id).future);
+                  },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                    itemCount: ordered.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = ordered[index];
+                      return Card(
+                        margin: EdgeInsets.zero,
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
+                          title: Row(
+                            children: [
+                              if (item.isPinned)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(
+                                    end: 6,
+                                  ),
+                                  child: Icon(
+                                    Symbols.push_pin,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                )
+                              else if (item.isFeatured)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(
+                                    end: 6,
+                                  ),
+                                  child: Icon(
+                                    Symbols.workspace_premium,
+                                    size: 16,
+                                    color: theme.colorScheme.tertiary,
+                                  ),
+                                ),
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          'hub.itemLikes'.tr(args: ['${item.likeCount}']),
-                        ].join(' · '),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                    onTap: () =>
-                        context.router.push(ContentDetailRoute(id: item.id)),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              [
+                                item.authorName,
+                                _formatDate(item.createdAt),
+                                'hub.itemComments'.tr(
+                                  args: ['${item.commentCount}'],
+                                ),
+                                'hub.itemViews'.tr(
+                                  args: ['${item.viewCount}'],
+                                ),
+                              ].join(' · '),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                          onTap: () => context.router.push(
+                            ContentDetailRoute(id: item.id),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 }

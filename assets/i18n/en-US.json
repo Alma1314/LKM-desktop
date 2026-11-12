@@ -5940,6 +5940,8 @@
     "projectMembersTitle": "Members",
     "projectReports": "Progress reports",
     "boardClosed": "Closed",
+    "boardFollow": "Follow board",
+    "boardFollowing": "Following board",
     "itemComments": "{} comments",
     "itemLikes": "{} likes",
     "itemViews": "{} views",
@@ -6075,6 +6077,12 @@
     "dlqDiscarded": "Discarded",
     "dlqEmpty": "No dead letters",
     "dlqAttempts": "{} attempts"
+  },
+  "searchMore": {
+    "all": "All",
+    "posts": "Posts",
+    "columns": "Columns",
+    "files": "Files"
   },
   "authFlow": {
     "registerTitle": "Create account",

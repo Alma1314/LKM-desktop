@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,6 +9,7 @@ import 'package:island/community/feed_links.dart';
 import 'package:island/community/notification_pod.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/notification_api.dart';
+import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/layouts/sheet_scaffold.dart';
 
 /// The LKM-service notification inbox, opened from the community bell.
@@ -185,6 +187,21 @@ Future<void> _open(
 ) async {
   await ref.read(communityNotificationsProvider.notifier).markRead(item);
   final rawUrl = item.payload['url'];
+  final route = parseFeedRoute(rawUrl is String ? rawUrl : null);
+  if (route != null && context.mounted) {
+    final router = context.router;
+    Navigator.of(context).pop();
+    router.push(
+      switch (route.kind) {
+        FeedRouteKind.content => ContentDetailRoute(id: route.id),
+        FeedRouteKind.qa => QaDetailRoute(id: route.id),
+        FeedRouteKind.project => ProjectDetailRoute(id: route.id),
+        FeedRouteKind.file => LibraryFileRoute(id: route.id),
+        FeedRouteKind.treehole => TreeholeRoute(),
+      },
+    );
+    return;
+  }
   final target = resolveFeedUrl(
     rawUrl is String ? rawUrl : null,
     ref.read(lkmServerUrlProvider),

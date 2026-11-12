@@ -133,6 +133,8 @@ class LkmContentItem {
     this.publishedAt,
     this.bookmarkCount = 0,
     this.forwardCount = 0,
+    this.isPinned = false,
+    this.isFeatured = false,
   });
 
   final String id;
@@ -155,6 +157,8 @@ class LkmContentItem {
   final int commentCount;
   final int bookmarkCount;
   final int forwardCount;
+  final bool isPinned;
+  final bool isFeatured;
   final DateTime createdAt;
   final DateTime? publishedAt;
 
@@ -182,6 +186,8 @@ class LkmContentItem {
       commentCount: _asInt(json['commentCount']),
       bookmarkCount: _asInt(json['bookmarkCount']),
       forwardCount: _asInt(json['forwardCount']),
+      isPinned: json['isPinned'] == true,
+      isFeatured: json['isFeatured'] == true,
       createdAt: (created ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal(),
       publishedAt: DateTime.tryParse('${json['publishedAt'] ?? ''}')?.toLocal(),
     );

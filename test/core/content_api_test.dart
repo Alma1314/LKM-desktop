@@ -99,6 +99,8 @@ void main() {
     expect(item.authorName, 'alma');
     expect(item.viewCount, 42);
     expect(item.tags, ['物理']);
+    expect(item.isPinned, isFalse);
+    expect(item.isFeatured, isTrue);
     expect(item.createdAt.isUtc, isFalse);
   });
 

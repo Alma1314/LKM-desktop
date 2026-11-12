@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:island/community/feed_links.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/search_api.dart';
+import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/layouts/sheet_scaffold.dart';
 
 final searchApiProvider = Provider<SearchApi>((ref) {
@@ -16,6 +18,34 @@ final searchApiProvider = Provider<SearchApi>((ref) {
 });
 
 const _debounce = Duration(milliseconds: 400);
+
+/// Scope tabs of the website's `/search`: the question bank is a mock there,
+/// so only the three real backends are offered.
+const _searchTypes = ['all', 'posts', 'columns', 'files'];
+const _contentTypeFor = {
+  'posts': 'discussion',
+  'columns': 'column_post',
+  'files': 'library_file',
+};
+const _detailTypes = {
+  'discussion',
+  'article',
+  'column_post',
+  'blog_post',
+};
+
+String _typeLabel(String type) => switch (type) {
+  'posts' => 'searchMore.posts'.tr(),
+  'columns' => 'searchMore.columns'.tr(),
+  'files' => 'searchMore.files'.tr(),
+  _ => 'searchMore.all'.tr(),
+};
+
+String _hitLabel(String contentType) => contentType == 'library_file'
+    ? 'searchMore.files'.tr()
+    : contentType == 'column_post'
+    ? 'searchMore.columns'.tr()
+    : 'searchMore.posts'.tr();
 
 /// Full-text search across the site, opened from the community header.
 class LkmSearchSheet extends HookConsumerWidget {
@@ -32,6 +62,7 @@ class LkmSearchSheet extends HookConsumerWidget {
     final error = useState<String?>(null);
     final page = useState(1);
     final pages = useState(1);
+    final type = useState('all');
     final requestId = useRef(0);
     final timer = useRef<Timer?>(null);
     final theme = Theme.of(context);
@@ -58,7 +89,11 @@ class LkmSearchSheet extends HookConsumerWidget {
       error.value = null;
       try {
         final result = await session.run(
-          () => ref.read(searchApiProvider).search(query, page: toPage),
+          () => ref.read(searchApiProvider).search(
+            query,
+            contentType: _contentTypeFor[type.value],
+            page: toPage,
+          ),
         );
         if (!context.mounted || id != requestId.value) return;
         results.value = toPage == 1
@@ -83,9 +118,18 @@ class LkmSearchSheet extends HookConsumerWidget {
     }
 
     void openHit(SearchHit hit) {
-      final path = hit.contentType == 'library_file'
-          ? '/files/${hit.id}'
-          : '/forum/post/${hit.id}';
+      final router = context.router;
+      if (hit.contentType == 'library_file') {
+        Navigator.of(context).pop();
+        router.push(LibraryFileRoute(id: hit.id));
+        return;
+      }
+      if (_detailTypes.contains(hit.contentType)) {
+        Navigator.of(context).pop();
+        router.push(ContentDetailRoute(id: hit.id));
+        return;
+      }
+      final path = '/forum/post/${hit.id}';
       final target = resolveFeedUrl(path, serverHost);
       if (target != null) {
         launchUrlString(target, mode: LaunchMode.externalApplication);
@@ -116,6 +160,28 @@ class LkmSearchSheet extends HookConsumerWidget {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  for (final value in _searchTypes)
+                    ChoiceChip(
+                      label: Text(_typeLabel(value)),
+                      selected: type.value == value,
+                      onSelected: (_) {
+                        if (type.value == value) return;
+                        type.value = value;
+                        timer.value?.cancel();
+                        run(controller.text);
+                      },
+                    ),
+                ],
               ),
             ),
           ),
@@ -173,6 +239,7 @@ class LkmSearchSheet extends HookConsumerWidget {
                         ),
                         subtitle: Text(
                           [
+                            _hitLabel(hit.contentType),
                             if (hit.authorName.isNotEmpty) hit.authorName,
                             if (hit.excerpt.isNotEmpty) hit.excerpt,
                           ].join(' · '),

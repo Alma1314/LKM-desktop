@@ -5904,6 +5904,8 @@
     "projectMembersTitle": "项目成员",
     "projectReports": "进展报告",
     "boardClosed": "已关闭",
+    "boardFollow": "关注板块",
+    "boardFollowing": "已关注板块",
     "itemComments": "{} 条评论",
     "itemLikes": "{} 赞",
     "itemViews": "{} 次浏览",
@@ -6039,6 +6041,12 @@
     "dlqDiscarded": "已丢弃",
     "dlqEmpty": "没有死信",
     "dlqAttempts": "尝试 {} 次"
+  },
+  "searchMore": {
+    "all": "全部",
+    "posts": "帖子",
+    "columns": "专栏",
+    "files": "文件库"
   },
   "authFlow": {
     "registerTitle": "创建账号",

@@ -64,7 +64,10 @@ class _Attachment {
 /// approves one it is shown as an "under review" placeholder and its URL is
 /// never written into the post (decision 3).
 class LkmComposeSheet extends HookConsumerWidget {
-  const LkmComposeSheet({super.key});
+  const LkmComposeSheet({super.key, this.initialBoardId});
+
+  /// Preselects the board when composing from inside a board page.
+  final String? initialBoardId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,7 +77,7 @@ class LkmComposeSheet extends HookConsumerWidget {
     final title = useTextEditingController();
     final body = useTextEditingController();
     final tags = useTextEditingController();
-    final selected = useState<String?>(null);
+    final selected = useState<String?>(initialBoardId);
     final submitting = useState(false);
     final error = useState<String?>(null);
     final attachments = useState<List<_Attachment>>(const []);

@@ -86,3 +86,46 @@ final boardItemsProvider = FutureProvider.autoDispose
             .items(boardId: key.boardId, page: key.page),
       );
     });
+
+/// The board detail's first page, large enough to rank locally like the
+/// website does. ponytail: 50-item cap, switch back to server paging if a
+/// board ever outgrows one page.
+final boardFeedProvider = FutureProvider.autoDispose
+    .family<List<LkmContentItem>, String>((ref, boardId) async {
+      final session = ref.watch(lkmApiSessionProvider);
+      final page = await session.run(
+        () => ref
+            .watch(contentApiProvider)
+            .items(boardId: boardId, pageSize: 50),
+      );
+      return page.items;
+    });
+
+/// Boards the signed-in viewer follows; also the source of truth for the
+/// follow button on a board page.
+final followingBoardsProvider =
+    FutureProvider.autoDispose<List<LkmFollowBoard>>((ref) {
+      final session = ref.watch(lkmApiSessionProvider);
+      if (!session.isSignedIn) return const <LkmFollowBoard>[];
+      return session.run(
+        () => ref.watch(contentApiProvider).followingBoards(),
+      );
+    });
+
+/// Board ordering shared by the 最新/热门 switch: pinned first; hot ranks
+/// featured before unfeatured and then by views, latest by publish time.
+List<LkmContentItem> orderBoardItems(
+  List<LkmContentItem> items, {
+  required bool hot,
+}) {
+  final sorted = [...items];
+  sorted.sort((a, b) {
+    if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+    if (hot) {
+      if (a.isFeatured != b.isFeatured) return a.isFeatured ? -1 : 1;
+      return b.viewCount.compareTo(a.viewCount);
+    }
+    return b.createdAt.compareTo(a.createdAt);
+  });
+  return sorted;
+}

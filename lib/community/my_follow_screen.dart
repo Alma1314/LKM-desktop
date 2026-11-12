@@ -6,8 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:island/community/content_detail_pod.dart';
 import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/api_providers.dart';
-import 'package:island/core/api/content_api.dart';
 import 'package:island/core/api/users_api.dart';
+import 'package:island/hub/hub_pod.dart';
 import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
 
@@ -17,12 +17,6 @@ final followingUsersProvider = FutureProvider.autoDispose<List<LkmFollowUser>>((
   final session = ref.watch(lkmApiSessionProvider);
   return session.run(() => ref.watch(usersApiProvider).following());
 });
-
-final followingBoardsProvider =
-    FutureProvider.autoDispose<List<LkmFollowBoard>>((ref) {
-      final session = ref.watch(lkmApiSessionProvider);
-      return session.run(() => ref.watch(contentApiProvider).followingBoards());
-    });
 
 /// The website's `/follow`: followed users and boards in one page.
 @RoutePage()

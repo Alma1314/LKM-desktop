@@ -5756,6 +5756,8 @@
     "projectMembersTitle": "專案成員",
     "projectReports": "進展報告",
     "boardClosed": "已關閉",
+    "boardFollow": "關注版塊",
+    "boardFollowing": "已關注版塊",
     "itemComments": "{} 條評論",
     "itemLikes": "{} 讚",
     "itemViews": "{} 次瀏覽",
@@ -5891,6 +5893,12 @@
     "dlqDiscarded": "已丟棄",
     "dlqEmpty": "沒有死信",
     "dlqAttempts": "嘗試 {} 次"
+  },
+  "searchMore": {
+    "all": "全部",
+    "posts": "帖子",
+    "columns": "專欄",
+    "files": "文件庫"
   },
   "authFlow": {
     "registerTitle": "建立帳號",
