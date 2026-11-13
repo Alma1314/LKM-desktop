@@ -1,0 +1,5 @@
+{
+  "id": "notes", "apiVersion": 1, "version": "1.0.0", "icon": "📝",
+  "name": {"zh-CN": "便签", "zh-TW": "便箋", "en-US": "Notes"},
+  "description": {"zh-CN": "随手记录想法，保存在本机", "zh-TW": "隨手記錄想法，儲存於本機", "en-US": "Keep your thoughts in local notes"}
+}

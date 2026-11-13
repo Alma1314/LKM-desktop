@@ -6404,5 +6404,6 @@
   },
   "legalDocument": {
     "language": "This document is provided in Simplified Chinese."
-  }
+  },
+  "miniApps": {"title": "Mini apps", "empty": "No mini apps yet", "notFound": "Mini app not found", "signIn": "Sign in to use mini apps", "loadFailed": "Could not load mini apps", "retry": "Retry"}
 }

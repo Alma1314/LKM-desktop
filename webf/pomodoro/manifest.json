@@ -1,0 +1,5 @@
+{
+  "id": "pomodoro", "apiVersion": 1, "version": "1.0.0", "icon": "🍅",
+  "name": {"zh-CN": "番茄钟", "zh-TW": "番茄鐘", "en-US": "Focus timer"},
+  "description": {"zh-CN": "专注 25 分钟，再休息一下", "zh-TW": "專注 25 分鐘，再休息一下", "en-US": "Focus for 25 minutes, then take a break"}
+}

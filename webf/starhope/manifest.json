@@ -1,0 +1,16 @@
+{
+  "id": "starhope",
+  "apiVersion": 1,
+  "version": "1.0.0",
+  "icon": "📚",
+  "name": {"zh-CN": "StarHope", "zh-TW": "StarHope", "en-US": "StarHope"},
+  "description": {"zh-CN": "管理题库、练习考试与错题复习", "zh-TW": "管理題庫、練習考試與錯題複習", "en-US": "Question bank, practice, exams and review"},
+  "requests": {
+    "questions.pull": {"method": "GET", "path": "/starhope/questions"},
+    "questions.push": {"method": "POST", "path": "/starhope/questions/sync"},
+    "folders.pull": {"method": "GET", "path": "/starhope/folders"},
+    "folders.push": {"method": "POST", "path": "/starhope/folders/sync"},
+    "sessions.pull": {"method": "GET", "path": "/starhope/sessions"},
+    "sessions.push": {"method": "POST", "path": "/starhope/sessions/sync"}
+  }
+}

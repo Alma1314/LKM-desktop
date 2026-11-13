@@ -47,13 +47,27 @@ class DriftStore {
       }
     }
     await _connection.executor.runCustom('DROP TABLE IF EXISTS app_state');
-    // Durable offline StarHope data must not be replaced by chat cache snapshots.
+    // Durable mini app data is independent of chat cache snapshots.
     await _connection.executor.runCustom('''
-      CREATE TABLE IF NOT EXISTS starhope_workspaces (
-        scope TEXT PRIMARY KEY,
-        payload TEXT NOT NULL
+      CREATE TABLE IF NOT EXISTS mini_app_workspaces (
+        app_id TEXT NOT NULL,
+        scope TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        PRIMARY KEY(app_id, scope)
       )
     ''');
+    final legacyStarHope = await _connection.executor.runSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'starhope_workspaces'",
+      const [],
+    );
+    if (legacyStarHope.isNotEmpty) {
+      // Idempotent if interrupted between copying and dropping the old table.
+      await _connection.executor.runCustom('''
+        INSERT OR IGNORE INTO mini_app_workspaces(app_id, scope, payload)
+        SELECT 'starhope', scope, payload FROM starhope_workspaces
+      ''');
+      await _connection.executor.runCustom('DROP TABLE starhope_workspaces');
+    }
     for (final table in _tables) {
       if (table == 'accounts') {
         await _connection.executor.runCustom('''
@@ -372,7 +386,7 @@ class DriftStore {
       'message_mentions',
       'chat_group_rooms',
       'chat_messages',
-      'starhope_workspaces',
+      'mini_app_workspaces',
       ..._tables,
     }) {
       await _connection.executor.runCustom('DELETE FROM $table');
@@ -381,20 +395,21 @@ class DriftStore {
 
   Future<void> close() => _connection.executor.close();
 
-  Future<String?> readStarHope(String scope) async {
+  Future<String?> readMiniApp(String appId, String scope) async {
     await _open();
     final rows = await _connection.executor.runSelect(
-      'SELECT payload FROM starhope_workspaces WHERE scope = ?', [scope],
+      'SELECT payload FROM mini_app_workspaces WHERE app_id = ? AND scope = ?',
+      [appId, scope],
     );
     return rows.isEmpty ? null : rows.single['payload'] as String;
   }
 
-  Future<void> saveStarHope(String scope, String payload) async {
+  Future<void> saveMiniApp(String appId, String scope, String payload) async {
     await _open();
     await _connection.executor.runCustom(
-      'INSERT INTO starhope_workspaces(scope, payload) VALUES (?, ?) '
-      'ON CONFLICT(scope) DO UPDATE SET payload = excluded.payload',
-      [scope, payload],
+      'INSERT INTO mini_app_workspaces(app_id, scope, payload) VALUES (?, ?, ?) '
+      'ON CONFLICT(app_id, scope) DO UPDATE SET payload = excluded.payload',
+      [appId, scope, payload],
     );
   }
 }

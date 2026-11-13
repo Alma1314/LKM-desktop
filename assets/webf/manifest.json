@@ -1,0 +1,79 @@
+{
+  "apiVersion": 1,
+  "apps": [
+    {
+      "id": "notes",
+      "apiVersion": 1,
+      "version": "1.0.0",
+      "icon": "📝",
+      "name": {
+        "zh-CN": "便签",
+        "zh-TW": "便箋",
+        "en-US": "Notes"
+      },
+      "description": {
+        "zh-CN": "随手记录想法，保存在本机",
+        "zh-TW": "隨手記錄想法，儲存於本機",
+        "en-US": "Keep your thoughts in local notes"
+      }
+    },
+    {
+      "id": "pomodoro",
+      "apiVersion": 1,
+      "version": "1.0.0",
+      "icon": "🍅",
+      "name": {
+        "zh-CN": "番茄钟",
+        "zh-TW": "番茄鐘",
+        "en-US": "Focus timer"
+      },
+      "description": {
+        "zh-CN": "专注 25 分钟，再休息一下",
+        "zh-TW": "專注 25 分鐘，再休息一下",
+        "en-US": "Focus for 25 minutes, then take a break"
+      }
+    },
+    {
+      "id": "starhope",
+      "apiVersion": 1,
+      "version": "1.0.0",
+      "icon": "📚",
+      "name": {
+        "zh-CN": "StarHope",
+        "zh-TW": "StarHope",
+        "en-US": "StarHope"
+      },
+      "description": {
+        "zh-CN": "管理题库、练习考试与错题复习",
+        "zh-TW": "管理題庫、練習考試與錯題複習",
+        "en-US": "Question bank, practice, exams and review"
+      },
+      "requests": {
+        "questions.pull": {
+          "method": "GET",
+          "path": "/starhope/questions"
+        },
+        "questions.push": {
+          "method": "POST",
+          "path": "/starhope/questions/sync"
+        },
+        "folders.pull": {
+          "method": "GET",
+          "path": "/starhope/folders"
+        },
+        "folders.push": {
+          "method": "POST",
+          "path": "/starhope/folders/sync"
+        },
+        "sessions.pull": {
+          "method": "GET",
+          "path": "/starhope/sessions"
+        },
+        "sessions.push": {
+          "method": "POST",
+          "path": "/starhope/sessions/sync"
+        }
+      }
+    }
+  ]
+}

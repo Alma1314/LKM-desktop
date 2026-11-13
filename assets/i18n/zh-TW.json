@@ -6221,5 +6221,6 @@
   },
   "legalDocument": {
     "language": "本文以簡體中文提供。"
-  }
+  },
+  "miniApps": {"title": "小程式", "empty": "暫無小程式", "notFound": "此小程式不存在", "signIn": "登入後使用小程式", "loadFailed": "小程式清單載入失敗", "retry": "重試"}
 }

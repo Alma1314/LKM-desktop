@@ -132,11 +132,11 @@ class AppDatabase {
     await (await _store).close();
   }
 
-  Future<String?> readStarHope(String scope) async =>
-      (await _store).readStarHope(scope);
+  Future<String?> readMiniApp(String appId, String scope) async =>
+      (await _store).readMiniApp(appId, scope);
 
-  Future<void> saveStarHope(String scope, String payload) async =>
-      (await _store).saveStarHope(scope, payload);
+  Future<void> saveMiniApp(String appId, String scope, String payload) async =>
+      (await _store).saveMiniApp(appId, scope, payload);
 
   Future<void> reset() async {
     await _ensureReady();

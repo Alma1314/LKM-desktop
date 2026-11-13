@@ -1,26 +1,14 @@
 import type { Bridge } from "./workspace";
-
-declare global {
-  interface Window {
-    webf?: {
-      methodChannel: {
-        invokeMethod(method: string, ...args: unknown[]): Promise<string>;
-      };
-    };
-  }
-}
+import { miniApp } from "../sdk";
 
 export const hostBridge: Bridge = {
   async call<T>(method: string, ...args: unknown[]): Promise<T> {
-    if (!window.webf) throw new Error("host");
-    const reply = JSON.parse(
-      await window.webf.methodChannel.invokeMethod(method, ...args),
-    ) as {
-      ok: boolean;
-      data?: T;
-      error?: string;
-    };
-    if (!reply.ok) throw new Error(reply.error ?? "sync");
-    return reply.data as T;
+    if (method === 'pull') return miniApp.request<T>(`${args[0]}.pull`, {
+      query: args[1] == null ? {} : { since: args[1] },
+    });
+    if (method === 'push') return miniApp.request<T>(`${args[0]}.push`, {
+      body: { upserts: args[1], deletes: args[2] },
+    });
+    return miniApp.call<T>(method, ...args);
   },
 };

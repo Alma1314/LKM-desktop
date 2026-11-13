@@ -199,8 +199,8 @@ class PersonalDashboardCard extends ConsumerWidget {
             runSpacing: 8,
             children: [
               TextButton(
-                onPressed: () => context.router.push(const StarHopeRoute()),
-                child: const Text('StarHope'),
+                onPressed: () => context.router.pushPath('/mini-apps'),
+                child: Text('miniApps.title'.tr()),
               ),
               TextButton(
                 onPressed: () => context.router.push(const LibraryRoute()),

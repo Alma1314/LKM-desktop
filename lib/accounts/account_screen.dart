@@ -14,7 +14,6 @@ import 'package:island/core/api/users_api.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/debug_sheet.dart';
 import 'package:island/core/services/responsive.dart';
-import 'package:island/core/webf/webf_demo_screen.dart';
 import 'package:island/discovery/widgets/pill_app_bar.dart';
 import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
@@ -183,10 +182,10 @@ class _LkmAccountPage extends HookConsumerWidget {
             onTap: () => context.router.push(const SeriesEditorRoute()),
           ),
           ListTile(
-            leading: const Icon(Symbols.school),
+            leading: const Icon(Symbols.apps),
             trailing: const Icon(Symbols.chevron_right),
-            title: const Text('StarHope'),
-            onTap: () => context.router.push(const StarHopeRoute()),
+            title: Text('miniApps.title'.tr()),
+            onTap: () => context.router.pushPath('/mini-apps'),
           ),
           ListTile(
             leading: const Icon(Symbols.article),
@@ -218,16 +217,6 @@ class _LkmAccountPage extends HookConsumerWidget {
               trailing: const Icon(Symbols.chevron_right),
               title: Text('debugOptions'.tr()),
               onTap: () => toggleDebugOverlay(ref),
-            ),
-          if (isDeveloperMode)
-            ListTile(
-              leading: const Icon(Symbols.public),
-              trailing: const Icon(Symbols.chevron_right),
-              title: const Text('WebF demo'),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WebfDemoScreen()),
-              ),
             ),
           // Admin surfaces are only offered to admin accounts; the panel then
           // signs in with its own cookie session (a bearer token cannot be

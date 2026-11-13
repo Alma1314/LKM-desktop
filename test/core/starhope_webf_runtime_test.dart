@@ -47,7 +47,7 @@ void main() {
     final methods = <String>[];
     final errors = <String>[];
     WebFController? controller;
-    final html = File('assets/webf/starhope/index.html').readAsStringSync();
+    final html = File('assets/webf/starhope.html').readAsStringSync();
     await tester.runAsync(() async {
       final font = File('assets/fonts/Nunito-Regular.ttf').readAsBytesSync();
       await (FontLoader(
@@ -75,7 +75,7 @@ void main() {
               case 'save':
                 snapshot = args.single as String;
                 data = true;
-              case 'pull':
+              case 'request':
                 return jsonEncode({'ok': false, 'error': 'offline'});
             }
             return jsonEncode({'ok': true, 'data': data});
@@ -84,7 +84,7 @@ void main() {
         },
         bundle: WebFBundle.fromContent(
           html,
-          url: 'assets:///assets/webf/starhope/index.html',
+          url: 'assets:///assets/webf/starhope.html',
           contentType: htmlContentType,
         ),
       );

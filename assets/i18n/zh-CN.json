@@ -6369,5 +6369,6 @@
   },
   "legalDocument": {
     "language": "本文以简体中文提供。"
-  }
+  },
+  "miniApps": {"title": "小程序", "empty": "暂无小程序", "notFound": "此小程序不存在", "signIn": "登录后使用小程序", "loadFailed": "小程序列表加载失败", "retry": "重试"}
 }

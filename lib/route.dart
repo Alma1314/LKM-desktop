@@ -3,6 +3,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:island/route.gr.dart';
+import 'package:island/mini_apps/mini_apps_screen.dart';
 
 bool get supportsAnalytics =>
     kIsWeb || Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
@@ -55,6 +56,17 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: MyContentRoute.page, path: '/my/content'),
     AutoRoute(page: MyFollowRoute.page, path: '/my/following'),
     AutoRoute(page: SeriesEditorRoute.page, path: '/editor'),
+    NamedRouteDef(
+      name: 'MiniAppsRoute',
+      path: '/mini-apps',
+      builder: (_, _) => const MiniAppsScreen(),
+    ),
+    NamedRouteDef(
+      name: 'MiniAppRoute',
+      path: '/mini-apps/:appId',
+      builder: (_, data) =>
+          MiniAppScreen(appId: data.pathParams.getString('appId')),
+    ),
     AutoRoute(page: StarHopeRoute.page, path: '/starhope'),
     AutoRoute(page: LibraryRoute.page, path: '/library/files'),
     AutoRoute(page: LibraryFileRoute.page, path: '/library/files/:id'),
