@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -10,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _Router implements HttpClientAdapter {
   _Router(this.handle);
 
-  final ResponseBody Function(RequestOptions options) handle;
+  final FutureOr<ResponseBody> Function(RequestOptions options) handle;
   final List<RequestOptions> requests = [];
 
   @override
@@ -53,13 +54,101 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
+    'credentials are scoped to the normalized deployment, ignoring legacy pairs',
+    () async {
+      final prefs = await _prefs();
+      await prefs.setString(
+        kLkmTokenPairStoreKey,
+        jsonEncode({'access_token': 'legacy'}),
+      );
+      final a = ApiSession(prefs: prefs, serverUrl: 'https://a.example');
+      expect(a.isSignedIn, isFalse);
+      await a.adopt(
+        const LkmTokenPair(accessToken: 'A', refreshToken: 'refresh-A'),
+      );
+      final requests = _Router((o) {
+        expect(o.uri.host, 'b.example');
+        expect(o.headers['Authorization'], isNull);
+        return _envelope({});
+      });
+      final b = ApiSession(
+        prefs: prefs,
+        serverUrl: 'https://b.example',
+        dio: Dio()..httpClientAdapter = requests,
+      );
+      await b.client.get('/auth/me');
+      expect(b.isSignedIn, isFalse);
+      final restored = ApiSession(
+        prefs: prefs,
+        serverUrl: 'https://a.example/api/v1/',
+      );
+      expect(restored.cachedAccessToken, 'A');
+      a.dispose();
+      b.dispose();
+      restored.dispose();
+    },
+  );
+
+  for (final replacement in [false, true]) {
+    test(
+      'stale refresh cannot overwrite ${replacement ? 'a new login' : 'sign-out'}',
+      () async {
+        final prefs = await _prefs();
+        final started = Completer<void>();
+        final response = Completer<ResponseBody>();
+        final session = ApiSession(
+          prefs: prefs,
+          serverUrl: 'https://community.example',
+          refreshDio: Dio()
+            ..httpClientAdapter = _Router((_) {
+              started.complete();
+              return response.future;
+            }),
+        );
+        await session.adopt(
+          LkmTokenPair(
+            accessToken: 'old',
+            refreshToken: 'old-refresh',
+            accessExpiresAt: DateTime.now().subtract(
+              const Duration(minutes: 1),
+            ),
+          ),
+        );
+        final pending = session.currentAccessToken();
+        await started.future;
+        if (replacement) {
+          await session.adopt(const LkmTokenPair(accessToken: 'replacement'));
+        } else {
+          await session.signOut(revoke: false);
+        }
+        response.complete(
+          _envelope({
+            'access_token': 'stale',
+            'refresh_token': 'stale-refresh',
+          }),
+        );
+        await pending;
+        expect(session.cachedAccessToken, replacement ? 'replacement' : null);
+        expect(
+          prefs.getString(session.storeKey),
+          replacement ? contains('replacement') : isNull,
+        );
+        session.dispose();
+      },
+    );
+  }
+
+  test(
     'logout carries the captured bearer after clearing local credentials',
     () async {
       final prefs = await _prefs();
       final router = _Router((options) {
         expect(options.path, '/auth/logout');
         expect(options.headers['Authorization'], 'Bearer access-1');
-        expect(prefs.getString(kLkmTokenPairStoreKey), isNull);
+        expect(
+          prefs.getString(apiTokenStoreKey('https://example.com')),
+          isNull,
+        );
         return _envelope(null);
       });
       final session = ApiSession(
@@ -95,7 +184,10 @@ void main() {
 
     expect(session.isSignedIn, isTrue);
     expect(await session.currentAccessToken(), 'access-1');
-    expect(prefs.getString(kLkmTokenPairStoreKey), contains('access-1'));
+    expect(
+      prefs.getString(apiTokenStoreKey('https://community.example')),
+      contains('access-1'),
+    );
     expect(
       calls.requests.where((r) => r.path.contains('/auth/refresh')),
       isEmpty,
@@ -136,7 +228,10 @@ void main() {
       expect(token, isNotNull);
       expect(token, isNot('access-old'));
       expect(router.requests, hasLength(1));
-      expect(prefs.getString(kLkmTokenPairStoreKey), contains(token!));
+      expect(
+        prefs.getString(apiTokenStoreKey('https://community.example')),
+        contains(token!),
+      );
       session.client.close();
     },
   );
@@ -202,7 +297,10 @@ void main() {
 
     expect(await session.currentAccessToken(), isNull);
     expect(session.isSignedIn, isFalse);
-    expect(prefs.getString(kLkmTokenPairStoreKey), isNull);
+    expect(
+      prefs.getString(apiTokenStoreKey('https://community.example')),
+      isNull,
+    );
     session.client.close();
   });
 

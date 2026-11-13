@@ -5,6 +5,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:island/core/api/api_providers.dart';
+import 'package:island/core/api/api_session.dart';
+import 'package:island/core/api/auth_api.dart';
+import 'package:island/auth/login_controller.dart';
+import 'package:island/hub/hub_pod.dart';
 import 'package:island/core/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +44,80 @@ Dio _dio(_Adapter adapter) => Dio()..httpClientAdapter = adapter;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'late authentication from an old deployment cannot be adopted by the new one',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      final previous = container.read(lkmApiSessionProvider);
+      container
+          .read(lkmServerUrlProvider.notifier)
+          .setServer('https://other.example');
+      final controller = container.read(loginControllerProvider.notifier);
+      await expectLater(
+        controller.adoptTokens(
+          const LkmAuthToken(
+            userId: 'A',
+            accountLevel: 'normal',
+            accessToken: 'token-from-A',
+            refreshToken: 'refresh-from-A',
+          ),
+          session: previous,
+        ),
+        throwsA(isA<SessionExpiredException>()),
+      );
+      expect(container.read(lkmApiSessionProvider).isSignedIn, isFalse);
+      expect(
+        prefs.getString(apiTokenStoreKey('https://other.example')),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'identity changes refresh subscribed viewer data without manual invalidation',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      final session = container.read(lkmApiSessionProvider);
+      final adapter = _Adapter(
+        (o) => _health([
+          {
+            'board_id': o.headers['Authorization'] == 'Bearer A'
+                ? 'board-A'
+                : 'board-B',
+            'title': 'Followed',
+          },
+        ]),
+      );
+      session.client.dio.httpClientAdapter = adapter;
+      final listener = container.listen(followingBoardsProvider, (_, _) {});
+      addTearDown(listener.close);
+      expect(await container.read(followingBoardsProvider.future), isEmpty);
+      await session.adopt(const LkmTokenPair(accessToken: 'A'));
+      expect(
+        (await container.read(followingBoardsProvider.future)).single.boardId,
+        'board-A',
+      );
+      await session.adopt(const LkmTokenPair(accessToken: 'B'));
+      expect(
+        (await container.read(followingBoardsProvider.future)).single.boardId,
+        'board-B',
+      );
+      await session.signOut(revoke: false);
+      expect(await container.read(followingBoardsProvider.future), isEmpty);
+      expect(adapter.requests.length, 2);
+    },
+  );
 
   group('LkmServerUrlNotifier', () {
     test('defaults to the LKM host and stores the bare domain', () async {

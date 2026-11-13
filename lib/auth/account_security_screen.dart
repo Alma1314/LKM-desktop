@@ -272,6 +272,7 @@ class AccountSecurityScreen extends HookConsumerWidget {
                       accessToken: stepped.accessToken!,
                       refreshToken: stepped.refreshToken ?? '',
                     ),
+                    session: session,
                   );
             }
             await session.run(() => api.deletePasskey(credential.id));

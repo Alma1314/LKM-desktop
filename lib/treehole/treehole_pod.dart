@@ -58,3 +58,21 @@ final treeholeRankLettersProvider =
       }
       return all;
     });
+
+/// The random-reading pool includes public and random letters, never our own.
+final treeholeRandomLettersProvider =
+    FutureProvider.autoDispose<List<LkmTreeholeLetter>>((ref) async {
+      final api = ref.watch(treeholeApiProvider);
+      final pool = <String, LkmTreeholeLetter>{};
+      for (final scope in ['public', 'random']) {
+        for (var page = 1; ; page++) {
+          final rows = await api.letters(scope: scope, page: page, limit: 100);
+          for (final letter in rows) {
+            if (!letter.isMine && letter.status == 'published')
+              pool[letter.id] = letter;
+          }
+          if (rows.length < 100) break;
+        }
+      }
+      return pool.values.toList();
+    });

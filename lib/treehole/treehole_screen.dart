@@ -52,6 +52,7 @@ class TreeholeScreen extends HookConsumerWidget {
     void refreshAll() {
       ref.invalidate(treeholeLettersProvider);
       ref.invalidate(treeholeRankLettersProvider);
+      ref.invalidate(treeholeRandomLettersProvider);
       ref.invalidate(treeholeBottlesProvider);
       ref.invalidate(treeholeWishesProvider);
       ref.invalidate(treeholeConversationsProvider);
@@ -98,6 +99,7 @@ class TreeholeScreen extends HookConsumerWidget {
       if (letter != null) {
         ref.invalidate(treeholeLettersProvider);
         ref.invalidate(treeholeRankLettersProvider);
+        ref.invalidate(treeholeRandomLettersProvider);
       }
     }
 

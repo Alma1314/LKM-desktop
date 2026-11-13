@@ -20,6 +20,7 @@ import 'package:island/route.gr.dart';
 import 'package:island/shared/hooks/material_hooks.dart';
 import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
+import 'package:island/shared/widgets/api_page_list.dart';
 
 /// Content hub aligned with the website's forum sidebar: questions, columns,
 /// projects and boards in one place.
@@ -152,9 +153,6 @@ class _QaTab extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final category = useState<String?>(null);
     final sort = useState('newest');
-    final questions = ref.watch(
-      qaQuestionsProvider((category: category.value, sort: sort.value)),
-    );
     final theme = Theme.of(context);
 
     return Column(
@@ -218,26 +216,17 @@ class _QaTab extends HookConsumerWidget {
           ),
         ),
         Expanded(
-          child: _AsyncList(
-            value: questions,
-            onRetry: () => ref.invalidate(
-              qaQuestionsProvider((category: category.value, sort: sort.value)),
+          child: ApiPageList<QaQuestion>(
+            key: ValueKey((category.value, sort.value)),
+            provider: (page) => qaQuestionsProvider((
+              category: category.value,
+              sort: sort.value,
+              page: page,
+            )),
+            itemBuilder: (context, q) => _QuestionCard(
+              question: q,
+              onTap: () => context.router.push(QaDetailRoute(id: q.id)),
             ),
-            builder: (page) {
-              if (page.items.isEmpty) return const _EmptyHint();
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                itemCount: page.items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final q = page.items[index];
-                  return _QuestionCard(
-                    question: q,
-                    onTap: () => context.router.push(QaDetailRoute(id: q.id)),
-                  );
-                },
-              );
-            },
           ),
         ),
       ],

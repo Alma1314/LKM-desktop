@@ -1,4 +1,5 @@
 import 'package:island/treehole/local_store.dart';
+import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -26,7 +27,9 @@ class TreeholeLettersView extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wallScope = useState('public');
     final effective = scope ?? wallScope.value;
-    final raw = effective.startsWith('rank')
+    final raw = effective == 'random'
+        ? ref.watch(treeholeRandomLettersProvider)
+        : effective.startsWith('rank')
         ? ref.watch(treeholeRankLettersProvider)
         : ref.watch(treeholeLettersProvider(effective));
     final letters = effective.startsWith('rank')
@@ -79,14 +82,19 @@ class TreeholeLettersView extends HookConsumerWidget {
             error: (error, _) => _TreeholeError(
               error: error,
               onRetry: () {
-                if (effective.startsWith('rank')) {
+                if (effective == 'random') {
+                  ref.invalidate(treeholeRandomLettersProvider);
+                } else if (effective.startsWith('rank')) {
                   ref.invalidate(treeholeRankLettersProvider);
+                  ref.invalidate(treeholeRandomLettersProvider);
                 } else {
                   ref.invalidate(treeholeLettersProvider(effective));
                 }
               },
             ),
-            data: (items) => items.isEmpty
+            data: (items) => effective == 'random'
+                ? _RandomLetterView(letters: items, onReplied: onReplied)
+                : items.isEmpty
                 ? Center(child: Text('treeholeNoLetters'.tr()))
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -95,6 +103,67 @@ class TreeholeLettersView extends HookConsumerWidget {
                     itemBuilder: (context, index) =>
                         _LetterCard(letter: items[index], onReplied: onReplied),
                   ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RandomLetterView extends HookConsumerWidget {
+  const _RandomLetterView({required this.letters, this.onReplied});
+  final List<LkmTreeholeLetter> letters;
+  final VoidCallback? onReplied;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chosen = useState<String?>(null);
+    final busy = useState(false);
+    final current = letters
+        .where((letter) => letter.id == chosen.value)
+        .firstOrNull;
+    return Column(
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.shuffle),
+          label: Text(
+            (current == null ? 'treeholeDrawLetter' : 'treeholeSwitchLetter')
+                .tr(),
+          ),
+          onPressed: busy.value
+              ? null
+              : () async {
+                  busy.value = true;
+                  try {
+                    ref.invalidate(treeholeRandomLettersProvider);
+                    final pool = await ref.read(
+                      treeholeRandomLettersProvider.future,
+                    );
+                    if (!context.mounted) return;
+                    final candidates = pool.length > 1
+                        ? pool
+                              .where((letter) => letter.id != chosen.value)
+                              .toList()
+                        : pool;
+                    chosen.value = candidates.isEmpty
+                        ? null
+                        : candidates[Random().nextInt(candidates.length)].id;
+                  } catch (error) {
+                    if (context.mounted) showSnackBar('$error');
+                  } finally {
+                    if (context.mounted) busy.value = false;
+                  }
+                },
+        ),
+        if (busy.value) const LinearProgressIndicator(),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+            children: [
+              if (current != null)
+                _LetterCard(letter: current, onReplied: onReplied)
+              else if (letters.isEmpty)
+                Center(child: Text('treeholeNoLetters'.tr())),
+            ],
           ),
         ),
       ],
@@ -132,6 +201,7 @@ class _LetterCard extends HookConsumerWidget {
       await api.toggleReaction(letter.id, kind);
       ref.invalidate(treeholeLettersProvider);
       ref.invalidate(treeholeRankLettersProvider);
+      ref.invalidate(treeholeRandomLettersProvider);
     });
 
     Future<void> reply() async {
@@ -170,6 +240,7 @@ class _LetterCard extends HookConsumerWidget {
       );
       ref.invalidate(treeholeLettersProvider);
       ref.invalidate(treeholeRankLettersProvider);
+      ref.invalidate(treeholeRandomLettersProvider);
     }
 
     Future<void> remove() async {
@@ -184,6 +255,7 @@ class _LetterCard extends HookConsumerWidget {
         await api.deleteLetter(letter.id);
         ref.invalidate(treeholeLettersProvider);
         ref.invalidate(treeholeRankLettersProvider);
+        ref.invalidate(treeholeRandomLettersProvider);
         ref.invalidate(treeholeConversationsProvider);
       });
     }

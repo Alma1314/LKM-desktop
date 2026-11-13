@@ -60,8 +60,12 @@ final lkmDeviceIdProvider = FutureProvider<String>((ref) => getUdid());
 final lkmApiSessionProvider = Provider<ApiSession>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   final serverUrl = ref.watch(lkmServerUrlProvider);
-  final session = ApiSession(prefs: prefs, serverUrl: serverUrl);
-  ref.onDispose(session.client.close);
+  final session = ApiSession(
+    prefs: prefs,
+    serverUrl: serverUrl,
+    onIdentityChanged: ref.notifyListeners,
+  );
+  ref.onDispose(session.dispose);
   return session;
 });
 

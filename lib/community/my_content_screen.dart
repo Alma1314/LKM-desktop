@@ -14,22 +14,28 @@ import 'package:island/hub/hub_pod.dart';
 import 'package:island/route.gr.dart';
 import 'package:island/shared/hooks/material_hooks.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
+import 'package:island/shared/widgets/api_page_list.dart';
 
 final myQuestionsProvider = FutureProvider.autoDispose
-    .family<ApiPage<QaQuestion>, String>((ref, authorId) {
+    .family<ApiPage<QaQuestion>, ({String authorId, int page})>((ref, query) {
       final session = ref.watch(lkmApiSessionProvider);
       return session.run(
-        () => ref.watch(qaApiProvider).questions(authorId: authorId, limit: 50),
+        () => ref
+            .watch(qaApiProvider)
+            .questions(authorId: query.authorId, page: query.page),
       );
     });
 
 final myPostsProvider = FutureProvider.autoDispose
-    .family<ApiPage<LkmContentItem>, String>((ref, authorId) {
+    .family<ApiPage<LkmContentItem>, ({String authorId, int page})>((
+      ref,
+      query,
+    ) {
       final session = ref.watch(lkmApiSessionProvider);
       return session.run(
         () => ref
             .watch(contentApiProvider)
-            .items(authorId: authorId, pageSize: 50),
+            .items(authorId: query.authorId, page: query.page),
       );
     });
 
@@ -52,25 +58,20 @@ final myApplicationsProvider =
       return session.run(() => ref.watch(projectsApiProvider).myApplications());
     });
 
-final myFavoritesProvider = FutureProvider.autoDispose<List<LkmSavedItem>>((
-  ref,
-) async {
-  final session = ref.watch(lkmApiSessionProvider);
-  final page = await session.run(
-    () => ref.watch(contentApiProvider).favorites(limit: 50),
-  );
-  return page.items;
-});
-
-final myHistoryProvider = FutureProvider.autoDispose<List<LkmSavedItem>>((
-  ref,
-) async {
-  final session = ref.watch(lkmApiSessionProvider);
-  final page = await session.run(
-    () => ref.watch(contentApiProvider).history(limit: 50),
-  );
-  return page.items;
-});
+final myFavoritesProvider = FutureProvider.autoDispose
+    .family<ApiPage<LkmSavedItem>, int>((ref, page) {
+      final session = ref.watch(lkmApiSessionProvider);
+      return session.run(
+        () => ref.watch(contentApiProvider).favorites(page: page),
+      );
+    });
+final myHistoryProvider = FutureProvider.autoDispose
+    .family<ApiPage<LkmSavedItem>, int>((ref, page) {
+      final session = ref.watch(lkmApiSessionProvider);
+      return session.run(
+        () => ref.watch(contentApiProvider).history(page: page),
+      );
+    });
 
 /// The website's `/my/*`: my questions, posts, projects, applications,
 /// favorites and reading history.
@@ -109,6 +110,7 @@ class MyContentScreen extends HookConsumerWidget {
             return _Message(text: 'authFlow.signInRequired'.tr());
           }
           return TabBarView(
+            key: ValueKey(account.id),
             controller: controller,
             children: [
               _QuestionsTab(userId: account.id),
@@ -124,70 +126,38 @@ class MyContentScreen extends HookConsumerWidget {
   }
 }
 
-class _QuestionsTab extends ConsumerWidget {
+class _QuestionsTab extends StatelessWidget {
   const _QuestionsTab({required this.userId});
-
   final String userId;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final questions = ref.watch(myQuestionsProvider(userId));
-    return questions.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: '$error'),
-      data: (page) {
-        if (page.items.isEmpty) return _Message(text: 'authFlow.empty'.tr());
-        return ListView.builder(
-          itemCount: page.items.length,
-          itemBuilder: (context, index) {
-            final question = page.items[index];
-            return ListTile(
-              title: Text(question.title),
-              subtitle: Text(
-                '${question.status} · ${question.answerCount} '
-                '${'authFlow.answers'.tr()}',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.router.push(QaDetailRoute(id: question.id)),
-            );
-          },
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => ApiPageList<QaQuestion>(
+    provider: (page) => myQuestionsProvider((authorId: userId, page: page)),
+    itemBuilder: (context, question) => ListTile(
+      title: Text(question.title),
+      subtitle: Text(
+        '${question.status} · ${question.answerCount} ${'authFlow.answers'.tr()}',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.router.push(QaDetailRoute(id: question.id)),
+    ),
+  );
 }
 
-class _PostsTab extends ConsumerWidget {
+class _PostsTab extends StatelessWidget {
   const _PostsTab({required this.userId});
-
   final String userId;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final posts = ref.watch(myPostsProvider(userId));
-    return posts.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: '$error'),
-      data: (page) {
-        if (page.items.isEmpty) return _Message(text: 'authFlow.empty'.tr());
-        return ListView.builder(
-          itemCount: page.items.length,
-          itemBuilder: (context, index) {
-            final item = page.items[index];
-            return ListTile(
-              title: Text(item.title),
-              subtitle: Text(
-                '${item.contentType} · ${item.likeCount} · '
-                '${item.commentCount}',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.router.push(ContentDetailRoute(id: item.id)),
-            );
-          },
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => ApiPageList<LkmContentItem>(
+    provider: (page) => myPostsProvider((authorId: userId, page: page)),
+    itemBuilder: (context, item) => ListTile(
+      title: Text(item.title),
+      subtitle: Text(
+        '${item.contentType} · ${item.likeCount} · ${item.commentCount}',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.router.push(ContentDetailRoute(id: item.id)),
+    ),
+  );
 }
 
 class _ProjectsTab extends ConsumerWidget {
@@ -246,44 +216,30 @@ class _ProjectsTab extends ConsumerWidget {
   }
 }
 
-class _FavoritesTab extends ConsumerWidget {
+class _FavoritesTab extends StatelessWidget {
   const _FavoritesTab();
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      _savedTab(ref.watch(myFavoritesProvider), 'authFlow.empty'.tr());
-}
-
-class _HistoryTab extends ConsumerWidget {
-  const _HistoryTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      _savedTab(ref.watch(myHistoryProvider), 'authFlow.empty'.tr());
-}
-
-Widget _savedTab(AsyncValue<List<LkmSavedItem>> items, String empty) {
-  return items.when(
-    loading: () => const Center(child: CircularProgressIndicator()),
-    error: (error, _) => _Message(text: '$error'),
-    data: (list) {
-      if (list.isEmpty) return _Message(text: empty);
-      return ListView.builder(
-        itemCount: list.length,
-        itemBuilder: (context, index) {
-          final item = list[index];
-          return ListTile(
-            title: Text(item.title),
-            subtitle: Text(item.contentType),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                context.router.push(ContentDetailRoute(id: item.contentId)),
-          );
-        },
-      );
-    },
+  Widget build(BuildContext context) => ApiPageList<LkmSavedItem>(
+    provider: myFavoritesProvider.call,
+    itemBuilder: _savedItem,
   );
 }
+
+class _HistoryTab extends StatelessWidget {
+  const _HistoryTab();
+  @override
+  Widget build(BuildContext context) => ApiPageList<LkmSavedItem>(
+    provider: myHistoryProvider.call,
+    itemBuilder: _savedItem,
+  );
+}
+
+Widget _savedItem(BuildContext context, LkmSavedItem item) => ListTile(
+  title: Text(item.title),
+  subtitle: Text(item.contentType),
+  trailing: const Icon(Icons.chevron_right),
+  onTap: () => context.router.push(ContentDetailRoute(id: item.contentId)),
+);
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.text});

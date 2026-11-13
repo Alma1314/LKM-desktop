@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -108,6 +109,34 @@ Future<({ProviderContainer container, _Adapter adapter})> _setup(
 }
 
 void main() {
+  test(
+    'restoration preserves credentials on temporary connection failures',
+    () async {
+      final setup = await _setup((options) {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionError,
+        );
+      });
+      final session = setup.container.read(lkmApiSessionProvider);
+      await session.adopt(
+        const LkmTokenPair(accessToken: 'valid', refreshToken: 'refresh'),
+      );
+      final done = Completer<void>();
+      final listener = setup.container.listen(loginControllerProvider, (
+        _,
+        next,
+      ) {
+        if (next.error != null && !next.busy && !done.isCompleted)
+          done.complete();
+      });
+      addTearDown(listener.close);
+      await done.future.timeout(const Duration(seconds: 5));
+      expect(session.isSignedIn, isTrue);
+      expect(setup.container.read(loginControllerProvider).busy, isFalse);
+      expect(setup.container.read(loginControllerProvider).error, isNotNull);
+    },
+  );
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('mandatory setup is handed off without adopting a session', () async {
@@ -354,7 +383,7 @@ void main() {
     expect(
       setup.container
           .read(sharedPreferencesProvider)
-          .getString(kLkmTokenPairStoreKey),
+          .getString(apiTokenStoreKey('https://community.example')),
       isNull,
     );
   });

@@ -13,6 +13,9 @@ import 'package:island/core/api/api_client.dart';
 /// shared key would let one engine's rotation corrupt the other's session.
 const String kLkmTokenPairStoreKey = 'lkm_api_token_pair';
 
+String apiTokenStoreKey(String server) =>
+    '$kLkmTokenPairStoreKey:${normalizeApiBase(server)}';
+
 /// Treat a token as expired this long before its real `exp`, so a request does
 /// not race the boundary on a slow link.
 const Duration kLkmTokenExpirySkew = Duration(seconds: 30);
@@ -166,11 +169,14 @@ class ApiSession {
     Dio? dio,
     Dio? refreshDio,
     String? userAgent,
+    this.onIdentityChanged,
   }) : _prefs = prefs,
        serverUrl = normalizeApiBase(serverUrl),
        _tokens = LkmTokenPair.tryFromPrefs(
-         prefs.getString(kLkmTokenPairStoreKey),
+         prefs.getString(apiTokenStoreKey(serverUrl)),
        ) {
+    // An unscoped legacy pair has no provable deployment. Require a fresh login.
+    unawaited(prefs.remove(kLkmTokenPairStoreKey));
     _refreshDio = refreshDio ?? Dio();
     _configure(_refreshDio);
     _dio = dio ?? Dio();
@@ -184,6 +190,8 @@ class ApiSession {
   }
 
   final SharedPreferences _prefs;
+  final void Function()? onIdentityChanged;
+  String get storeKey => apiTokenStoreKey(serverUrl);
 
   /// Normalized base URL, e.g. `https://community.example/api/v1`.
   final String serverUrl;
@@ -194,6 +202,35 @@ class ApiSession {
 
   LkmTokenPair? _tokens;
   Future<bool>? _refreshInFlight;
+  int _generation = 0;
+  int _identityRevision = 0;
+  int get identityRevision => _identityRevision;
+  bool _disposed = false;
+
+  static String? _identity(LkmTokenPair? pair) {
+    if (pair == null) return null;
+    try {
+      final payload =
+          jsonDecode(
+                utf8.decode(
+                  base64Url.decode(
+                    base64Url.normalize(pair.accessToken.split('.')[1]),
+                  ),
+                ),
+              )
+              as Map;
+      return '${payload['user_id'] ?? payload['sub'] ?? pair.accessToken}';
+    } catch (_) {
+      return pair.accessToken;
+    }
+  }
+
+  void dispose() {
+    _disposed = true;
+    _generation++;
+    _dio.close(force: true);
+    _refreshDio.close(force: true);
+  }
 
   /// HTTP client for authenticated business calls.
   ApiClient get client => _client;
@@ -222,8 +259,14 @@ class ApiSession {
 
   /// Adopts a freshly issued pair (login / registration).
   Future<void> adopt(LkmTokenPair pair) async {
+    if (_disposed) throw const SessionExpiredException();
+    final changed = _identity(_tokens) != _identity(pair);
+    if (changed) _identityRevision++;
+    _generation++;
+    _refreshInFlight = null;
     _tokens = pair;
     await _persist(pair);
+    if (changed && !_disposed) onIdentityChanged?.call();
   }
 
   /// Forgets the credential locally. Pass [revoke] to also tell the server (the
@@ -231,8 +274,7 @@ class ApiSession {
   /// a per-device logout).
   Future<void> signOut({bool revoke = true}) async {
     final access = _tokens?.accessToken;
-    _tokens = null;
-    await _prefs.remove(kLkmTokenPairStoreKey);
+    await _clear();
     if (!revoke || access == null || access.isEmpty) return;
     try {
       // Local state is already cleared; carry the captured credential explicitly.
@@ -259,9 +301,13 @@ class ApiSession {
   /// Runs [action], and if it fails as unauthenticated (expired or revoked
   /// access token), refreshes once and retries it once.
   Future<T> run<T>(Future<T> Function() action) async {
+    final identity = _identity(_tokens);
     try {
       return await action();
     } on ApiException catch (error) {
+      if (_disposed || _identity(_tokens) != identity) {
+        throw const SessionExpiredException();
+      }
       if (!error.isUnauthenticated) rethrow;
       final refreshed = await _refreshTokenPair(force: true);
       if (!refreshed) throw const SessionExpiredException();
@@ -279,20 +325,37 @@ class ApiSession {
 
     final future = _performRefresh(force: force);
     _refreshInFlight = future;
-    future.whenComplete(() {
-      if (identical(_refreshInFlight, future)) _refreshInFlight = null;
-    });
+    unawaited(
+      future.then<void>(
+        (_) {
+          if (identical(_refreshInFlight, future)) _refreshInFlight = null;
+        },
+        onError: (Object _, StackTrace __) {
+          if (identical(_refreshInFlight, future)) _refreshInFlight = null;
+        },
+      ),
+    );
     return future;
   }
 
   Future<bool> _performRefresh({required bool force}) async {
+    final generation = _generation;
     // Another engine may have rotated while this instance was idle; its copy is
     // the one the server still honours.
     await _prefs.reload();
-    final onDisk = LkmTokenPair.tryFromPrefs(
-      _prefs.getString(kLkmTokenPairStoreKey),
-    );
-    if (onDisk != null) _tokens = onDisk;
+    if (_disposed || generation != _generation) return false;
+    final onDisk = LkmTokenPair.tryFromPrefs(_prefs.getString(storeKey));
+    if (onDisk == null) {
+      await _clear();
+      return false;
+    }
+    if (_identity(onDisk) != _identity(_tokens)) {
+      _tokens = onDisk;
+      _identityRevision++;
+      onIdentityChanged?.call();
+      return false;
+    }
+    _tokens = onDisk;
 
     final current = _tokens;
     if (current == null) return false;
@@ -310,16 +373,21 @@ class ApiSession {
         data: {'refresh_token': current.refreshToken},
         options: Options(validateStatus: (_) => true),
       );
+      if (_disposed || generation != _generation) return false;
       final pair = _pairFromEnvelope(response);
       await adopt(pair);
       return true;
     } on ApiException catch (error) {
+      if (_disposed || generation != _generation) return false;
       if (ApiCode.isUnauthenticated(error.code) ||
           error.code == ApiCode.authRefreshTokenRevoked ||
           error.code == ApiCode.authTokenInvalid) {
         await _clear();
         return false;
       }
+      rethrow;
+    } catch (_) {
+      if (_disposed || generation != _generation) return false;
       rethrow;
     }
   }
@@ -365,10 +433,15 @@ class ApiSession {
   }
 
   Future<void> _persist(LkmTokenPair pair) =>
-      _prefs.setString(kLkmTokenPairStoreKey, jsonEncode(pair.toJson()));
+      _prefs.setString(storeKey, jsonEncode(pair.toJson()));
 
   Future<void> _clear() async {
+    final changed = _tokens != null;
+    if (changed) _identityRevision++;
+    _generation++;
+    _refreshInFlight = null;
     _tokens = null;
-    await _prefs.remove(kLkmTokenPairStoreKey);
+    await _prefs.remove(storeKey);
+    if (changed && !_disposed) onIdentityChanged?.call();
   }
 }

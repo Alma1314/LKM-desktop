@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:island/auth/login_controller.dart';
 import 'package:island/core/api/auth_api.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/api_client.dart';
 
 class TotpSetupDialog extends HookConsumerWidget {
@@ -14,6 +15,7 @@ class TotpSetupDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = useMemoized(() => ref.read(lkmApiSessionProvider));
     final setup = useState<LkmTotpSetup?>(null);
     final completed = useState<LkmTotpSetupComplete?>(null);
     final code = useTextEditingController();
@@ -23,7 +25,7 @@ class TotpSetupDialog extends HookConsumerWidget {
     useEffect(() {
       Future.microtask(() async {
         try {
-          final api = ref.read(authApiProvider);
+          final api = AuthApi(session.client);
           final value = authResult == null
               ? await api.beginTotpSetup()
               : await api.beginTotpSetupWithTemp(authResult!.tempToken!);
@@ -40,7 +42,7 @@ class TotpSetupDialog extends HookConsumerWidget {
       busy.value = true;
       error.value = null;
       try {
-        final api = ref.read(authApiProvider);
+        final api = AuthApi(session.client);
         final result = authResult == null
             ? await api.completeTotpSetup(code.text)
             : await api.completeTotpSetupWithTemp(
@@ -72,9 +74,10 @@ class TotpSetupDialog extends HookConsumerWidget {
                   accessToken: tokens.accessToken!,
                   refreshToken: tokens.refreshToken!,
                 ),
+                session: session,
               );
         }
-        await ref.read(authApiProvider).confirmTotpRecoveryCodes();
+        await AuthApi(session.client).confirmTotpRecoveryCodes();
         if (context.mounted) Navigator.pop(context, true);
       } catch (failure) {
         if (context.mounted) error.value = _describe(failure);

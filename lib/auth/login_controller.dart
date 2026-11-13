@@ -110,7 +110,10 @@ class LoginState {
 class LoginController extends Notifier<LoginState> {
   @override
   LoginState build() {
-    final session = ref.watch(lkmApiSessionProvider);
+    // Identity mutations notify data providers; this controller owns those
+    // transitions itself and only restores when the deployment changes.
+    ref.watch(lkmApiSessionProvider.select((session) => session.serverUrl));
+    final session = ref.read(lkmApiSessionProvider);
     if (session.isSignedIn) {
       Future.microtask(_restore);
     }
@@ -125,13 +128,26 @@ class LoginController extends Notifier<LoginState> {
   Future<String> _deviceId() => ref.read(lkmDeviceIdProvider.future);
 
   Future<void> _restore() async {
-    if (!ref.read(lkmApiSessionProvider).isSignedIn) return;
+    final session = ref.read(lkmApiSessionProvider);
+    final revision = session.identityRevision;
+    if (!session.isSignedIn) return;
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final account = await _api.me();
+      final account = await session.run(() => AuthApi(session.client).me());
+      if (!ref.mounted ||
+          !identical(ref.read(lkmApiSessionProvider), session) ||
+          session.identityRevision != revision)
+        return;
       state = state.copyWith(account: account, busy: false);
     } catch (error) {
-      await ref.read(lkmApiSessionProvider).signOut(revoke: false);
+      if (!ref.mounted ||
+          !identical(ref.read(lkmApiSessionProvider), session) ||
+          session.identityRevision != revision)
+        return;
+      if (error is SessionExpiredException ||
+          (error is ApiException && error.isUnauthenticated)) {
+        await session.signOut(revoke: false);
+      }
       state = state.copyWith(
         busy: false,
         clearAccount: true,
@@ -192,25 +208,28 @@ class LoginController extends Notifier<LoginState> {
   /// Runs the platform ceremony for the current passkey factor and submits the
   /// assertion.
   Future<void> authenticateWithPasskey() async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     final challenge = state.challenge;
     if (challenge == null) return;
     state = state.copyWith(busy: true, clearMessages: true);
     try {
       final deviceId = await _deviceId();
-      final options = await _api.startPasskeyFactor(challenge.id, deviceId);
+      final options = await api.startPasskeyFactor(challenge.id, deviceId);
       final assertion = await ref.read(passkeyCeremonyProvider)(options);
-      final step = await _api.completePasskeyFactor(
+      final step = await api.completePasskeyFactor(
         challenge.id,
         deviceId: deviceId,
         webauthnChallengeId: options.challengeId,
         assertion: assertion,
       );
+      _checkSession(session);
       if (step.isComplete) {
-        await _finish(step.tokens!);
+        await _finish(step.tokens!, session);
         return;
       }
       if (step.setup != null) {
-        await _applyOauthResult(step.setup!);
+        await _applyOauthResult(step.setup!, session);
         return;
       }
       state = state.copyWith(
@@ -326,18 +345,20 @@ class LoginController extends Notifier<LoginState> {
     required String email,
     required String code,
   }) async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     if (email.trim().isEmpty || code.trim().isEmpty) {
       state = state.copyWith(error: _t('lkmErrEmptyCode'));
       return;
     }
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final result = await _api.registerWithEmail(
+      final result = await api.registerWithEmail(
         email: email.trim(),
         code: code.trim(),
       );
       if (result.tokens != null) {
-        await _finish(result.tokens!);
+        await _finish(result.tokens!, session);
       } else if (result.isPendingAdmission) {
         state = state.copyWith(busy: false, info: _t('lkmAdmissionPending'));
       } else {
@@ -354,10 +375,12 @@ class LoginController extends Notifier<LoginState> {
   /// Browser-based GitHub login: opens the system browser, waits on the
   /// loopback callback, then exchanges the one-time code.
   Future<void> signInWithGithub() async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final result = await runGithubLogin(_api);
-      await _applyOauthResult(result);
+      final result = await runGithubLogin(api);
+      await _applyOauthResult(result, session);
     } catch (error) {
       state = state.copyWith(busy: false, error: _describe(error));
     }
@@ -382,6 +405,8 @@ class LoginController extends Notifier<LoginState> {
   }
 
   Future<void> verifyMagicLink(String link) async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     if (state.busy) return;
     final raw = link.trim();
     if (raw.isEmpty) {
@@ -392,19 +417,23 @@ class LoginController extends Notifier<LoginState> {
     try {
       final uri = Uri.tryParse(raw);
       final token = uri?.queryParameters['token'] ?? raw;
-      await _applyOauthResult(await _api.verifyMagicLink(token));
+      await _applyOauthResult(await api.verifyMagicLink(token), session);
     } catch (error) {
       state = state.copyWith(busy: false, error: _describe(error));
     }
   }
 
-  Future<void> _applyOauthResult(LkmAuthResult result) async {
+  Future<void> _applyOauthResult(
+    LkmAuthResult result,
+    ApiSession session,
+  ) async {
+    _checkSession(session);
     if (result.setupRequired && result.tempToken != null) {
       state = LoginState(setup: result);
       return;
     }
     if (result.tokens != null) {
-      await _finish(result.tokens!);
+      await _finish(result.tokens!, session);
       return;
     }
     if (result.requires2fa && result.tempToken != null) {
@@ -426,6 +455,8 @@ class LoginController extends Notifier<LoginState> {
 
   /// Second factor for the OAuth path (the challenge flow does not apply).
   Future<void> submitOauthTotp(String code) async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     final temp = state.oauthTempToken;
     if (temp == null) return;
     if (code.trim().isEmpty) {
@@ -434,7 +465,7 @@ class LoginController extends Notifier<LoginState> {
     }
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final verified = await _api.verifyTotp(
+      final verified = await api.verifyTotp(
         tempToken: temp,
         code: state.recoveryMode ? null : code.trim(),
         recoveryCode: state.recoveryMode ? code.trim() : null,
@@ -454,6 +485,7 @@ class LoginController extends Notifier<LoginState> {
           accessToken: verified.accessToken!,
           refreshToken: verified.refreshToken ?? '',
         ),
+        session,
       );
     } catch (error) {
       state = state.copyWith(busy: false, error: _describe(error));
@@ -469,8 +501,11 @@ class LoginController extends Notifier<LoginState> {
 
   /// Adopts a pair minted outside the challenge flow (registration, passkey
   /// management), through the same single adoption path as login.
-  Future<LkmAccount?> adoptTokens(LkmAuthToken token) async {
-    await _finish(token);
+  Future<LkmAccount?> adoptTokens(
+    LkmAuthToken token, {
+    ApiSession? session,
+  }) async {
+    await _finish(token, session ?? ref.read(lkmApiSessionProvider));
     return state.account;
   }
 
@@ -479,13 +514,16 @@ class LoginController extends Notifier<LoginState> {
     required String primaryFactor,
     required LoginMethod method,
   }) async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     state = state.copyWith(busy: true, clearMessages: true, method: method);
     try {
-      final challenge = await _api.createChallenge(
+      final challenge = await api.createChallenge(
         account: account,
         deviceId: await _deviceId(),
         primaryFactor: primaryFactor,
       );
+      _checkSession(session);
       state = state.copyWith(
         challenge: challenge,
         busy: false,
@@ -504,11 +542,13 @@ class LoginController extends Notifier<LoginState> {
     String? code,
     String? recoveryCode,
   }) async {
+    final session = ref.read(lkmApiSessionProvider);
+    final api = AuthApi(session.client);
     final challenge = state.challenge;
     if (challenge == null) return;
     state = state.copyWith(busy: true, clearMessages: true);
     try {
-      final step = await _api.submitFactor(
+      final step = await api.submitFactor(
         challenge.id,
         deviceId: await _deviceId(),
         kind: kind,
@@ -516,12 +556,13 @@ class LoginController extends Notifier<LoginState> {
         code: code,
         recoveryCode: recoveryCode,
       );
+      _checkSession(session);
       if (step.setup != null) {
-        await _applyOauthResult(step.setup!);
+        await _applyOauthResult(step.setup!, session);
         return;
       }
       if (step.isComplete) {
-        await _finish(step.tokens!);
+        await _finish(step.tokens!, session);
         return;
       }
       final next = step.challenge!;
@@ -553,8 +594,14 @@ class LoginController extends Notifier<LoginState> {
     }
   }
 
-  Future<void> _finish(LkmAuthToken token) async {
-    final session = ref.read(lkmApiSessionProvider);
+  void _checkSession(ApiSession session) {
+    if (!ref.mounted || !identical(ref.read(lkmApiSessionProvider), session)) {
+      throw const SessionExpiredException();
+    }
+  }
+
+  Future<void> _finish(LkmAuthToken token, ApiSession session) async {
+    _checkSession(session);
     await session.adopt(
       LkmTokenPair(
         accessToken: token.accessToken,
@@ -563,7 +610,12 @@ class LoginController extends Notifier<LoginState> {
         refreshExpiresAt: decodeJwtExpiry(token.refreshToken),
       ),
     );
-    final account = await _api.me();
+    _checkSession(session);
+    final revision = session.identityRevision;
+    final account = await AuthApi(session.client).me();
+    _checkSession(session);
+    if (session.identityRevision != revision)
+      throw const SessionExpiredException();
     ref.invalidate(lkmMeProvider);
     state = LoginState(account: account);
   }

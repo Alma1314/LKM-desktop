@@ -14,15 +14,17 @@ import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/content_api.dart';
 import 'package:island/core/api/projects_api.dart';
+import 'package:island/core/api/qa_api.dart';
 import 'package:island/core/api/users_api.dart';
 import 'package:island/route.gr.dart';
 import 'package:island/shared/hooks/material_hooks.dart';
 import 'package:island/shared/widgets/alert.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
+import 'package:island/shared/widgets/api_page_list.dart';
 
 /// The profile's post/column tabs narrow the unified content read by type.
 final _userContentProvider = FutureProvider.autoDispose
-    .family<ApiPage<LkmContentItem>, ({String userId, String type})>((
+    .family<ApiPage<LkmContentItem>, ({String userId, String type, int page})>((
       ref,
       key,
     ) {
@@ -30,7 +32,7 @@ final _userContentProvider = FutureProvider.autoDispose
       return session.run(
         () => ref
             .watch(contentApiProvider)
-            .items(authorId: key.userId, contentType: key.type, pageSize: 50),
+            .items(authorId: key.userId, contentType: key.type, page: key.page),
       );
     });
 
@@ -99,7 +101,11 @@ class _ProfileBody extends HookConsumerWidget {
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
           child: Column(
             children: [
-              _Avatar(url: profile.avatar, name: profile.displayName),
+              _Avatar(
+                userId: profile.userId,
+                url: profile.avatar,
+                name: profile.displayName,
+              ),
               const SizedBox(height: 16),
               Text(
                 profile.displayName,
@@ -171,38 +177,23 @@ class _ProfileBody extends HookConsumerWidget {
   }
 }
 
-class _ProfilePosts extends ConsumerWidget {
+class _ProfilePosts extends StatelessWidget {
   const _ProfilePosts({required this.userId});
-
   final String userId;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final page = ref.watch(
-      _userContentProvider((userId: userId, type: 'discussion')),
-    );
-    return page.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: '$error'),
-      data: (page) => page.items.isEmpty
-          ? _Message(text: 'authFlow.empty'.tr())
-          : ListView.builder(
-              itemCount: page.items.length,
-              itemBuilder: (context, index) {
-                final item = page.items[index];
-                return ListTile(
-                  title: Text(item.title),
-                  subtitle: Text(
-                    [item.authorName, _formatDate(item.createdAt)].join(' · '),
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () =>
-                      context.router.push(ContentDetailRoute(id: item.id)),
-                );
-              },
-            ),
-    );
-  }
+  Widget build(BuildContext context) => ApiPageList<LkmContentItem>(
+    key: ValueKey(userId),
+    provider: (page) =>
+        _userContentProvider((userId: userId, type: 'discussion', page: page)),
+    itemBuilder: (context, item) => ListTile(
+      title: Text(item.title),
+      subtitle: Text(
+        [item.authorName, _formatDate(item.createdAt)].join(' · '),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.router.push(ContentDetailRoute(id: item.id)),
+    ),
+  );
 }
 
 class _ProfileProjects extends ConsumerWidget {
@@ -262,69 +253,39 @@ class _ProfileProjects extends ConsumerWidget {
   }
 }
 
-class _ProfileQuestions extends ConsumerWidget {
+class _ProfileQuestions extends StatelessWidget {
   const _ProfileQuestions({required this.userId});
-
   final String userId;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final questions = ref.watch(myQuestionsProvider(userId));
-    return questions.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: '$error'),
-      data: (page) => page.items.isEmpty
-          ? _Message(text: 'authFlow.empty'.tr())
-          : ListView.builder(
-              itemCount: page.items.length,
-              itemBuilder: (context, index) {
-                final question = page.items[index];
-                return ListTile(
-                  title: Text(question.title),
-                  subtitle: Text(
-                    '${question.status} · ${question.answerCount} '
-                    '${'authFlow.answers'.tr()}',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () =>
-                      context.router.push(QaDetailRoute(id: question.id)),
-                );
-              },
-            ),
-    );
-  }
+  Widget build(BuildContext context) => ApiPageList<QaQuestion>(
+    key: ValueKey(userId),
+    provider: (page) => myQuestionsProvider((authorId: userId, page: page)),
+    itemBuilder: (context, question) => ListTile(
+      title: Text(question.title),
+      subtitle: Text(
+        '${question.status} · ${question.answerCount} ${'authFlow.answers'.tr()}',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.router.push(QaDetailRoute(id: question.id)),
+    ),
+  );
 }
 
-class _ProfileColumns extends ConsumerWidget {
+class _ProfileColumns extends StatelessWidget {
   const _ProfileColumns({required this.userId});
-
   final String userId;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final page = ref.watch(
-      _userContentProvider((userId: userId, type: 'column_post')),
-    );
-    return page.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _Message(text: '$error'),
-      data: (page) => page.items.isEmpty
-          ? _Message(text: 'authFlow.empty'.tr())
-          : ListView.builder(
-              itemCount: page.items.length,
-              itemBuilder: (context, index) {
-                final item = page.items[index];
-                return ListTile(
-                  title: Text(item.title),
-                  subtitle: Text(item.columnTitle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () =>
-                      context.router.push(ContentDetailRoute(id: item.id)),
-                );
-              },
-            ),
-    );
-  }
+  Widget build(BuildContext context) => ApiPageList<LkmContentItem>(
+    key: ValueKey(userId),
+    provider: (page) =>
+        _userContentProvider((userId: userId, type: 'column_post', page: page)),
+    itemBuilder: (context, item) => ListTile(
+      title: Text(item.title),
+      subtitle: Text(item.columnTitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.router.push(ContentDetailRoute(id: item.id)),
+    ),
+  );
 }
 
 class _Message extends StatelessWidget {
@@ -356,22 +317,22 @@ String _formatDate(DateTime date) {
   return iso.substring(0, 10);
 }
 
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.url, required this.name});
+class _Avatar extends ConsumerWidget {
+  const _Avatar({required this.userId, required this.url, required this.name});
 
   final String? url;
+  final String userId;
   final String name;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final initial = name.isEmpty ? '?' : name.characters.first;
+    final image = userAvatarUrl(ref.watch(lkmServerUrlProvider), userId, url);
     return CircleAvatar(
       radius: 48,
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
-      foregroundImage: url == null || url!.isEmpty
-          ? null
-          : CachedNetworkImageProvider(url!),
+      foregroundImage: image == null ? null : CachedNetworkImageProvider(image),
       child: Text(
         initial,
         style: theme.textTheme.headlineMedium?.copyWith(

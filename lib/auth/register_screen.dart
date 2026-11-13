@@ -9,6 +9,7 @@ import 'package:island/auth/totp_setup_dialog.dart';
 import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/api_client.dart';
 import 'package:island/core/api/auth_api.dart';
+import 'package:island/core/api/api_providers.dart';
 import 'package:island/route.gr.dart';
 import 'package:island/shared/widgets/app_scaffold.dart';
 
@@ -26,6 +27,7 @@ class RegisterScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = useMemoized(() => ref.read(lkmApiSessionProvider));
     final mode = useState(_RegisterMode.normal);
     final busy = useState(false);
     final error = useState<String?>(null);
@@ -56,7 +58,7 @@ class RegisterScreen extends HookConsumerWidget {
       if (result.tokens != null) {
         await ref
             .read(loginControllerProvider.notifier)
-            .adoptTokens(result.tokens!);
+            .adoptTokens(result.tokens!, session: session);
         ref.invalidate(lkmMeProvider);
         if (!context.mounted) return;
         await context.router.push(const OnboardingRoute());

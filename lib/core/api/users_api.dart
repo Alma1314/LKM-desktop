@@ -1,5 +1,19 @@
 import 'api_client.dart';
 
+/// Profiles carry a storage key, not a public object-storage URL.
+String? userAvatarUrl(String server, String userId, String? avatar) {
+  if (avatar == null || avatar.isEmpty) return null;
+  final uri = Uri.tryParse(avatar);
+  if (uri != null &&
+      uri.hasAuthority &&
+      ['http', 'https'].contains(uri.scheme)) {
+    return uri.toString();
+  }
+  return Uri.parse(
+    '${normalizeApiBase(server)}/auth/avatar/${Uri.encodeComponent(userId)}',
+  ).replace(queryParameters: {'v': avatar}).toString();
+}
+
 /// Public account profile (`ProfileInfo`): what another user's page can show.
 class LkmUserProfile {
   const LkmUserProfile({

@@ -10,6 +10,7 @@ import 'package:island/community/notifications_sheet.dart';
 import 'package:island/community/user_pod.dart';
 import 'package:island/core/api/api_providers.dart';
 import 'package:island/core/api/auth_api.dart';
+import 'package:island/core/api/users_api.dart';
 import 'package:island/core/config.dart';
 import 'package:island/core/debug_sheet.dart';
 import 'package:island/core/services/responsive.dart';
@@ -282,6 +283,7 @@ class _LkmAccountPage extends HookConsumerWidget {
                       for (final user in users)
                         ListTile(
                           leading: _LkmAvatar(
+                            userId: user.userId,
                             url: user.avatar,
                             name: user.displayName,
                             radius: 18,
@@ -317,6 +319,7 @@ class _ProfileHeader extends StatelessWidget {
           GestureDetector(
             onTap: onAvatarTap,
             child: _LkmAvatar(
+              userId: account.id,
               url: account.avatar,
               name: account.displayName,
               radius: 40,
@@ -368,27 +371,28 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _LkmAvatar extends StatelessWidget {
+class _LkmAvatar extends ConsumerWidget {
   const _LkmAvatar({
     required this.url,
+    required this.userId,
     required this.name,
     required this.radius,
   });
 
   final String? url;
+  final String userId;
   final String name;
   final double radius;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final initial = name.isEmpty ? '?' : name.characters.first;
+    final image = userAvatarUrl(ref.watch(lkmServerUrlProvider), userId, url);
     return CircleAvatar(
       radius: radius,
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
-      foregroundImage: url == null || url!.isEmpty
-          ? null
-          : CachedNetworkImageProvider(url!),
+      foregroundImage: image == null ? null : CachedNetworkImageProvider(image),
       child: Text(
         initial,
         style: theme.textTheme.titleLarge?.copyWith(

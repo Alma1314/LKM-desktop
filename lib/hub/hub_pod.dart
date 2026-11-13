@@ -21,7 +21,7 @@ final projectsApiProvider = Provider<ProjectsApi>((ref) {
 });
 
 /// A QA list selection: category (`help`/`volunteer`/null for all) plus sort.
-typedef QaFilter = ({String? category, String sort});
+typedef QaFilter = ({String? category, String sort, int page});
 
 /// QA questions are public, so this is fetched signed out too.
 final qaQuestionsProvider = FutureProvider.autoDispose
@@ -30,7 +30,11 @@ final qaQuestionsProvider = FutureProvider.autoDispose
       return session.run(
         () => ref
             .watch(qaApiProvider)
-            .questions(category: filter.category, sort: filter.sort),
+            .questions(
+              category: filter.category,
+              sort: filter.sort,
+              page: filter.page,
+            ),
       );
     });
 
@@ -49,13 +53,13 @@ final columnsProvider = FutureProvider.autoDispose<ColumnPage>((ref) {
 final columnPostsProvider = FutureProvider.autoDispose
     .family<ColumnPostPage, String>((ref, columnId) {
       final session = ref.watch(lkmApiSessionProvider);
-      return session.run(
-        () => ref.watch(columnsApiProvider).posts(columnId),
-      );
+      return session.run(() => ref.watch(columnsApiProvider).posts(columnId));
     });
 
 /// Projects are public; the hall list is small enough for one page.
-final projectsProvider = FutureProvider.autoDispose<List<ProjectSummary>>((ref) {
+final projectsProvider = FutureProvider.autoDispose<List<ProjectSummary>>((
+  ref,
+) {
   final session = ref.watch(lkmApiSessionProvider);
   return session.run(() => ref.watch(projectsApiProvider).projects());
 });
@@ -70,9 +74,7 @@ final myProjectApplicationsProvider =
     FutureProvider.autoDispose<List<ProjectApplication>>((ref) async {
       final session = ref.watch(lkmApiSessionProvider);
       if (!session.isSignedIn) return const [];
-      return session.run(
-        () => ref.watch(projectsApiProvider).myApplications(),
-      );
+      return session.run(() => ref.watch(projectsApiProvider).myApplications());
     });
 
 /// Published content inside one board, one page per call. The board detail
@@ -94,9 +96,8 @@ final boardFeedProvider = FutureProvider.autoDispose
     .family<List<LkmContentItem>, String>((ref, boardId) async {
       final session = ref.watch(lkmApiSessionProvider);
       final page = await session.run(
-        () => ref
-            .watch(contentApiProvider)
-            .items(boardId: boardId, pageSize: 50),
+        () =>
+            ref.watch(contentApiProvider).items(boardId: boardId, pageSize: 50),
       );
       return page.items;
     });
@@ -107,9 +108,7 @@ final followingBoardsProvider =
     FutureProvider.autoDispose<List<LkmFollowBoard>>((ref) {
       final session = ref.watch(lkmApiSessionProvider);
       if (!session.isSignedIn) return const <LkmFollowBoard>[];
-      return session.run(
-        () => ref.watch(contentApiProvider).followingBoards(),
-      );
+      return session.run(() => ref.watch(contentApiProvider).followingBoards());
     });
 
 /// Board ordering shared by the 最新/热门 switch: pinned first; hot ranks
