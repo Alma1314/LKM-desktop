@@ -1,0 +1,11 @@
+{
+  "name": "wakelock_plus",
+  "version": "1.0.0",
+  "description": "HarmonyOS (OHOS) platform implementation of the wakelock_plus Flutter plugin: keeps the screen on via the window keepScreenOn capability.",
+  "main": "index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@ohos/flutter_ohos": "file:./libs/flutter_embedding.har"
+  }
+}

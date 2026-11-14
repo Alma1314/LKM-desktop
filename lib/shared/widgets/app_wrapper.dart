@@ -785,11 +785,18 @@ class AppWrapper extends HookConsumerWidget {
           final daysSinceFirstLaunch = now.difference(launchAt).inDays;
           if (daysSinceFirstLaunch >= 3 &&
               !kIsWeb &&
-              (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+              (Platform.isAndroid ||
+                  Platform.isIOS ||
+                  Platform.isMacOS ||
+                  Platform.operatingSystem == 'ohos')) {
             final InAppReview inAppReview = InAppReview.instance;
             Future(() async {
-              if (await inAppReview.isAvailable()) {
-                inAppReview.requestReview();
+              try {
+                if (await inAppReview.isAvailable()) {
+                  await inAppReview.requestReview();
+                }
+              } catch (error) {
+                Logger.root.warning('Unable to request an app review', error);
               }
             });
             settingsNotifier.setAskedReview(true);

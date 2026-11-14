@@ -1,0 +1,66 @@
+group 'net.wolverinebeach.flutter_timezone'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.7.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+def agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0] as int
+def builtInKotlinEnabled = project.findProperty('android.builtInKotlin')?.toString() == 'true'
+
+apply plugin: 'com.android.library'
+// AGP 9+ registers the Kotlin Android plugin (and the `kotlin {}` extension)
+// itself only when android.builtInKotlin=true. Flutter 3.44 currently
+// defaults that flag to false to support consumers that depend on
+// unmigrated Flutter-SDK plugins (eg. integration_test). Apply the plugin
+// ourselves whenever AGP isn't going to.
+//
+// Applied via pluginManager rather than `apply plugin:` so that Flutter's
+// static "plugin applies KGP" detection, which pattern-matches build file
+// text and cannot see this guard, does not flag the plugin.
+if (agpMajor < 9 || !builtInKotlinEnabled) {
+    pluginManager.apply('kotlin-android')
+}
+
+android {
+    namespace 'net.wolverinebeach.flutter_timezone'
+    compileSdkVersion 35
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+    defaultConfig {
+        minSdkVersion 21
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}

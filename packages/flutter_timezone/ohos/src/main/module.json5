@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "flutter_timezone",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}

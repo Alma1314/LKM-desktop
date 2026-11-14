@@ -122,8 +122,8 @@ flutter assemble --no-version-check \
 ### 最新应用检查结果
 
 - `flutter analyze --no-pub`：0 error、7 warning、59 info，退出码 1；集中检查本轮适配与新增测试为 0 issue。
-- 新增音频、文件选择、Flutter 菜单回归及原有 OHOS UI 回归均通过（4 项）。原生网络/文件选择逻辑检查和 NDK ARM64 编译探针通过。
-- `flutter test --no-pub --reporter expanded`：871 通过、22 失败、3 跳过，退出码 1。相比上一记录 868 通过，本轮新增 3 个用例通过；失败仍涉及下列 9 个文件。尚未用替换前工具链做基线对照，不将其直接归因为已有问题。
+- 新增图片选择/分享的 2 项回归通过；原有时区、常亮、评价、音频、文件选择、菜单及 OHOS UI 回归包含于本轮全量测试且通过。真实 ArkTS 后端逻辑检查通过，原生库和 NDK 探针记录见下文。
+- `flutter test --no-pub --reporter expanded`：877 通过、21 失败、3 跳过，退出码 1。新增 2 项回归通过；逐项比较第四阶段日志，失败清单完全一致，没有新增失败（下列 8 个文件）。尚未用替换前工具链做基线对照。
 - 失败涉及主题/消息截图、链接解析、页面断言、聊天布局/状态与音频探测超时；日志也有远程字体获取失败。没有将全量测试标为成功。
 
 | 测试文件 | 失败用例数 |
@@ -131,14 +131,13 @@ flutter assemble --no-version-check \
 | `test/chat/message_avatar_alignment_test.dart` | 4 |
 | `test/chat/message_bubble_shape_test.dart` | 1 |
 | `test/chat/message_post_link_test.dart` | 1 |
-| `test/chat/messages_notifier_test.dart` | 1 |
 | `test/drive/s3_direct_upload_test.dart` | 1 |
 | `test/misc/settings_explore_category_test.dart` | 1 |
 | `test/posts/post_link_embed_test.dart` | 9 |
 | `test/shared/widgets/markdown_selection_test.dart` | 1 |
 | `test/theme_preview_test.dart` | 3 |
 
-完整日志与机器可读结果持久保存在 `/home/alma/harmonyos/validation/`，本轮文件名以 `lkm-desktop-phase3-` 开头；先前验证记录仍保留。
+完整日志与机器可读结果持久保存在 `/home/alma/harmonyos/validation/`，本轮文件名以 `lkm-desktop-phase5-` 开头；先前验证记录仍保留。
 
 ### 业务原生资产与 HAP
 
@@ -168,7 +167,7 @@ python3 buildtools/verify-ohos-hap.py build/ohos/hap/entry-default-unsigned.hap
 
 检查脚本验证当前业务需要的 8 个库，拒绝 GNU/Linux 依赖和错误 ELF 架构；输出 JSON 的 SHA-256 与库依赖用于复查。这项检查不证明未适配插件已能运行。HDC 设备查询返回 `[Empty]`。
 
-业务 **release HAP** 也已在 Linux 本机构建成功，使用默认图标裁剪与 ARM64 AOT，96100366 字节（96.1 MB），SHA-256 `7aa2e498d1e70e447f37952b9d872dadd80cfa6687c05b5a5a38db6d7e9cd96b`。持久产物为 `/home/alma/harmonyos/validation/lkm-desktop-release-unsigned.hap`。9 个动态库包含 AOT `libapp.so` 和上述 8 个运行库，CRC、架构、动态依赖及 N-API / FFI 导出检查通过。
+业务 **release HAP** 也已在 Linux 本机构建成功，使用默认图标裁剪与 ARM64 AOT，96143173 字节（96.1 MB），SHA-256 `925163221ced34997c6d379b80fc3d334f0bcb1d0a6d608f11caae3ddef30376`。持久产物为 `/home/alma/harmonyos/validation/lkm-desktop-release-unsigned.hap`。9 个动态库包含 AOT `libapp.so` 和上述 8 个运行库，CRC、架构、动态依赖及 N-API / FFI 导出检查通过。
 
 ```bash
 PATH="/usr/bin:$PATH" flutter build hap \
@@ -177,6 +176,36 @@ python3 buildtools/verify-ohos-hap.py --require-aot
 ```
 
 RTC、播放器、Firebase 等功能缺口仍见 [插件替换进度](HARMONYOS_PLUGIN_REPLACEMENTS.md)。所有业务构建均未签名，尚未在设备运行。
+
+### 第四阶段插件接入
+
+在保持 `flutter_timezone 5.1.1`、`wakelock_plus 1.8.0`、`in_app_review 2.0.12` 现有 API / 非鸿蒙实现的基础上，统一加入已有 OHOS 后端，没有降级 Pigeon / 平台接口或额外引入旧 URL launcher。三个插件均由正式的 OHOS 注册器注册，非 dev-only；评价同时接入既有共享提示策略。
+
+- 时区：系统 IANA ID 继续由当前 API 转成 `TimezoneInfo.identifier`；可选本地化名称在 OHOS 上为空。调用失败回传异常，不让 Dart 挂起。
+- 常亮：原生 codec 与当前 Pigeon 28 的类型码 129/130 和消息封装一致；等待窗口操作完成才返回，读取实际窗口状态；无 Ability / SDK 失败不假报成功。只控制屏幕常亮，不提供后台执行保证。
+- 评价：API 20+ 的 AppGalleryKit，打开当前应用 bundle 的商店页；原有 Android/iOS/macOS/Windows 实现和公开方法签名不变。账号、上架配置和配额仍是运行条件，实际评论服务需要真机。
+
+```bash
+node buildtools/verify-ohos-timezone-wakelock.mjs
+node buildtools/verify-ohos-review.mjs
+PATH="/usr/bin:$PATH" flutter test --no-pub \
+  test/core/ohos_timezone_wakelock_test.dart test/core/ohos_review_test.dart
+```
+
+原生逻辑检查与新增 3 项 Dart 回归通过；集中静态检查为 0 issue。来源提交、归档哈希和移植边界记录于各包 `UPSTREAM.md`。本轮记录以 `/home/alma/harmonyos/validation/lkm-desktop-phase4-` 为前缀。最终 release HAP 已通过 CRC、ARM64 动态依赖、N-API/FFI 导出和 AOT 检查；额外核对了 AOT 中的最新共享评价处理和 ArkTS 中的三个新增插件。固定备份为 `lkm-desktop-phase4-release-unsigned.hap`，第三阶段 release 保留为 `lkm-desktop-phase3-release-unsigned.hap`。debug 仍是第三阶段产物，本轮以 release 验证新增插件。
+
+### 第五阶段插件接入
+
+`image_picker 1.2.4` / `share_plus 13.3.1` 的 Dart API 与原平台保持当前发布版，统一使用本地 OHOS 后端。图片选择复用当前 interface 2.11.2 的 MethodChannel，原生返回可读的私有缓存路径；系统相机输出复制后清理。图库取消返回 null/空列表、重复请求报 already_active，多视频完整返回。缩放使用同一个比例，同时修正 JPEG 路径、部分写入和 FD 生命周期。
+
+分享保留 interface 7.2.0，修正旧后端与当前统一 share map 不匹配的问题。文本、URI、文件和旧 Share API 都经过原有 Dart 入口；文件复制完成后打开系统面板。关闭事件仅返回 unavailable，不伪造分享成功。无 Ability、拷贝/显示错误和并发请求均显式回复；不删除其他接收应用可能仍在读取的缓存。
+
+```bash
+node buildtools/verify-ohos-image-picker-share.mjs
+PATH="/usr/bin:$PATH" flutter test --no-pub test/core/ohos_image_picker_share_test.dart
+```
+
+上述原生逻辑与新增 2 项 Dart 回归通过，插件已进入正式原生注册器，均非 dev-only。首次真实 Linux release 构建成功，CRC、ARM64 AOT / 原生依赖和编译后的两个插件及通道名称检查通过。附加许可证按 Flutter manifest 声明进入产物。最终 release HAP 为 96143173 字节，固定保存为 `/home/alma/harmonyos/validation/lkm-desktop-phase5-release-unsigned.hap`，SHA-256 `925163221ced34997c6d379b80fc3d334f0bcb1d0a6d608f11caae3ddef30376`。最终包重新通过 CRC / ARM64 / AOT / 原生依赖检查，额外解压并逐文件核对 9 份附加许可证均已进入 NOTICES。旧版产物保持各自阶段备份。本轮日志及报告以 `lkm-desktop-phase5-` 为前缀；debug 仍是第三阶段产物。后续仍需真机相机、URI 授权和跨应用分享验收。
 
 ### 本地构建依赖和修复
 

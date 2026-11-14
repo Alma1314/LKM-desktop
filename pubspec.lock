@@ -1255,10 +1255,9 @@ packages:
   flutter_timezone:
     dependency: "direct main"
     description:
-      name: flutter_timezone
-      sha256: "7830bc64bef0b003468fc1f58fc3f3faf54817f8cd6e68fa818b306560410d68"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/flutter_timezone"
+      relative: true
+    source: path
     version: "5.1.1"
   flutter_typeahead:
     dependency: "direct main"
@@ -1550,10 +1549,9 @@ packages:
   image_picker:
     dependency: "direct main"
     description:
-      name: image_picker
-      sha256: e71b1bd9e40124041128d60fc3034c7b1598e1bba4e570bba0c70301c817013a
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/image_picker"
+      relative: true
+    source: path
     version: "1.2.4"
   image_picker_android:
     dependency: "direct main"
@@ -1595,6 +1593,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2+1"
+  image_picker_ohos:
+    dependency: "direct dev"
+    description:
+      path: "packages/image_picker_ohos"
+      relative: true
+    source: path
+    version: "0.8.13+7"
   image_picker_platform_interface:
     dependency: "direct main"
     description:
@@ -1646,10 +1651,9 @@ packages:
   in_app_review:
     dependency: "direct main"
     description:
-      name: in_app_review
-      sha256: "364db0c160b37fe7fad9cdaa18f968473924b17368869010af902760421b6bf8"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/in_app_review"
+      relative: true
+    source: path
     version: "2.0.12"
   in_app_review_platform_interface:
     dependency: transitive
@@ -3019,10 +3023,9 @@ packages:
   share_plus:
     dependency: "direct main"
     description:
-      name: share_plus
-      sha256: db40767f130189d53f3ae8a6393c217ff4a492da1baff718a9873679c0c00224
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/share_plus"
+      relative: true
+    source: path
     version: "13.3.1"
   share_plus_platform_interface:
     dependency: transitive
@@ -3602,10 +3605,9 @@ packages:
   wakelock_plus:
     dependency: "direct main"
     description:
-      name: wakelock_plus
-      sha256: "22b3e7e937721de70e63c85e7139f4ac781dc22863b9262431a53ac030eb074b"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/wakelock_plus"
+      relative: true
+    source: path
     version: "1.8.0"
   wakelock_plus_platform_interface:
     dependency: transitive

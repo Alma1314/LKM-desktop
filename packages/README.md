@@ -23,6 +23,8 @@ so the tree must stay together.
 | `code_assets` / `native_toolchain_c` | Current native-assets versions with real OHOS targets / NDK compilation |
 | `cnativeapi` / `openmls` | Existing versions with explicit OHOS hook handling |
 | `audio_session` / `connectivity_plus` / `file_picker` | Current API versions with OHOS native backends |
+| `flutter_timezone` / `wakelock_plus` / `in_app_review` | Current API versions with OHOS timezone, screen wake and AppGallery review backends |
+| `image_picker` / `image_picker_ohos` / `share_plus` | Current image/video picker and sharing APIs with OHOS system backends |
 | `super_native_extensions` | Pinned cross-platform fork with a reproducible OHOS Rust build |
 
 The UI/input packages retain their current APIs and original platforms. All app
@@ -59,3 +61,6 @@ flutter pub get && flutter analyze lib
 
 Record the new upstream commit here (replace `2f3b2b4`) once the update lands, so the next
 diff starts from the right baseline.
+
+OHOS backend licenses are listed under each local package's `flutter.licenses`
+so the additional notices are bundled in the app, alongside the original licenses.

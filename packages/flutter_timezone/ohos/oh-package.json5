@@ -1,0 +1,11 @@
+{
+  "name": "flutter_timezone",
+  "version": "1.0.0",
+  "description": "A flutter plugin for getting the local timezone of the device.",
+  "main": "index.ets",
+  "author": "nutpi",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@ohos/flutter_ohos": "file:./libs/flutter_embedding.har"
+  }
+}

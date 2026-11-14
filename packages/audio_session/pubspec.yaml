@@ -20,6 +20,8 @@ dependencies:
   meta: ^1.3.0
 
 flutter:
+  licenses:
+    - LICENSE-OHOS
   plugin:
     platforms:
       android:

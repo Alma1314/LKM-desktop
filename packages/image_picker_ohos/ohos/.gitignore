@@ -1,0 +1,10 @@
+build/
+libs/
+.har/
+.har
+oh_modules/
+.hvigor/
+.cxx/
+BuildProfile.ets
+local.properties
+oh-package-lock.json5

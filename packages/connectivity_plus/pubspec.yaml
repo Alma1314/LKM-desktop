@@ -16,6 +16,8 @@ environment:
   flutter: ">=3.7.0"
 
 flutter:
+  licenses:
+    - LICENSE-OHOS
   plugin:
     platforms:
       ohos:

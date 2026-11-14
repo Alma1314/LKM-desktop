@@ -205,6 +205,9 @@ dev_dependencies:
   code_assets: ^2.2.0
   native_toolchain_c: ^0.19.6
   hooks: ^2.2.0
+  # Exercise the registered OHOS backend through the current ImagePicker API.
+  image_picker_ohos:
+    path: packages/image_picker_ohos
   # Verify the shared Flutter menu renderer used by the OHOS plugin.
   super_native_extensions: ^0.9.1
   # flutter_image_compress is a federated plugin; the test registers the
@@ -336,6 +339,16 @@ hooks:
       additional_libraries: [m]
 
 dependency_overrides:
+  image_picker:
+    path: packages/image_picker
+  share_plus:
+    path: packages/share_plus
+  in_app_review:
+    path: packages/in_app_review
+  flutter_timezone:
+    path: packages/flutter_timezone
+  wakelock_plus:
+    path: packages/wakelock_plus
   # liquid_glass_renderer 1.0 needs hooks 2, openmls pins hooks 1.
   hooks: ^2.0.2
   # open_meteo pins flat_buffers ^23.

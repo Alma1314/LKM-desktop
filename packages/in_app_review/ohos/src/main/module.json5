@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "in_app_review",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}

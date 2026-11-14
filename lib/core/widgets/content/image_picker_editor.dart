@@ -775,7 +775,11 @@ class ImagePickerEditor extends HookConsumerWidget {
     }
 
     // Check if camera is available (mobile only)
-    final isCameraAvailable = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    final isCameraAvailable =
+        !kIsWeb &&
+        (Platform.isAndroid ||
+            Platform.isIOS ||
+            Platform.operatingSystem == 'ohos');
 
     // Calculate if cropping is required and the target aspect ratio
     final requiresCropping =
