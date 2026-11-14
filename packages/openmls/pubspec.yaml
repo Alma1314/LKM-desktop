@@ -1,0 +1,54 @@
+name: openmls
+publish_to: none
+description: "Dart wrapper for OpenMLS — a Rust implementation of the Messaging Layer Security (MLS) protocol (RFC 9420)"
+
+version: 3.3.0
+license: MIT
+repository: https://github.com/djx-y-z/openmls_dart
+homepage: https://github.com/djx-y-z/openmls_dart
+issue_tracker: https://github.com/djx-y-z/openmls_dart/issues
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  # One version, written as a range. `frb_generated.dart` records the codegen
+  # version and the runtime asserts it equals its own with `==`, so anything a
+  # range admits except this exact version throws on init. `>=X.Y.Z <X.Y.Z+1`
+  # admits only X.Y.Z — but unlike the bare `X.Y.Z` form it does not trip pub's
+  # "should allow more than one version" warning, and `dart pub publish` exits
+  # 65 on any warning, which would make the package unreleasable. The caret is
+  # stripped rather than trusted absent, so this, FRB_CODEGEN_VERSION and the
+  # `=` pin in Cargo.toml stay in step whatever `frb_version` is answered with.
+  flutter_rust_bridge: ">=2.13.0 <2.13.1"
+  # SHA256 verification for native library downloads
+  crypto: ^3.0.7
+  # Build hooks for automatic native library download. Open across two majors
+  # on purpose: these define the protocol hook/build.dart implements, and the
+  # SDK is the other half of it, so each Flutter has to be able to resolve the
+  # major it supports. 3.38–3.44 pin `meta` below the 1.19.0 that hooks >= 2.1.0
+  # needs, and an app there resolves hooks 2.0.x with code_assets 1.x; from
+  # 3.47.0 it resolves hooks 2.2 with code_assets 2.1, and a pure-Dart
+  # resolution of this package takes 2.x on either. Measured on 3.38.4 and
+  # 3.47.4: the example app builds and the package's tests pass on both.
+  # code_assets 2.0's one breaking change — `OS`, `Architecture` and `Sanitizer`
+  # define `==` and no longer key a const map — touches nothing the hook uses.
+  # A 3.x is a migration again, not a bump.
+  hooks: ">=1.0.0 <3.0.0"
+  code_assets: ">=1.0.0 <3.0.0"
+
+platforms:
+  ohos:
+  android:
+  ios:
+  linux:
+  macos:
+  windows:
+  web:
+
+topics:
+  - mls
+  - encryption
+  - messaging
+  - e2ee
+  - rust

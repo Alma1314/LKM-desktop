@@ -48,6 +48,7 @@ if ! command -v flutter >/dev/null 2>&1; then
     fi
 fi
 
+bash buildtools/patch-ohos-sdk.sh
 log "Flutter $(flutter --version 2>/dev/null | head -n 1)"
 log "Expected OH-Flutter ${REQUIRED_FLUTTER} (pubspec.lock pins Dart >= ${MIN_DART})"
 

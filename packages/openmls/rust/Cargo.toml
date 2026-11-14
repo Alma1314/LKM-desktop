@@ -1,0 +1,157 @@
+[package]
+name = "openmls_frb"
+version = "2.4.0"
+edition = "2024"
+# 1.91 is the floor openmls's workspace declares (since 0.9.0), and that is what
+# sets this now. The previous 1.89 was ours: `std::fs::File::try_lock`, the
+# single-writer sidecar lock in `encrypted_db.rs`, whose alternative
+# `libc::flock` is an `unsafe fn` this crate would have to make an exception
+# for. That requirement still holds; it is simply no longer the binding one.
+rust-version = "1.91"
+description = "Dart wrapper for OpenMLS — a Rust implementation of the Messaging Layer Security (MLS) protocol (RFC 9420)"
+repository = "https://github.com/djx-y-z/openmls_dart"
+license = "MIT"
+publish = false
+
+[lib]
+name = "openmls_frb"
+# rlib is required so the fuzz crate (rust/fuzz) can link against this crate.
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.13.0"
+thiserror = "2.0"
+log = "0.4"
+zeroize = { version = "1.8", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+futures = "0.3"
+parking_lot = "0.12"
+# `test-utils` is deliberately absent, and must stay absent in a shipped
+# binary: it implies `backtrace`, and `LibraryError::custom()` then formats a
+# symbolized Rust backtrace — build-machine paths, symbol names, crate layout —
+# into an error that travels the *ordinary* error channel out to the Dart
+# caller, no panic required. It also drags a test harness into the release
+# graph — `openmls_test`, `wasm-bindgen-test` and `minicov` among fifteen crates
+# that leave the third-party notices with it.
+# The one thing this crate used it for was `MlsGroup::export_group_context()`,
+# which is a one-line wrapper over `self.public_group.group_context()`; both
+# `public_group()` and `GroupContext`'s accessors became public in 0.9.0, so
+# `api/engine.rs` calls that chain directly.
+openmls = { version = "=0.9.2", features = ["draft-ietf-mls-pq-ciphersuites"] }
+openmls_rust_crypto = { version = "0.6.0", features = ["draft-ietf-mls-pq-ciphersuites"] }
+# Both features are named explicitly rather than inherited.
+# `draft-ietf-mls-pq-ciphersuites`: without it `SignatureKeyPair::new` has no
+# ML-DSA arms and the four MLDSA ciphersuites cannot build an identity.
+# `test-utils`: this is *this* crate's feature, not openmls's — it is what makes
+# `SignatureKeyPair::private()` reachable (`api/keys.rs`), and it implies no
+# backtrace.
+openmls_basic_credential = { version = "0.6.0", features = ["test-utils", "draft-ietf-mls-pq-ciphersuites"] }
+openmls_traits = { version = "0.6.0", features = ["draft-ietf-mls-pq-ciphersuites"] }
+# libcrux-based provider: only used for the X-Wing hybrid post-quantum KEM
+# (HpkeKemType::XWingKemDraft6); everything else stays on openmls_rust_crypto.
+openmls_libcrux_crypto = { version = "0.4.0", features = ["draft-ietf-mls-pq-ciphersuites"] }
+
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "0.37", features = ["bundled-sqlcipher-vendored-openssl"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# OpenMLS requires `js` feature for WASM: enables fluvio_wasm_timer for time access
+# Cargo merges features from [dependencies] and [target.*.dependencies]
+openmls = { version = "=0.9.2", features = ["js"] }
+# getrandom refuses to compile for wasm32-unknown-unknown until its browser
+# backend is selected by name, and three majors coexist in a modern Rust crypto
+# graph. Cargo unions features per package version and per target, so declaring
+# each here is what turns the backend on for every crate that reaches it on the
+# Web, and changes nothing for the native builds.
+#
+# 0.4 is the one that is easy to miss. The RustCrypto stack reaches it through
+# aead 0.6 -> crypto-common, which declares it with NO target cfg, so it is
+# compiled for wasm32 as well — and a `--cfg getrandom_backend="wasm_js"` in
+# .cargo/config.toml does NOT cover it: 0.4 does not recognise that value and
+# selects its backend from the feature alone. Here it arrives a second way too,
+# through openmls_libcrux_crypto via rand 0.10 (hpke-rs-libcrux).
+#
+# Getting it wrong is loud rather than silently weak: getrandom `compile_error!`s
+# when it has no backend for this target, so `make build-web` fails closed.
+# If one of these is genuinely unreachable, `cargo tree --target
+# wasm32-unknown-unknown -i getrandom@<version>` says so — the declaration is
+# then the only thing holding it in the graph and can be dropped.
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom_04 = { package = "getrandom", version = "0.4", features = ["wasm_js"] }
+idb = "0.6"
+# `Lifetime::validate_with_time` (reached by `checkLifetimeAt` in
+# `api/engine.rs`) takes a `SystemTime`, and openmls's `lifetime.rs` selects
+# which one by `cfg(target_arch)`: `web_time`'s here, `std`'s on every other
+# target. They are unrelated types, so the wasm32 build has to be able to name
+# the web-time one — a `std::time::SystemTime` does not compile against it.
+#
+# Same version openmls already resolves (1.1.0), so nothing new enters the
+# graph and THIRD_PARTY_NOTICES.txt does not move. openmls asks for it with
+# `features = ["serde"]`; that is not named here because this crate does not
+# use it, and feature unification supplies it anyway on the builds where
+# openmls's `js` feature is on.
+web-time = "1.1"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "console", "Window", "Performance",
+    "Crypto", "SubtleCrypto", "CryptoKey",
+    "AesGcmParams",
+] }
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+# The browser harness `make test-web` drives. Target-gated so a native
+# `cargo test` does not build a browser harness it can never run.
+#
+# ⚠ This is NOT visible to the third-party notices gate, and does not need to
+# be: `make third-party-notices` runs `cargo tree --edges normal,build`, which
+# excludes EVERY dev-dependency on every target, gated or not.
+wasm-bindgen-test = "0.3"
+
+# ⚠ The absence of a `panic` key here is load-bearing. Adding
+# `panic = "abort"` would trade a small binary saving for skipping unwinding
+# altogether, and unwinding is what runs `Drop` — so every zeroize-on-Drop in
+# this crate would silently stop happening on the one path where it matters
+# most, a failure in the middle of an operation holding key material. Nothing
+# would fail; the wipe would just not occur. The same applies to
+# `-Cpanic=abort` in RUSTFLAGS, which bypasses this file entirely.
+#
+# Enforced by `release_profile_must_not_abort_on_panic` in `src/utils.rs`,
+# which reads this file rather than the profile it runs under: Cargo forces
+# unwind for `test`/`bench`, so no running test can observe the setting that
+# actually ships. It rejects the key in either TOML string form and, because an
+# exact section match is a thing TOML gives several ways around, any
+# non-comment line here that names both `panic` and `abort`.
+#
+# It is a native-target statement only: `wasm32-unknown-unknown` aborts on
+# panic by default (`rustc --print cfg --target wasm32-unknown-unknown` says
+# `panic="abort"`), and no profile key changes that — a panic traps the module,
+# destructors do not run, and anything held in linear memory stays there until
+# the page is reloaded. Say so in SECURITY.md rather than assuming the profile
+# covers it.
+[profile.release]
+lto = true
+opt-level = "z"
+strip = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O4", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+# Turn silent integer wraparound into a deterministic panic — but ONLY for this
+# crate's own code. Applying overflow-checks tree-wide would change the release
+# arithmetic of audited upstream dependencies, some of which rely on wrapping.
+[profile.release.package.openmls_frb]
+overflow-checks = true
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(frb_expand)"] }
+# Hand-written code denies unsafe by default. Exactly two places opt out, both
+# with an item-level `#[allow(unsafe_code)]`: the FRB-generated bridge (on
+# `mod frb_generated` in lib.rs) and encrypted_db's WASM `unsafe impl Send +
+# Sync` (on the two impls). Neither is module-wide, so adding `unsafe` anywhere
+# else in either file is still a compile error.
+unsafe_code = "deny"

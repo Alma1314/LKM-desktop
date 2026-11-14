@@ -1,0 +1,647 @@
+//! Shared enums and value types for the OpenMLS FRB API.
+
+use openmls::prelude::*;
+
+/// MLS ciphersuite selection.
+///
+/// The first three variants are the IANA-registered MLS 1.0 ciphersuites
+/// (RFC 9420 §17.1) and are the right choice for interoperable deployments.
+///
+/// # The post-quantum suites are experimental
+///
+/// Every other variant is a post-quantum or hybrid suite taken from
+/// [draft-ietf-mls-pq-ciphersuites][draft] — or, for
+/// `mls256XwingChacha20Poly1305Sha256Ed25519`, from an expired individual
+/// draft. They share these limitations, and each carries the full warning on
+/// its own documentation:
+///
+/// - **The code points are provisional and not registered with IANA.** They may
+///   be renumbered or withdrawn. The numeric value is stated on each variant so
+///   that a future renumbering is visible in a diff rather than silent.
+/// - **Interoperability is limited** to stacks implementing the same draft
+///   revision — in practice, OpenMLS-based ones.
+/// - **Groups created on these suites may need migrating** once an official
+///   IANA-registered post-quantum suite is standardized.
+/// - The underlying ML-KEM / ML-DSA / X-Wing implementations are pre-1.0.
+///
+/// [draft]: https://datatracker.ietf.org/doc/draft-ietf-mls-pq-ciphersuites
+pub enum MlsCiphersuite {
+    /// DH KEM X25519 | AES-GCM 128 | SHA2-256 | Ed25519 (0x0001).
+    ///
+    /// IANA-registered, RFC 9420. The recommended default.
+    Mls128DhkemX25519Aes128gcmSha256Ed25519,
+    /// DH KEM X25519 | ChaCha20Poly1305 | SHA2-256 | Ed25519 (0x0003).
+    ///
+    /// IANA-registered, RFC 9420.
+    Mls128DhkemX25519Chacha20poly1305Sha256Ed25519,
+    /// DH KEM P-256 | AES-GCM 128 | SHA2-256 | ECDSA P-256 (0x0002).
+    ///
+    /// IANA-registered, RFC 9420.
+    Mls128DhkemP256Aes128gcmSha256P256,
+    /// **Experimental** hybrid post-quantum ciphersuite based on the X-Wing
+    /// KEM (ML-KEM-768 + X25519, draft-connolly-cfrg-xwing-kem-06).
+    ///
+    /// Provides protection against harvest-now-decrypt-later attacks within
+    /// closed deployments. Important limitations:
+    ///
+    /// - The ciphersuite value (0x004D) is **not registered with IANA** and
+    ///   comes from an expired individual draft. Interoperability is limited
+    ///   to OpenMLS-based stacks (and ts-mls).
+    /// - When an official IANA-registered post-quantum suite is standardized,
+    ///   groups using this suite will need to migrate to it.
+    /// - The underlying libcrux KEM implementation is pre-1.0 (its ML-KEM
+    ///   source is formally verified, but compiled executables carry no
+    ///   side-channel-resistance verification).
+    ///
+    /// This is the only suite whose HPKE operations are delegated to the
+    /// libcrux provider; every other suite runs on RustCrypto.
+    Mls256XwingChacha20poly1305Sha256Ed25519,
+
+    // ---------------------------------------------------------------------
+    // draft-ietf-mls-pq-ciphersuites. Appended, never reordered: these values
+    // cross the FFI boundary by index, so the four above must keep theirs.
+    // ---------------------------------------------------------------------
+    /// **Experimental** ML-KEM-1024 | AES-GCM 256 | SHA2-384 | ECDSA P-384
+    /// (0x0042, provisional TBD8).
+    ///
+    /// Pure post-quantum KEM with a classical signature — no hybrid KEM, so it
+    /// carries no classical fallback if ML-KEM is broken. Provisional code
+    /// point; see the type-level documentation.
+    Mls192Mlkem1024Aes256gcmSha384P384,
+    /// **Experimental** ML-KEM-768 + X25519 | AES-GCM 256 | SHA2-384 | Ed25519
+    /// (0x004E, provisional TBD2).
+    ///
+    /// Hybrid KEM (the same construction as X-Wing) with a classical signature.
+    /// Provisional code point; see the type-level documentation.
+    Mls128Mlkem768x25519Aes256gcmSha384Ed25519,
+    /// **Experimental** ML-KEM-768 + X25519 | AES-GCM 128 | SHA2-256 | Ed25519
+    /// (0x004F, provisional TBD1).
+    ///
+    /// Hybrid KEM (the same construction as X-Wing) with a classical signature.
+    /// Provisional code point; see the type-level documentation.
+    Mls128Mlkem768x25519Aes128gcmSha256Ed25519,
+    /// **Experimental** ML-KEM-768 | AES-GCM 256 | SHA2-384 | ECDSA P-256
+    /// (0x0050, provisional TBD7).
+    ///
+    /// Pure post-quantum KEM with a classical signature — no hybrid KEM, so it
+    /// carries no classical fallback if ML-KEM is broken. Provisional code
+    /// point; see the type-level documentation.
+    Mls128Mlkem768Aes256gcmSha384P256,
+    /// **Experimental** ML-KEM-768 | AES-GCM 256 | SHA2-384 | ML-DSA-65
+    /// (0x0051, provisional TBD10).
+    ///
+    /// Post-quantum KEM *and* signature — no classical fallback in either.
+    /// Provisional code point; see the type-level documentation.
+    Mls192Mlkem768Aes256gcmSha384Mldsa65,
+    /// **Experimental** ML-KEM-768 + X25519 | ChaCha20Poly1305 | SHA2-384 |
+    /// ML-DSA-44 (0x0052, provisional TBD9).
+    ///
+    /// Hybrid KEM (the same construction as X-Wing) with a post-quantum
+    /// signature. Provisional code point; see the type-level documentation.
+    Mls128Mlkem768x25519Chacha20poly1305Sha384Mldsa44,
+    /// **Experimental** ML-KEM-1024 | AES-GCM 256 | SHA2-512 | ML-DSA-87
+    /// (0x0906, provisional).
+    ///
+    /// The strongest suite offered: post-quantum KEM *and* signature at the
+    /// 256-bit security level — and correspondingly the largest key material
+    /// and the slowest. No classical fallback in either primitive. Provisional
+    /// code point; see the type-level documentation.
+    Mls256Mlkem1024Aes256gcmSha512Mldsa87,
+    /// **Experimental** ML-KEM-1024 | AES-GCM 256 | SHA2-384 | ML-DSA-87
+    /// (0x0907, provisional TBD11).
+    ///
+    /// As `mls256Mlkem1024Aes256GcmSha512Mldsa87` but with SHA2-384.
+    /// Post-quantum KEM *and* signature; no classical fallback in either.
+    /// Provisional code point; see the type-level documentation.
+    Mls256Mlkem1024Aes256gcmSha384Mldsa87,
+    /// **Experimental** ML-KEM-768 | AES-GCM 256 | SHA2-384 | Ed25519
+    /// (0xF042, provisional TBD6).
+    ///
+    /// Pure post-quantum KEM with a classical signature — no hybrid KEM, so it
+    /// carries no classical fallback if ML-KEM is broken. The code point sits
+    /// in the private-use range and is carried over from the former
+    /// `AIR_128_MLKEM768_AES256GCM_SHA384_Ed25519` suite for backwards
+    /// compatibility. Provisional; see the type-level documentation.
+    Mls128Mlkem768Aes256gcmSha384Ed25519,
+}
+
+/// Wire format policy for MLS messages.
+pub enum MlsWireFormatPolicy {
+    Plaintext,
+    Ciphertext,
+}
+
+/// Type of a processed incoming message.
+pub enum ProcessedMessageType {
+    Application,
+    Proposal,
+    StagedCommit,
+}
+
+/// MLS proposal types.
+pub enum MlsProposalType {
+    Add,
+    Remove,
+    Update,
+    PreSharedKey,
+    Reinit,
+    ExternalInit,
+    GroupContextExtensions,
+    Custom,
+}
+
+/// Information about a group member.
+pub struct MlsMemberInfo {
+    pub index: u32,
+    /// TLS-serialized Credential. Deserialize with `MlsCredential.deserialize()`.
+    pub credential: Vec<u8>,
+    pub signature_key: Vec<u8>,
+}
+
+/// An MLS extension (type + data).
+pub struct MlsExtension {
+    pub extension_type: u16,
+    pub data: Vec<u8>,
+}
+
+/// Information about a pending proposal in the group.
+pub struct MlsPendingProposalInfo {
+    /// The type of proposal.
+    pub proposal_type: MlsProposalType,
+    /// Sender's leaf index (if sender is a group member).
+    pub sender_index: Option<u32>,
+}
+
+/// Capabilities advertised by a leaf node.
+///
+/// All fields are lists of u16 values representing the supported types.
+/// Empty lists mean "use defaults".
+pub struct MlsCapabilities {
+    /// Supported protocol versions (1 = MLS 1.0).
+    pub versions: Vec<u16>,
+    /// Supported ciphersuites, as raw MLS code points.
+    ///
+    /// An **empty** list is not "advertise nothing" — it means "use OpenMLS's
+    /// defaults", which is every ciphersuite `supportedCiphersuites`
+    /// returns, ten of them experimental post-quantum suites. To advertise a
+    /// narrower set, list the code points explicitly (e.g. `[0x0001, 0x0002,
+    /// 0x0003]` for the IANA-registered MLS 1.0 suites only).
+    pub ciphersuites: Vec<u16>,
+    /// Supported extension types.
+    pub extensions: Vec<u16>,
+    /// Supported proposal types.
+    pub proposals: Vec<u16>,
+    /// Supported credential types.
+    pub credentials: Vec<u16>,
+}
+
+/// Options for creating a key package with the builder API.
+pub struct KeyPackageOptions {
+    /// Lifetime in seconds. None = default (84 days).
+    pub lifetime_seconds: Option<u64>,
+    /// Mark as last-resort key package.
+    pub last_resort: bool,
+    /// Custom capabilities. None = defaults.
+    pub capabilities: Option<MlsCapabilities>,
+    /// Extensions on the leaf node.
+    pub leaf_node_extensions: Option<Vec<MlsExtension>>,
+    /// Extensions on the key package itself.
+    pub key_package_extensions: Option<Vec<MlsExtension>>,
+}
+
+/// Information extracted from a Welcome message before joining.
+pub struct WelcomeInspectResult {
+    /// The group ID the Welcome is for.
+    pub group_id: Vec<u8>,
+    /// The ciphersuite used by the group.
+    pub ciphersuite: MlsCiphersuite,
+    /// Number of PSKs required to join.
+    pub psk_count: u32,
+    /// The group epoch at time of Welcome.
+    pub epoch: u64,
+}
+
+/// Full information about the own leaf node.
+pub struct MlsLeafNodeInfo {
+    /// TLS-serialized Credential. Deserialize with `MlsCredential.deserialize()`.
+    pub credential: Vec<u8>,
+    pub signature_key: Vec<u8>,
+    pub encryption_key: Vec<u8>,
+    pub capabilities: MlsCapabilities,
+    pub extensions: Vec<MlsExtension>,
+}
+
+/// Full group context information.
+pub struct MlsGroupContextInfo {
+    pub group_id: Vec<u8>,
+    pub epoch: u64,
+    pub ciphersuite: MlsCiphersuite,
+    pub tree_hash: Vec<u8>,
+    pub confirmed_transcript_hash: Vec<u8>,
+    pub extensions: Vec<u8>,
+}
+
+/// Information about a staged commit before merging.
+// The fields after `psk_count` default to empty, so code that builds one
+// itself (a test double) keeps compiling; the struct-level attribute is what
+// lets the fields carry `#[frb(..)]`.
+#[flutter_rust_bridge::frb]
+pub struct StagedCommitInfo {
+    /// TLS-serialized Credentials of members being added.
+    pub add_credentials: Vec<Vec<u8>>,
+    /// Leaf indices of members being removed.
+    pub remove_indices: Vec<u32>,
+    /// Whether a self-update is included.
+    pub has_update: bool,
+    /// Whether the local member was removed.
+    pub self_removed: bool,
+    /// Number of PSK proposals.
+    pub psk_count: u32,
+    /// TLS-serialized Credentials of the members being removed, as they stood
+    /// before the commit — one per entry of `remove_indices`, in the same
+    /// order. After the merge those leaves are gone, so this is where an
+    /// application learns *whose* device a Remove takes out.
+    #[frb(default = [])]
+    pub remove_credentials: Vec<Vec<u8>>,
+    /// Every proposal the commit applies, with who proposed it. A commit can
+    /// carry proposals by reference from other members, so the committer is
+    /// not necessarily the author of each change: an access-control policy
+    /// judges each proposal by its own sender.
+    #[frb(default = [])]
+    pub proposals: Vec<StagedProposalInfo>,
+    /// The committer's new leaf credential when the commit has an update
+    /// path, TLS-serialized. A path can replace the committer's credential,
+    /// which an application binding credentials to identities must check.
+    pub committer_credential: Option<Vec<u8>>,
+    /// The extensions of the group context the commit leads to — whether or
+    /// not it carries a GroupContextExtensions proposal — so an application
+    /// can check what it binds there (the head of an access-control list,
+    /// say) before accepting the commit.
+    ///
+    /// Every extension, including the types OpenMLS interprets itself:
+    /// `RequiredCapabilities` (0x0003), `ExternalSenders` (0x0005), … — each
+    /// in its wire form, as `MlsExtension` takes it. The data was chosen by
+    /// the committer and is not vouched for by anyone else.
+    #[frb(default = [])]
+    pub group_context_extensions: Vec<MlsExtension>,
+    /// The external senders the group context the commit leads to admits —
+    /// its `ExternalSenders` extension, decoded. Each may send proposals
+    /// (adds and removes among them) without being a member, so a change
+    /// here hands that power to a new party: compare it with the current
+    /// group context before accepting the commit.
+    #[frb(default = [])]
+    pub external_senders: Vec<MlsExternalSenderInfo>,
+}
+
+/// One proposal of a staged commit, or a proposal inspected on its own.
+///
+/// Everything here except `sender` and `affectedMember` is what the proposer
+/// claims. MLS proves *who signed* it, not that a credential names who it says
+/// it does: binding a credential to an identity is the application's job.
+pub struct StagedProposalInfo {
+    pub proposal_type: MlsProposalType,
+    /// The proposer's leaf index when a group member proposed it; `None` for
+    /// an external sender or a new member — `sender` tells those apart.
+    pub sender_index: Option<u32>,
+    /// Who proposed it, external senders and new members included.
+    pub sender: MlsSenderInfo,
+    /// Whether the commit carries it by reference — a proposal sent earlier
+    /// on its own — rather than inline.
+    pub by_reference: bool,
+    /// The leaf node the proposal introduces: the new member's for an Add,
+    /// the proposer's replacement leaf for an Update — its credential,
+    /// signature key and encryption key. OpenMLS does not check that an
+    /// Update keeps the proposer's identity; compare this credential with
+    /// `affectedMember`'s.
+    pub leaf: Option<MlsLeafNodeInfo>,
+    /// The member the proposal acts on, as this client's own tree has it
+    /// before the change: the member being removed for a Remove, the member
+    /// whose leaf an Update replaces.
+    pub affected_member: Option<MlsMemberInfo>,
+    /// The extensions a GroupContextExtensions proposal sets, every type
+    /// included, in wire form.
+    pub extensions: Vec<MlsExtension>,
+}
+
+/// Who sent a message or a proposal.
+pub enum MlsSenderKind {
+    /// A member of the group; the index is its leaf index.
+    Member,
+    /// A party listed in the group's `ExternalSenders` extension, not a
+    /// member; the index is its position in that list.
+    External,
+    /// A new member proposing to add itself (an external join proposal).
+    NewMemberProposal,
+    /// A new member joining through an external commit.
+    NewMemberCommit,
+}
+
+/// The sender of a message or a proposal, as MLS authenticated it.
+pub struct MlsSenderInfo {
+    pub kind: MlsSenderKind,
+    /// The leaf index for `member`. For `external`, the position in the
+    /// `ExternalSenders` extension of the group context the message was sent
+    /// in, which OpenMLS verified it against — for the proposals of a commit,
+    /// the context before the commit, not the list
+    /// `StagedCommitInfo.externalSenders` reports, which is the one after it.
+    /// `None` for a new member.
+    pub index: Option<u32>,
+}
+
+/// One entry of an `ExternalSenders` group context extension.
+pub struct MlsExternalSenderInfo {
+    /// TLS-serialized Credential. Deserialize with `MlsCredential.deserialize()`.
+    pub credential: Vec<u8>,
+    pub signature_key: Vec<u8>,
+}
+
+/// Options for the flexible commit builder.
+// The struct-level attribute is what lets a field carry `#[frb(..)]`: it
+// rewrites them before rustc sees them, which a field attribute alone cannot.
+#[flutter_rust_bridge::frb]
+pub struct FlexibleCommitOptions {
+    /// TLS-serialized KeyPackages to add.
+    pub add_key_packages: Vec<Vec<u8>>,
+    /// Leaf indices to remove.
+    pub remove_indices: Vec<u32>,
+    /// Force a self-update even if no other proposals.
+    pub force_self_update: bool,
+    /// Whether to consume pending proposals from the store (default: true).
+    pub consume_pending_proposals: bool,
+    /// Group context extensions to propose.
+    pub group_context_extensions: Option<Vec<MlsExtension>>,
+    /// Additional authenticated data.
+    pub aad: Option<Vec<u8>>,
+    /// Whether to create a GroupInfo message (default: true).
+    pub create_group_info: bool,
+    /// Whether to include the ratchet tree extension in GroupInfo.
+    pub use_ratchet_tree_extension: bool,
+    /// Leave the commit pending instead of merging it (default: false).
+    ///
+    /// With a delivery service that orders commits, a commit only becomes the
+    /// next epoch once the service accepts it: another member's commit to the
+    /// same epoch may win. Kept pending, the group stays in its current epoch
+    /// until the application calls `mergePendingCommit` (accepted) or
+    /// `clearPendingCommit` (lost), so a lost race leaves nothing to repair.
+    /// Another member's commit processed meanwhile replaces it.
+    ///
+    /// While a commit is pending, `flexibleCommit` refuses to create another
+    /// one — with or without this option. Replacing a commit that may already
+    /// have reached other members would fork the group: they would apply one
+    /// commit, this member another. Resolve the pending one first.
+    ///
+    /// Send the result's Welcome, and publish its GroupInfo, only after
+    /// `mergePendingCommit`, once the delivery service accepted the commit;
+    /// see `CommitResult.welcome`.
+    #[frb(default = false)]
+    pub keep_pending: bool,
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Conversion helpers
+// ═══════════════════════════════════════════════════════════════
+
+pub(crate) fn ciphersuite_to_native(cs: &MlsCiphersuite) -> Ciphersuite {
+    match cs {
+        MlsCiphersuite::Mls128DhkemX25519Aes128gcmSha256Ed25519 => {
+            Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519
+        }
+        MlsCiphersuite::Mls128DhkemX25519Chacha20poly1305Sha256Ed25519 => {
+            Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519
+        }
+        MlsCiphersuite::Mls128DhkemP256Aes128gcmSha256P256 => {
+            Ciphersuite::MLS_128_DHKEMP256_AES128GCM_SHA256_P256
+        }
+        MlsCiphersuite::Mls256XwingChacha20poly1305Sha256Ed25519 => {
+            Ciphersuite::MLS_256_XWING_CHACHA20POLY1305_SHA256_Ed25519
+        }
+        MlsCiphersuite::Mls192Mlkem1024Aes256gcmSha384P384 => {
+            Ciphersuite::MLS_192_MLKEM1024_AES256GCM_SHA384_P384
+        }
+        MlsCiphersuite::Mls128Mlkem768x25519Aes256gcmSha384Ed25519 => {
+            Ciphersuite::MLS_128_MLKEM768X25519_AES256GCM_SHA384_Ed25519
+        }
+        MlsCiphersuite::Mls128Mlkem768x25519Aes128gcmSha256Ed25519 => {
+            Ciphersuite::MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519
+        }
+        MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384P256 => {
+            Ciphersuite::MLS_128_MLKEM768_AES256GCM_SHA384_P256
+        }
+        MlsCiphersuite::Mls192Mlkem768Aes256gcmSha384Mldsa65 => {
+            Ciphersuite::MLS_192_MLKEM768_AES256GCM_SHA384_MLDSA65
+        }
+        MlsCiphersuite::Mls128Mlkem768x25519Chacha20poly1305Sha384Mldsa44 => {
+            Ciphersuite::MLS_128_MLKEM768X25519_CHACHA20POLY1305_SHA384_MLDSA44
+        }
+        MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha512Mldsa87 => {
+            Ciphersuite::MLS_256_MLKEM1024_AES256GCM_SHA512_MLDSA87
+        }
+        MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha384Mldsa87 => {
+            Ciphersuite::MLS_256_MLKEM1024_AES256GCM_SHA384_MLDSA87
+        }
+        MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384Ed25519 => {
+            Ciphersuite::MLS_128_MLKEM768_AES256GCM_SHA384_Ed25519
+        }
+    }
+}
+
+pub(crate) fn native_to_ciphersuite(cs: Ciphersuite) -> Result<MlsCiphersuite, String> {
+    match cs {
+        Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519 => {
+            Ok(MlsCiphersuite::Mls128DhkemX25519Aes128gcmSha256Ed25519)
+        }
+        Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519 => {
+            Ok(MlsCiphersuite::Mls128DhkemX25519Chacha20poly1305Sha256Ed25519)
+        }
+        Ciphersuite::MLS_128_DHKEMP256_AES128GCM_SHA256_P256 => {
+            Ok(MlsCiphersuite::Mls128DhkemP256Aes128gcmSha256P256)
+        }
+        Ciphersuite::MLS_256_XWING_CHACHA20POLY1305_SHA256_Ed25519 => {
+            Ok(MlsCiphersuite::Mls256XwingChacha20poly1305Sha256Ed25519)
+        }
+        Ciphersuite::MLS_192_MLKEM1024_AES256GCM_SHA384_P384 => {
+            Ok(MlsCiphersuite::Mls192Mlkem1024Aes256gcmSha384P384)
+        }
+        Ciphersuite::MLS_128_MLKEM768X25519_AES256GCM_SHA384_Ed25519 => {
+            Ok(MlsCiphersuite::Mls128Mlkem768x25519Aes256gcmSha384Ed25519)
+        }
+        Ciphersuite::MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519 => {
+            Ok(MlsCiphersuite::Mls128Mlkem768x25519Aes128gcmSha256Ed25519)
+        }
+        Ciphersuite::MLS_128_MLKEM768_AES256GCM_SHA384_P256 => {
+            Ok(MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384P256)
+        }
+        Ciphersuite::MLS_192_MLKEM768_AES256GCM_SHA384_MLDSA65 => {
+            Ok(MlsCiphersuite::Mls192Mlkem768Aes256gcmSha384Mldsa65)
+        }
+        Ciphersuite::MLS_128_MLKEM768X25519_CHACHA20POLY1305_SHA384_MLDSA44 => {
+            Ok(MlsCiphersuite::Mls128Mlkem768x25519Chacha20poly1305Sha384Mldsa44)
+        }
+        Ciphersuite::MLS_256_MLKEM1024_AES256GCM_SHA512_MLDSA87 => {
+            Ok(MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha512Mldsa87)
+        }
+        Ciphersuite::MLS_256_MLKEM1024_AES256GCM_SHA384_MLDSA87 => {
+            Ok(MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha384Mldsa87)
+        }
+        Ciphersuite::MLS_128_MLKEM768_AES256GCM_SHA384_Ed25519 => {
+            Ok(MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384Ed25519)
+        }
+        _ => Err(format!("Unsupported ciphersuite: {:?}", cs)),
+    }
+}
+
+pub(crate) fn wire_format_to_native(wf: &MlsWireFormatPolicy) -> WireFormatPolicy {
+    match wf {
+        MlsWireFormatPolicy::Plaintext => PURE_PLAINTEXT_WIRE_FORMAT_POLICY,
+        MlsWireFormatPolicy::Ciphertext => PURE_CIPHERTEXT_WIRE_FORMAT_POLICY,
+    }
+}
+
+pub(crate) fn capabilities_to_native(caps: &MlsCapabilities) -> Result<Capabilities, String> {
+    let versions: Option<Vec<ProtocolVersion>> = if caps.versions.is_empty() {
+        None
+    } else {
+        Some(caps.versions.iter().map(|&v| ProtocolVersion::from(v)).collect())
+    };
+    let ciphersuites: Option<Vec<Ciphersuite>> = if caps.ciphersuites.is_empty() {
+        None
+    } else {
+        let cs: Result<Vec<_>, _> = caps.ciphersuites
+            .iter()
+            .map(|&c| Ciphersuite::try_from(c).map_err(|e| format!("Invalid ciphersuite {}: {}", c, e)))
+            .collect();
+        Some(cs?)
+    };
+    let extensions: Option<Vec<ExtensionType>> = if caps.extensions.is_empty() {
+        None
+    } else {
+        Some(caps.extensions.iter().map(|&e| ExtensionType::from(e)).collect())
+    };
+    let proposals: Option<Vec<ProposalType>> = if caps.proposals.is_empty() {
+        None
+    } else {
+        Some(caps.proposals.iter().map(|&p| ProposalType::from(p)).collect())
+    };
+    let credentials: Option<Vec<CredentialType>> = if caps.credentials.is_empty() {
+        None
+    } else {
+        Some(caps.credentials.iter().map(|&c| CredentialType::from(c)).collect())
+    };
+
+    Ok(Capabilities::new(
+        versions.as_deref(),
+        ciphersuites.as_deref(),
+        extensions.as_deref(),
+        proposals.as_deref(),
+        credentials.as_deref(),
+    ))
+}
+
+/// The extensions `exts` stand for, typed where OpenMLS knows their type.
+///
+/// Each one is decoded from its wire form exactly as OpenMLS decodes a
+/// received extension, so a type it defines — `RequiredCapabilities`
+/// (0x0003), `ExternalSenders` (0x0005), … — becomes its typed variant, and
+/// only the rest stays `Extension::Unknown`. Passing every type as unknown
+/// would make those unusable: OpenMLS looks for the typed variants, and for
+/// instance refuses an application's group-context extension unless a typed
+/// `RequiredCapabilities` lists it.
+pub(crate) fn extensions_from_mls(exts: &[MlsExtension]) -> Result<Vec<Extension>, String> {
+    exts.iter().map(extension_from_mls).collect()
+}
+
+fn extension_from_mls(ext: &MlsExtension) -> Result<Extension, String> {
+    use openmls::prelude::tls_codec::{DeserializeBytes, Serialize, VLBytes};
+    let mut wire = ext.extension_type.to_be_bytes().to_vec();
+    wire.extend(
+        VLBytes::new(ext.data.clone())
+            .tls_serialize_detached()
+            .map_err(|e| format!("Failed to encode extension 0x{:04x}: {}", ext.extension_type, e))?,
+    );
+    Extension::tls_deserialize_exact_bytes(&wire)
+        .map_err(|e| format!("Invalid extension 0x{:04x}: {}", ext.extension_type, e))
+}
+
+/// `ext` in the form `MlsExtension` holds — the inverse of
+/// `extension_from_mls`, for typed and unknown extensions alike.
+pub(crate) fn extension_to_mls(ext: &Extension) -> Result<MlsExtension, String> {
+    use openmls::prelude::tls_codec::{DeserializeBytes, Serialize, VLBytes};
+    let extension_type = u16::from(ext.extension_type());
+    let wire = ext
+        .tls_serialize_detached()
+        .map_err(|e| format!("Failed to encode extension 0x{:04x}: {}", extension_type, e))?;
+    // Two bytes of type, then the data behind its variable-length prefix. A
+    // serialized extension is never shorter than three bytes, so `get` cannot
+    // miss here; it is the slice that cannot panic, which on wasm32 would
+    // abort the module.
+    let body = wire
+        .get(2..)
+        .ok_or_else(|| format!("Failed to encode extension 0x{:04x}: too short", extension_type))?;
+    let data = VLBytes::tls_deserialize_exact_bytes(body)
+        .map_err(|e| format!("Failed to decode extension 0x{:04x}: {}", extension_type, e))?;
+    Ok(MlsExtension { extension_type, data: data.as_slice().to_vec() })
+}
+
+/// The entries of an `ExternalSenders` extension. OpenMLS keeps their fields
+/// to itself, so each is read back from its wire form: the signature key,
+/// then the credential.
+pub(crate) fn external_senders_to_mls(
+    senders: &ExternalSendersExtension,
+) -> Result<Vec<MlsExternalSenderInfo>, String> {
+    use openmls::prelude::tls_codec::{DeserializeBytes, Serialize, VLBytes};
+    senders
+        .iter()
+        .map(|sender| {
+            let wire = sender
+                .tls_serialize_detached()
+                .map_err(|e| format!("Failed to encode external sender: {}", e))?;
+            let (signature_key, credential) = VLBytes::tls_deserialize_bytes(&wire)
+                .map_err(|e| format!("Failed to decode external sender: {}", e))?;
+            Ok(MlsExternalSenderInfo {
+                credential: credential.to_vec(),
+                signature_key: signature_key.as_slice().to_vec(),
+            })
+        })
+        .collect()
+}
+
+/// Decodes the data of an `ExternalSenders` extension (type 0x0005) — as
+/// `groupContextExtensions` or `exportGroupContext` report it — into its
+/// entries.
+#[flutter_rust_bridge::frb(sync)]
+pub fn decode_external_senders(data: Vec<u8>) -> Result<Vec<MlsExternalSenderInfo>, String> {
+    match extension_from_mls(&MlsExtension { extension_type: 0x0005, data })? {
+        Extension::ExternalSenders(senders) => external_senders_to_mls(&senders),
+        _ => Err("Not an ExternalSenders extension".to_string()),
+    }
+}
+
+/// Returns every ciphersuite this build can execute.
+///
+/// This is the same set OpenMLS advertises in a leaf node when the caller does
+/// not pin `MlsCapabilities.ciphersuites`, and every entry is covered by a
+/// full group-lifecycle test. Note that most of them are **experimental**
+/// post-quantum suites on provisional code points — see `MlsCiphersuite`.
+// The tests are `all_supported_ciphersuites_full_group_lifecycle`
+// (rust/src/hybrid_crypto.rs) and the loop over `MlsCiphersuite.values` in
+// test/group_lifecycle_test.dart. Kept out of the doc comment: FRB copies that
+// into the published Dart API, where a pointer to a private Rust test module is
+// noise for consumers.
+#[flutter_rust_bridge::frb(sync)]
+pub fn supported_ciphersuites() -> Vec<MlsCiphersuite> {
+    vec![
+        MlsCiphersuite::Mls128DhkemX25519Aes128gcmSha256Ed25519,
+        MlsCiphersuite::Mls128DhkemX25519Chacha20poly1305Sha256Ed25519,
+        MlsCiphersuite::Mls128DhkemP256Aes128gcmSha256P256,
+        MlsCiphersuite::Mls256XwingChacha20poly1305Sha256Ed25519,
+        MlsCiphersuite::Mls192Mlkem1024Aes256gcmSha384P384,
+        MlsCiphersuite::Mls128Mlkem768x25519Aes256gcmSha384Ed25519,
+        MlsCiphersuite::Mls128Mlkem768x25519Aes128gcmSha256Ed25519,
+        MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384P256,
+        MlsCiphersuite::Mls192Mlkem768Aes256gcmSha384Mldsa65,
+        MlsCiphersuite::Mls128Mlkem768x25519Chacha20poly1305Sha384Mldsa44,
+        MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha512Mldsa87,
+        MlsCiphersuite::Mls256Mlkem1024Aes256gcmSha384Mldsa87,
+        MlsCiphersuite::Mls128Mlkem768Aes256gcmSha384Ed25519,
+    ]
+}

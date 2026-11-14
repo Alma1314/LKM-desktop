@@ -1,0 +1,587 @@
+# Objective-C++ tests, on macOS and the iOS clipboard host. The language must be
+# enabled in this directory: enable_language() in src/ is scoped to that sibling,
+# and a target here that compiles .mm or is marked LANGUAGE OBJCXX makes CMake
+# generate fail with a missing CMAKE_OBJCXX_COMPILE_OBJECT.
+if(APPLE)
+  enable_language(OBJCXX)
+endif()
+
+add_executable(url_opener_test url_opener_test.cpp)
+target_link_libraries(url_opener_test PRIVATE nativeapi)
+add_test(NAME url_opener_test COMMAND url_opener_test)
+
+add_executable(window_shape_test window_shape_test.cpp)
+target_link_libraries(window_shape_test PRIVATE nativeapi)
+add_test(NAME window_shape_test COMMAND window_shape_test)
+
+# SDK-independent polygon/raster math; no window/input or OHOS headers required.
+add_executable(ohos_window_mask_test ohos_window_mask_test.cpp)
+target_link_libraries(ohos_window_mask_test PRIVATE nativeapi)
+add_test(NAME ohos_window_mask_test COMMAND ohos_window_mask_test)
+
+add_executable(view_layout_test view_layout_test.cpp)
+target_link_libraries(view_layout_test PRIVATE nativeapi)
+add_test(NAME view_layout_test COMMAND view_layout_test)
+
+# Plain arithmetic behind the Windows screen coordinates; runs everywhere.
+add_executable(screen_layout_test screen_layout_test.cpp)
+target_link_libraries(screen_layout_test PRIVATE nativeapi)
+add_test(NAME screen_layout_test COMMAND screen_layout_test)
+
+# window_manager#412 / #572 (#75): Maximize() before the first show.
+if(WIN32)
+  add_executable(tray_template_windows_test tray_template_windows_test.cpp)
+  target_link_libraries(tray_template_windows_test PRIVATE nativeapi)
+  add_test(NAME tray_template_windows_test COMMAND tray_template_windows_test)
+  set_tests_properties(tray_template_windows_test PROPERTIES TIMEOUT 20)
+  add_executable(window_startup_maximize_windows_test window_startup_maximize_windows_test.cpp)
+  target_link_libraries(window_startup_maximize_windows_test PRIVATE nativeapi comctl32)
+  add_test(NAME window_startup_maximize_windows_test COMMAND window_startup_maximize_windows_test)
+  set_tests_properties(window_startup_maximize_windows_test PROPERTIES TIMEOUT 20)
+endif()
+
+# window_manager#569 (#77): WS_POPUP windows and their caption.
+# window_manager#534 (#78): Application::SetIcon on the application's windows.
+if(WIN32)
+  add_executable(application_icon_windows_test application_icon_windows_test.cpp)
+  target_link_libraries(application_icon_windows_test PRIVATE nativeapi)
+  target_compile_options(application_icon_windows_test PRIVATE /utf-8)
+  add_test(NAME application_icon_windows_test COMMAND application_icon_windows_test)
+  set_tests_properties(application_icon_windows_test PROPERTIES TIMEOUT 20)
+  add_executable(window_popup_caption_windows_test window_popup_caption_windows_test.cpp)
+  target_link_libraries(window_popup_caption_windows_test PRIVATE nativeapi)
+  add_test(NAME window_popup_caption_windows_test COMMAND window_popup_caption_windows_test)
+  set_tests_properties(window_popup_caption_windows_test PROPERTIES TIMEOUT 20)
+endif()
+
+# SetMaximizeButtonBounds (#70): Windows hit testing and forwarding; unsupported elsewhere.
+add_executable(window_maximize_button_test window_maximize_button_test.cpp)
+target_link_libraries(window_maximize_button_test PRIVATE nativeapi)
+add_test(NAME window_maximize_button_test COMMAND window_maximize_button_test)
+set_tests_properties(window_maximize_button_test PROPERTIES TIMEOUT 20)
+
+# Occlusion on a real desktop; puts windows on screen, so run by hand (77 = skipped).
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_occlusion_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_occlusion_test window_occlusion_test.cpp)
+  target_link_libraries(window_occlusion_test PRIVATE nativeapi)
+endif()
+
+# WindowPropertyChangedEvent from setters and direct native changes; unshown windows.
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_property_changed_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_property_changed_test window_property_changed_test.cpp)
+  target_link_libraries(window_property_changed_test PRIVATE nativeapi)
+  add_test(NAME window_property_changed_test COMMAND window_property_changed_test)
+  set_tests_properties(window_property_changed_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_content_protection_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_content_protection_test window_content_protection_test.cpp)
+  target_link_libraries(window_content_protection_test PRIVATE nativeapi)
+  add_test(NAME window_content_protection_test COMMAND window_content_protection_test)
+  set_tests_properties(window_content_protection_test PROPERTIES SKIP_RETURN_CODE 77)
+  add_executable(window_corner_preference_unsupported_test window_corner_preference_unsupported_test.cpp)
+  target_link_libraries(window_corner_preference_unsupported_test PRIVATE nativeapi)
+  add_test(NAME window_corner_preference_unsupported_test COMMAND window_corner_preference_unsupported_test)
+  set_tests_properties(window_corner_preference_unsupported_test PROPERTIES SKIP_RETURN_CODE 77)
+endif()
+
+add_executable(window_shadow_blur_test window_shadow_blur_test.cpp)
+target_link_libraries(window_shadow_blur_test PRIVATE nativeapi)
+add_test(NAME window_shadow_blur_test COMMAND window_shadow_blur_test)
+
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  add_executable(tray_template_macos_test tray_template_macos_test.mm)
+  target_compile_options(tray_template_macos_test PRIVATE -fobjc-arc)
+  target_link_libraries(tray_template_macos_test PRIVATE nativeapi "-framework Cocoa")
+  add_test(NAME tray_template_macos_test COMMAND tray_template_macos_test)
+  set_tests_properties(tray_template_macos_test PROPERTIES TIMEOUT 20)
+  add_executable(shortcut_media_macos_test shortcut_media_macos_test.mm)
+  target_link_libraries(shortcut_media_macos_test PRIVATE nativeapi "-framework Cocoa" "-framework Carbon")
+  add_test(NAME shortcut_media_macos_test COMMAND shortcut_media_macos_test)
+  set_tests_properties(shortcut_media_macos_test PROPERTIES TIMEOUT 15)
+  add_executable(shortcut_release_macos_test shortcut_release_macos_test.mm)
+  target_link_libraries(shortcut_release_macos_test PRIVATE nativeapi "-framework Carbon" "-framework Cocoa")
+  add_test(NAME shortcut_release_macos_test COMMAND shortcut_release_macos_test)
+  set_tests_properties(shortcut_release_macos_test PROPERTIES TIMEOUT 10)
+  # Optional host compatibility check against the installed Flutter framework.
+  set(NATIVEAPI_FLUTTER_FRAMEWORK_DIR "" CACHE PATH "Directory containing FlutterMacOS.framework for tests")
+  if(NATIVEAPI_FLUTTER_FRAMEWORK_DIR)
+    find_library(NATIVEAPI_TEST_FLUTTER_FRAMEWORK FlutterMacOS
+                 PATHS "${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}" NO_DEFAULT_PATH)
+    if(NOT NATIVEAPI_TEST_FLUTTER_FRAMEWORK)
+      message(FATAL_ERROR "FlutterMacOS.framework not found in NATIVEAPI_FLUTTER_FRAMEWORK_DIR")
+    endif()
+    add_executable(application_flutter_delegate_macos_test application_flutter_delegate_macos_test.mm)
+    target_compile_options(application_flutter_delegate_macos_test PRIVATE -fobjc-arc "-F${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+    target_link_libraries(application_flutter_delegate_macos_test PRIVATE nativeapi "${NATIVEAPI_TEST_FLUTTER_FRAMEWORK}")
+    set_target_properties(application_flutter_delegate_macos_test PROPERTIES BUILD_RPATH "${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+    add_test(NAME application_flutter_delegate_macos_test COMMAND application_flutter_delegate_macos_test)
+    set_tests_properties(application_flutter_delegate_macos_test PROPERTIES TIMEOUT 10)
+    # Explicit headless integration; its Dart assets are prepared separately.
+    add_executable(application_flutter_engine_macos_test application_flutter_engine_macos_test.mm)
+    target_compile_options(application_flutter_engine_macos_test PRIVATE -fobjc-arc "-F${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+    target_link_libraries(application_flutter_engine_macos_test PRIVATE nativeapi "${NATIVEAPI_TEST_FLUTTER_FRAMEWORK}")
+    set_target_properties(application_flutter_engine_macos_test PROPERTIES BUILD_RPATH "${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+    # The actual Dart binding loads its bundled native asset. Do not link a
+    # second core here: that would create an unrelated handle table/registry.
+    add_executable(window_flutter_engine_macos_test window_flutter_engine_macos_test.mm)
+    target_compile_options(window_flutter_engine_macos_test PRIVATE -fobjc-arc "-F${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+    target_link_libraries(window_flutter_engine_macos_test PRIVATE "${NATIVEAPI_TEST_FLUTTER_FRAMEWORK}" "-framework Cocoa")
+    set_target_properties(window_flutter_engine_macos_test PROPERTIES BUILD_RPATH "${NATIVEAPI_FLUTTER_FRAMEWORK_DIR}")
+  endif()
+  add_executable(application_host_delegate_macos_test application_host_delegate_macos_test.mm)
+  target_link_libraries(application_host_delegate_macos_test PRIVATE nativeapi)
+  add_test(NAME application_host_delegate_macos_test COMMAND application_host_delegate_macos_test)
+  set_tests_properties(application_host_delegate_macos_test PROPERTIES TIMEOUT 10)
+  add_test(NAME application_late_host_delegate_macos_test COMMAND application_host_delegate_macos_test --late)
+  set_tests_properties(application_late_host_delegate_macos_test PROPERTIES TIMEOUT 10)
+  # Explicit guarded GUI integration; no automatic CTest registration.
+  add_executable(window_title_bar_double_click_gui_macos_test window_title_bar_double_click_gui_macos_test.mm)
+  target_link_libraries(window_title_bar_double_click_gui_macos_test PRIVATE nativeapi)
+  add_executable(window_title_bar_double_click_macos_test window_title_bar_double_click_macos_test.mm)
+  target_link_libraries(window_title_bar_double_click_macos_test PRIVATE nativeapi)
+  add_test(NAME window_title_bar_double_click_macos_test COMMAND window_title_bar_double_click_macos_test)
+  add_executable(window_mouse_forwarding_macos_test window_mouse_forwarding_macos_test.mm)
+  target_link_libraries(window_mouse_forwarding_macos_test PRIVATE nativeapi)
+  add_test(NAME window_mouse_forwarding_macos_test COMMAND window_mouse_forwarding_macos_test)
+  set_tests_properties(window_mouse_forwarding_macos_test PROPERTIES TIMEOUT 10)
+  add_executable(window_system_menu_unsupported_test window_system_menu_unsupported_test.cpp)
+  target_link_libraries(window_system_menu_unsupported_test PRIVATE nativeapi)
+  add_test(NAME window_system_menu_unsupported_test COMMAND window_system_menu_unsupported_test)
+  # Changes the active application; run by hand on a desktop (exit 77 = skipped).
+  add_executable(window_focus_return_macos_test window_focus_return_macos_test.mm)
+  target_link_libraries(window_focus_return_macos_test PRIVATE nativeapi)
+  add_executable(window_shape_macos_test window_shape_macos_test.mm)
+  target_link_libraries(window_shape_macos_test PRIVATE nativeapi)
+  add_test(NAME window_shape_macos_test COMMAND window_shape_macos_test)
+endif()
+
+# Links the full library because EventEmitter now routes async delivery through
+# the platform dispatcher. The test installs its own dispatcher (see
+# FakeMainThread) so no run loop is required at runtime.
+find_package(Threads REQUIRED)
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(application_quit_request_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(application_quit_request_test application_quit_request_test.cpp)
+  target_link_libraries(application_quit_request_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME application_quit_request_test COMMAND application_quit_request_test)
+  set_tests_properties(application_quit_request_test PROPERTIES TIMEOUT 10)
+endif()
+add_executable(event_delivery_test event_delivery_test.cpp)
+target_link_libraries(event_delivery_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME event_delivery_test COMMAND event_delivery_test)
+set_tests_properties(event_delivery_test PROPERTIES TIMEOUT 10)
+add_executable(event_request_test event_request_test.cpp)
+target_link_libraries(event_request_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME event_request_test COMMAND event_request_test)
+set_tests_properties(event_request_test PROPERTIES TIMEOUT 10)
+add_executable(event_emitter_test event_emitter_test.cpp)
+target_link_libraries(event_emitter_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME event_emitter_test COMMAND event_emitter_test)
+set_tests_properties(event_emitter_test PROPERTIES TIMEOUT 120)
+
+add_executable(id_allocator_test id_allocator_test.cpp)
+target_link_libraries(id_allocator_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME id_allocator_test COMMAND id_allocator_test)
+
+add_executable(handle_table_test handle_table_test.cpp)
+target_link_libraries(handle_table_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME handle_table_test COMMAND handle_table_test)
+set_tests_properties(handle_table_test PROPERTIES TIMEOUT 120)
+
+add_executable(shortcut_accelerator_test shortcut_accelerator_test.cpp)
+target_link_libraries(shortcut_accelerator_test PRIVATE nativeapi)
+add_test(NAME shortcut_accelerator_test COMMAND shortcut_accelerator_test)
+
+add_executable(callback_lifetime_test callback_lifetime_test.cpp)
+target_link_libraries(callback_lifetime_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME callback_lifetime_test COMMAND callback_lifetime_test)
+set_tests_properties(callback_lifetime_test PROPERTIES TIMEOUT 20)
+
+if(WIN32)
+  # Global shortcuts reach the OS: the hotkey is held while registered and
+  # released by Unregister.
+  add_executable(shortcut_manager_windows_test shortcut_manager_windows_test.cpp)
+  target_link_libraries(shortcut_manager_windows_test PRIVATE nativeapi)
+  add_test(NAME shortcut_manager_windows_test COMMAND shortcut_manager_windows_test)
+  set_tests_properties(shortcut_manager_windows_test PROPERTIES TIMEOUT 20)
+endif()
+
+# The registry side of launch-at-login: the Run value, the StartupApproved flag that
+# Task Manager toggles, and a non-ASCII identifier. Writes only under HKCU, under a
+# test-only identifier, and removes what it writes.
+if(WIN32)
+  add_executable(launch_at_login_test launch_at_login_test.cpp)
+  target_link_libraries(launch_at_login_test PRIVATE nativeapi)
+  add_test(NAME launch_at_login_test COMMAND launch_at_login_test)
+endif()
+
+# Interactive: with any argument it opens real menus and closes them from a timer
+# (no input needed, but it does need a desktop session). A no-op without arguments.
+if(WIN32)
+  add_executable(menu_lifetime_test menu_lifetime_test.cpp)
+  target_link_libraries(menu_lifetime_test PRIVATE nativeapi)
+  add_test(NAME menu_lifetime_test COMMAND menu_lifetime_test)
+endif()
+
+# Interactive: with a round name it opens a real menu and waits for
+# tools/gui/core_menu_backend_test.ps1 to work it with the mouse. Without arguments
+# it is a no-op, so CTest can run it.
+if(WIN32)
+  add_executable(menu_click_test menu_click_test.cpp)
+  target_link_libraries(menu_click_test PRIVATE nativeapi)
+  add_test(NAME menu_click_test COMMAND menu_click_test)
+endif()
+
+if(WIN32)
+  add_executable(menu_backend_test menu_backend_test.cpp)
+  target_link_libraries(menu_backend_test PRIVATE nativeapi)
+  add_test(NAME menu_backend_test COMMAND menu_backend_test)
+  if(NATIVEAPI_ENABLE_WINUI3)
+    target_sources(menu_backend_test PRIVATE "../cmake/winui3-example.manifest")
+    nativeapi_deploy_winui3(menu_backend_test)
+  endif()
+endif()
+
+# Explicit desktop integration test; not part of headless CTest runs.
+if(WIN32 AND NATIVEAPI_ENABLE_WINUI3)
+  add_executable(winui3_dialog_test winui3_dialog_test.cpp ../cmake/winui3-example.manifest)
+  target_link_libraries(winui3_dialog_test PRIVATE nativeapi)
+  nativeapi_deploy_winui3(winui3_dialog_test)
+endif()
+
+if(WIN32)
+  add_executable(window_title_bar_double_click_windows_test window_title_bar_double_click_windows_test.cpp)
+  target_link_libraries(window_title_bar_double_click_windows_test PRIVATE nativeapi)
+  add_executable(window_mouse_forwarding_windows_test window_mouse_forwarding_windows_test.cpp)
+  target_link_libraries(window_mouse_forwarding_windows_test PRIVATE nativeapi)
+  add_test(NAME window_mouse_forwarding_windows_test COMMAND window_mouse_forwarding_windows_test)
+  set_tests_properties(window_mouse_forwarding_windows_test PROPERTIES TIMEOUT 10)
+  add_executable(window_mouse_policy_windows_test window_mouse_policy_windows_test.cpp)
+  target_link_libraries(window_mouse_policy_windows_test PRIVATE nativeapi)
+  add_test(NAME window_mouse_policy_windows_test COMMAND window_mouse_policy_windows_test)
+  set_tests_properties(window_mouse_policy_windows_test PROPERTIES TIMEOUT 10)
+  add_executable(window_system_menu_windows_test window_system_menu_windows_test.cpp)
+  target_link_libraries(window_system_menu_windows_test PRIVATE nativeapi)
+  # Explicit desktop regression; captures only a pixel inside its own windows.
+  add_executable(window_content_protection_windows_test window_content_protection_windows_test.cpp)
+  target_link_libraries(window_content_protection_windows_test PRIVATE nativeapi)
+  # Explicit desktop regression; --preview shows all four DWM policies.
+  add_executable(window_corner_preference_windows_test window_corner_preference_windows_test.cpp)
+  target_link_libraries(window_corner_preference_windows_test PRIVATE nativeapi)
+  add_executable(desktop_features_test desktop_features_test.cpp)
+  target_link_libraries(desktop_features_test PRIVATE nativeapi)
+  add_test(NAME desktop_features_test COMMAND desktop_features_test)
+  set_tests_properties(desktop_features_test PROPERTIES TIMEOUT 20)
+  if(NATIVEAPI_ENABLE_WINUI3)
+    target_sources(desktop_features_test PRIVATE ../cmake/winui3-example.manifest)
+    nativeapi_deploy_winui3(desktop_features_test)
+  endif()
+endif()
+
+# Explicit desktop integration test for the classic Win32 title-bar backend.
+if(WIN32 AND NOT NATIVEAPI_ENABLE_WINUI3)
+  add_executable(window_maximize_test window_maximize_test.cpp)
+  target_link_libraries(window_maximize_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop test: temporarily switches the app theme and restores it.
+# Not registered with CTest because it needs an interactive desktop.
+if(WIN32)
+  add_executable(menu_theme_test menu_theme_test.cpp)
+  target_link_libraries(menu_theme_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop integration test; requires a running window manager.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # Inspect real server input regions without injecting input into the desktop.
+  add_executable(window_title_bar_double_click_linux_test window_title_bar_double_click_linux_test.cpp)
+  target_link_libraries(window_title_bar_double_click_linux_test PRIVATE nativeapi)
+  add_executable(window_mouse_forwarding_linux_test window_mouse_forwarding_linux_test.cpp)
+  target_link_libraries(window_mouse_forwarding_linux_test PRIVATE nativeapi)
+  add_test(NAME window_mouse_forwarding_linux_test COMMAND window_mouse_forwarding_linux_test)
+  set_tests_properties(window_mouse_forwarding_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 20)
+  add_executable(window_mouse_passthrough_linux_test window_mouse_passthrough_linux_test.cpp)
+  target_link_libraries(window_mouse_passthrough_linux_test PRIVATE nativeapi Xext)
+  add_test(NAME window_mouse_passthrough_linux_test COMMAND window_mouse_passthrough_linux_test)
+  set_tests_properties(window_mouse_passthrough_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 20)
+  # Explicit integration in a private Xvfb session or Wayland negative path.
+  add_executable(window_system_menu_linux_test window_system_menu_linux_test.cpp)
+  target_link_libraries(window_system_menu_linux_test PRIVATE nativeapi)
+  add_executable(window_size_constraints_linux_test window_size_constraints_linux_test.cpp)
+  target_link_libraries(window_size_constraints_linux_test PRIVATE nativeapi)
+endif()
+
+if(WIN32)
+  add_executable(window_size_constraints_windows_test window_size_constraints_windows_test.cpp)
+  target_link_libraries(window_size_constraints_windows_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop integration test; requires a running window manager.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_resizable_linux_test window_resizable_linux_test.cpp)
+  target_link_libraries(window_resizable_linux_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop integration test; creates windows but sends no input.
+if(WIN32 OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_resizable_desktop_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_resizable_desktop_test window_resizable_desktop_test.cpp)
+  target_link_libraries(window_resizable_desktop_test PRIVATE nativeapi)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_controls_linux_test window_controls_linux_test.cpp)
+  target_link_libraries(window_controls_linux_test PRIVATE nativeapi)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_restore_linux_test window_restore_linux_test.cpp)
+  target_link_libraries(window_restore_linux_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop integration test; requires a running compositor (meant for one that
+# sends tiled states to floating windows, such as Hyprland).
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_shadow_remap_linux_test window_shadow_remap_linux_test.cpp)
+  target_link_libraries(window_shadow_remap_linux_test PRIVATE nativeapi)
+endif()
+
+# Explicit desktop integration test; creates windows but sends no input.
+if(WIN32 OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_aspect_ratio_desktop_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_aspect_ratio_desktop_test window_aspect_ratio_desktop_test.cpp)
+  target_link_libraries(window_aspect_ratio_desktop_test PRIVATE nativeapi)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_aspect_ratio_linux_test window_aspect_ratio_linux_test.cpp)
+  target_link_libraries(window_aspect_ratio_linux_test PRIVATE nativeapi)
+endif()
+
+# The C ABI releases every callback's user_data exactly once, on the main
+# thread, after the core lets the callback go.
+add_executable(user_data_release_test user_data_release_test.cpp)
+target_link_libraries(user_data_release_test PRIVATE nativeapi)
+add_test(NAME user_data_release_test COMMAND user_data_release_test)
+set_tests_properties(user_data_release_test PROPERTIES TIMEOUT 20)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_manager_hooks_linux_test window_manager_hooks_linux_test.cpp)
+  target_link_libraries(window_manager_hooks_linux_test PRIVATE nativeapi)
+  add_test(NAME window_manager_hooks_linux_test COMMAND window_manager_hooks_linux_test)
+  set_tests_properties(window_manager_hooks_linux_test PROPERTIES SKIP_RETURN_CODE 77)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(shortcut_shutdown_linux_test shortcut_shutdown_linux_test.cpp)
+  target_link_libraries(shortcut_shutdown_linux_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME shortcut_shutdown_linux_test COMMAND shortcut_shutdown_linux_test)
+  set_tests_properties(shortcut_shutdown_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 8)
+endif()
+
+# Explicit desktop regression; --clicks is driven by the guarded GUI harness.
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_focus_policy_test window_focus_policy_test.cpp)
+  target_link_libraries(window_focus_policy_test PRIVATE nativeapi)
+  # Focus()/Blur() across processes; changes the foreground window, run by hand.
+  add_executable(window_focus_return_test window_focus_return_test.cpp)
+  target_link_libraries(window_focus_return_test PRIVATE nativeapi)
+endif()
+
+# Real SNI properties and initial watcher registration, on a private session bus.
+# No desktop or tray panel required.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(tray_template_linux_test tray_template_linux_test.cpp)
+  target_link_libraries(tray_template_linux_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME tray_template_linux_test COMMAND tray_template_linux_test)
+  set_tests_properties(tray_template_linux_test PROPERTIES TIMEOUT 30)
+  add_executable(tray_identifier_linux_test tray_identifier_linux_test.cpp)
+  target_link_libraries(tray_identifier_linux_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME tray_identifier_linux_test COMMAND tray_identifier_linux_test)
+  set_tests_properties(tray_identifier_linux_test PROPERTIES TIMEOUT 30)
+endif()
+
+# Explicit desktop test: macOS status items require an AppKit session.
+if(WIN32 OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(tray_identifier_desktop_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(tray_identifier_desktop_test tray_identifier_desktop_test.cpp)
+  target_link_libraries(tray_identifier_desktop_test PRIVATE nativeapi)
+endif()
+
+add_executable(window_close_request_test window_close_request_test.cpp)
+target_link_libraries(window_close_request_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME window_close_request_test COMMAND window_close_request_test)
+set_tests_properties(window_close_request_test PROPERTIES TIMEOUT 10)
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  add_executable(window_close_macos_test window_close_macos_test.mm)
+  target_link_libraries(window_close_macos_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME window_close_macos_test COMMAND window_close_macos_test)
+  set_tests_properties(window_close_macos_test PROPERTIES TIMEOUT 10)
+endif()
+if(WIN32)
+  add_executable(window_close_windows_test window_close_windows_test.cpp)
+  target_link_libraries(window_close_windows_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME window_close_windows_test COMMAND window_close_windows_test)
+  set_tests_properties(window_close_windows_test PROPERTIES TIMEOUT 10)
+  # WindowManager first touched from a thread that never reads Win32 messages: the
+  # WinEvent hooks and the geometry subclass still have to end up on the thread
+  # that owns the windows.
+  add_executable(window_manager_ui_thread_windows_test window_manager_ui_thread_windows_test.cpp)
+  target_link_libraries(window_manager_ui_thread_windows_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME window_manager_ui_thread_windows_test COMMAND window_manager_ui_thread_windows_test)
+  set_tests_properties(window_manager_ui_thread_windows_test PROPERTIES TIMEOUT 30)
+  # Deferred work from the thread that loaded the library, which never pumps, lands
+  # on the thread that owns this process's windows.
+  add_executable(run_on_main_thread_windows_test run_on_main_thread_windows_test.cpp)
+  target_link_libraries(run_on_main_thread_windows_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME run_on_main_thread_windows_test COMMAND run_on_main_thread_windows_test)
+  set_tests_properties(run_on_main_thread_windows_test PROPERTIES TIMEOUT 30)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_close_linux_test window_close_linux_test.cpp)
+  target_link_libraries(window_close_linux_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME window_close_linux_test COMMAND window_close_linux_test)
+  set_tests_properties(window_close_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 10)
+  add_executable(window_close_manager_first_linux_test window_close_manager_first_linux_test.cpp)
+  target_link_libraries(window_close_manager_first_linux_test PRIVATE nativeapi)
+  add_test(NAME window_close_manager_first_linux_test COMMAND window_close_manager_first_linux_test)
+  set_tests_properties(window_close_manager_first_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 10)
+endif()
+
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  add_executable(application_native_quit_macos_test application_native_quit_macos_test.mm)
+  target_link_libraries(application_native_quit_macos_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME application_native_quit_macos_test COMMAND application_native_quit_macos_test)
+  set_tests_properties(application_native_quit_macos_test PROPERTIES TIMEOUT 10)
+endif()
+
+add_executable(clipboard_validation_test clipboard_validation_test.cpp)
+target_link_libraries(clipboard_validation_test PRIVATE nativeapi)
+add_test(NAME clipboard_validation_test COMMAND clipboard_validation_test)
+
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  # Manually run: snapshots and restores every native pasteboard item/type.
+  add_executable(clipboard_macos_test clipboard_macos_test.mm)
+  target_compile_options(clipboard_macos_test PRIVATE -fobjc-arc)
+  target_link_libraries(clipboard_macos_test PRIVATE nativeapi "-framework Cocoa")
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  # UIKit host; run explicitly in a simulator, never in headless CTest.
+  add_executable(clipboard_ios_test MACOSX_BUNDLE clipboard_ios_test.mm)
+  target_compile_options(clipboard_ios_test PRIVATE -fobjc-arc)
+  target_link_libraries(clipboard_ios_test PRIVATE nativeapi)
+  set_target_properties(clipboard_ios_test PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER dev.nativeapi.clipboard-test
+    MACOSX_BUNDLE_BUNDLE_NAME clipboard_ios_test
+    MACOSX_BUNDLE_BUNDLE_VERSION 1)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # Explicit private Xvfb integration; changes that display's clipboard.
+  add_executable(clipboard_linux_test clipboard_linux_test.cpp)
+  target_link_libraries(clipboard_linux_test PRIVATE nativeapi)
+  # Explicit private Xvfb integration; drives the in-process GTK chooser.
+  add_executable(file_dialog_linux_test file_dialog_linux_test.cpp)
+  target_link_libraries(file_dialog_linux_test PRIVATE nativeapi)
+endif()
+
+if(ANDROID)
+  # C++ NativeActivity hosts; package/run explicitly in an emulator, not CTest.
+  add_library(clipboard_android_test SHARED clipboard_android_test.cpp)
+  target_link_libraries(clipboard_android_test PRIVATE nativeapi)
+  add_library(clipboard_android_writer SHARED clipboard_android_test.cpp)
+  target_compile_definitions(clipboard_android_writer PRIVATE NATIVEAPI_CLIPBOARD_WRITER=1)
+  target_link_libraries(clipboard_android_writer PRIVATE nativeapi)
+endif()
+
+# Controlled platform seam: distinguish an enumeration error from an empty topology.
+add_executable(display_enumeration_failure_test
+  display_enumeration_failure_test.cpp ../src/display_manager.cpp)
+target_compile_features(display_enumeration_failure_test PRIVATE cxx_std_17)
+find_package(Threads REQUIRED)
+target_link_libraries(display_enumeration_failure_test PRIVATE Threads::Threads)
+add_test(NAME display_enumeration_failure_test COMMAND display_enumeration_failure_test)
+
+# Backend refusal must preserve the public registration so removal can be retried.
+add_executable(shortcut_unregister_failure_test
+  shortcut_unregister_failure_test.cpp ../src/shortcut_manager.cpp ../src/shortcut.cpp)
+target_compile_features(shortcut_unregister_failure_test PRIVATE cxx_std_17)
+target_link_libraries(shortcut_unregister_failure_test PRIVATE Threads::Threads)
+add_test(NAME shortcut_unregister_failure_test COMMAND shortcut_unregister_failure_test)
+set_tests_properties(shortcut_unregister_failure_test PROPERTIES TIMEOUT 10)
+
+add_executable(shortcut_registration_request_test
+  shortcut_registration_request_test.cpp ../src/shortcut_manager.cpp ../src/shortcut.cpp)
+target_compile_features(shortcut_registration_request_test PRIVATE cxx_std_17)
+target_link_libraries(shortcut_registration_request_test PRIVATE Threads::Threads)
+add_test(NAME shortcut_registration_request_test COMMAND shortcut_registration_request_test)
+set_tests_properties(shortcut_registration_request_test PROPERTIES TIMEOUT 10)
+
+# Shared value/ABI contract suite; also executed inside both OHOS guest types.
+add_executable(foundation_values_test foundation_values_test.cpp)
+target_link_libraries(foundation_values_test PRIVATE nativeapi Threads::Threads)
+add_test(NAME foundation_values_test COMMAND foundation_values_test)
+set_tests_properties(foundation_values_test PROPERTIES TIMEOUT 20)
+
+# Public-SDK shadow image math, including shape clipping and straight RGBA.
+add_executable(ohos_shadow_raster_test ohos_shadow_raster_test.cpp)
+target_link_libraries(ohos_shadow_raster_test PRIVATE nativeapi)
+add_test(NAME ohos_shadow_raster_test COMMAND ohos_shadow_raster_test)
+
+# Migrated appbar, keyboard-grab and macOS frame/space capabilities. Manual:
+# creates windows and briefly reserves desktop space; sends no synthetic input.
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_migration_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_migration_test window_migration_test.cpp)
+  target_link_libraries(window_migration_test PRIVATE nativeapi)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(shortcut_native_linux_test shortcut_native_linux_test.cpp)
+  target_link_libraries(shortcut_native_linux_test PRIVATE nativeapi X11 Threads::Threads)
+  add_test(NAME shortcut_native_linux_test COMMAND shortcut_native_linux_test)
+  set_tests_properties(shortcut_native_linux_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 20)
+  add_executable(shortcut_portal_linux_test shortcut_portal_linux_test.cpp)
+  target_compile_definitions(shortcut_portal_linux_test PRIVATE NATIVEAPI_PORTAL_MANAGER_TEST=1)
+  target_link_libraries(shortcut_portal_linux_test PRIVATE nativeapi Threads::Threads)
+  add_test(NAME shortcut_portal_linux_test COMMAND shortcut_portal_linux_test)
+  set_tests_properties(shortcut_portal_linux_test PROPERTIES TIMEOUT 30)
+  add_executable(shortcut_portal_live_linux_probe shortcut_portal_live_linux_probe.cpp)
+  target_link_libraries(shortcut_portal_live_linux_probe PRIVATE nativeapi Threads::Threads)
+endif()
+
+# Manual no-input caption group/policy checks; requires a desktop compositor.
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux" OR (APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+  if(APPLE)
+    set_source_files_properties(window_controls_test.cpp PROPERTIES LANGUAGE OBJCXX)
+  endif()
+  add_executable(window_controls_test window_controls_test.cpp)
+  target_link_libraries(window_controls_test PRIVATE nativeapi)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(window_startup_state_linux_test window_startup_state_linux_test.cpp)
+  target_link_libraries(window_startup_state_linux_test PRIVATE nativeapi)
+  add_executable(window_controls_x11_test window_controls_x11_test.cpp)
+  target_link_libraries(window_controls_x11_test PRIVATE nativeapi)
+endif()

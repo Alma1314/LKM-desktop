@@ -201,6 +201,10 @@ dev_dependencies:
     sdk: flutter
   # Exercise the shared Cupertino implementation in the OHOS UI regression.
   cupertino_ui: ^1.1.6
+  # Shared native-asset regression tooling (the same versions used by hooks).
+  code_assets: ^2.2.0
+  native_toolchain_c: ^0.19.6
+  hooks: ^2.2.0
   # flutter_image_compress is a federated plugin; the test registers the
   # macOS Dart implementation explicitly (the plugin registrant does not run
   # under flutter test), so the package must be a direct dependency.
@@ -320,6 +324,15 @@ msix_config:
   languages: en-US
   store: true
 
+hooks:
+  user_defines:
+    sqlite3:
+      source:
+        ohos: source
+        default: sqlite3
+      path: buildtools/native/sqlite3/sqlite3.c
+      additional_libraries: [m]
+
 dependency_overrides:
   # liquid_glass_renderer 1.0 needs hooks 2, openmls pins hooks 1.
   hooks: ^2.0.2
@@ -338,6 +351,25 @@ dependency_overrides:
     path: packages/pinput
   flutter_quill:
     path: packages/flutter_quill
+  code_assets:
+    path: packages/code_assets
+  native_toolchain_c:
+    path: packages/native_toolchain_c
+  cnativeapi:
+    path: packages/cnativeapi
+  openmls:
+    path: packages/openmls
+  audio_session:
+    path: packages/audio_session
+  connectivity_plus:
+    path: packages/connectivity_plus
+  file_picker:
+    path: packages/file_picker
+  just_audio:
+    git:
+      url: https://gitcode.com/oh-flutter/just_audio.git
+      ref: a171f118d3e83d698592a0a262d08107a75ed06b
+      path: just_audio
 
   # One shared plugin implementation for every platform. OHOS forks retain
   # their original platforms; pin all companion packages to the same commit.

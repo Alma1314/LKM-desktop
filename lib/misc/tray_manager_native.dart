@@ -14,9 +14,8 @@ class TrayService {
   static TrayService get instance => _instance;
 
   bool _checkPlatformAvalability() {
-    if (kIsWeb) return false;
-    if (Platform.isAndroid || Platform.isIOS) return false;
-    return true;
+    return !kIsWeb &&
+        (Platform.isLinux || Platform.isMacOS || Platform.isWindows);
   }
 
   Future<void> initialize(TrayListener listener) async {

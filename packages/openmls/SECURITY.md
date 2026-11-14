@@ -1,0 +1,450 @@
+# Security
+
+## Architecture Overview
+
+This library uses **Flutter Rust Bridge (FRB)** with the **OpenMLS** Rust crate.
+
+**Key security properties:**
+
+- **Memory safety** is handled by Rust's ownership system
+- **Cryptographic operations** are implemented in OpenMLS (with RustCrypto backend)
+- **No manual memory management** in Dart - FRB handles all cleanup automatically
+- **No `dispose()` calls needed** - Rust drops resources when they go out of scope (except `MlsEngine.close()` for deterministic key release)
+
+## Security Scope
+
+### In Scope
+
+This package provides Dart bindings to openmls via Flutter Rust Bridge. The security scope covers:
+
+- **Memory safety** of the FRB wrapper and the hand-written Rust in `rust/src/api/`
+- **Correct API usage** of the underlying openmls primitives
+- **Secret handling** across the FFI boundary (deterministic `dispose()`, keeping secrets in Rust where possible)
+- **Supply-chain integrity** of the prebuilt native binaries (build pipeline, fail-closed download verification, release/tag protections)
+
+### Out of Scope
+
+The core cryptography / functionality is implemented and maintained upstream in openmls — the algorithm implementations, their constant-time / side-channel resistance, and protocol design. Report those to the upstream project (see **Upstream Security** below).
+
+### Threat Model Limitations
+
+Out of scope for this wrapper:
+
+- **Physical side-channels** (power analysis, electromagnetic emissions)
+- **Fault injection** (Rowhammer, voltage/clock glitching)
+- **Hardware vulnerabilities**
+- **Compromised host** — secrets that cross into Dart's GC heap cannot be reliably erased
+
+## Security Considerations
+
+### A: Memory Safety (Rust-handled)
+
+With FRB, memory management is handled automatically:
+
+```dart
+// FRB Architecture - no cleanup needed
+final keyPair = MlsSignatureKeyPair.generate(ciphersuite: ciphersuite);
+final signerBytes = serializeSigner(
+  ciphersuite: ciphersuite,
+  privateKey: keyPair.privateKey(),
+  publicKey: keyPair.publicKey(),
+);
+// keyPair is automatically cleaned up when no longer referenced
+```
+
+Rust's ownership system ensures:
+- No use-after-free
+- No double-free
+- No memory leaks
+- Deterministic cleanup
+
+### B: Key Material Handling
+
+Never expose key material in logs or errors:
+
+```dart
+// WRONG - exposes key material
+print('Signer key: $signerBytes');
+throw Exception('Failed with key: $keyBytes');
+
+// CORRECT - no key material in logs
+print('Generated new signing key pair');
+throw Exception('Key operation failed');
+```
+
+### C: Encrypted Storage (MlsEngine)
+
+`MlsEngine` stores all MLS state in an encrypted database. Encryption is handled automatically:
+
+| Platform | Backend | Encryption |
+|----------|---------|------------|
+| Native | SQLCipher | AES-256 full-database encryption |
+| Web (WASM) | IndexedDB | AES-256-GCM per-value encryption via `crypto.subtle` |
+
+```dart
+// Provide a 32-byte encryption key. Store it in platform secure storage
+// (Keychain, Android Keystore, flutter_secure_storage).
+final engine = await MlsEngine.create(
+  dbPath: 'mls_data.db',    // file path on native, IDB name on web
+  encryptionKey: myKey,       // 32-byte AES-256 key
+);
+
+// Use ":memory:" for ephemeral storage (testing only, data lost on drop)
+final testEngine = await MlsEngine.create(
+  dbPath: ':memory:',
+  encryptionKey: testKey,
+);
+```
+
+**Engine lifecycle:**
+
+```dart
+// Close the engine to release the DB connection and encryption key resources.
+// After close, all operations fail immediately with "MlsEngine is closed".
+await engine.close();
+assert(engine.isClosed()); // synchronous check
+
+// Re-create from platform secure storage on unlock
+engine = await MlsEngine.create(dbPath: 'mls_data.db', encryptionKey: myKey);
+```
+
+`close()` is idempotent (safe to call multiple times) and provides deterministic resource release — the app controls exactly when the DB connection is closed, rather than relying on Dart's garbage collector. This is useful for screen lock / app background scenarios where encryption key material should be released from memory as soon as possible.
+
+**Note:** `close()` does not guarantee cryptographic zeroization of key material. On native, SQLCipher manages its own key memory; on WASM, the `CryptoKey` becomes eligible for browser GC. See [Known Limitations](#known-limitations).
+
+**Key management requirements:**
+
+- **Secure key storage** - the 32-byte encryption key must be stored in platform secure storage, not in plain files
+- **Access control** - only the app should read/write MLS state
+- **Backup considerations** - MLS state includes forward-secrecy keys; restoring old state breaks protocol guarantees
+
+**Native hardening (SQLCipher).** Every connection is opened with:
+
+| Setting | Why |
+|---------|-----|
+| raw key `x'<hex>'` | your 32 bytes are the AES key — no PBKDF2 pass over a passphrase |
+| `cipher_memory_security = ON` | SQLCipher wipes its own working buffers on free and keeps them out of swap; those buffers hold MLS plaintext while it is being encrypted |
+| `journal_mode = DELETE` | never WAL — a WAL side file holds committed data that a file-level backup or crash can drop |
+| `synchronous = FULL` | fsync on every commit |
+| `locking_mode = EXCLUSIVE` | single writer, see below |
+| file mode `0600` (Unix) | the file is created owner-only rather than with the process umask default (typically world-readable on desktops) |
+
+`fullfsync` is deliberately **off**. On Apple platforms it additionally flushes the drive's own write cache, which measured **16 ms per MLS operation** against 318 µs without it — paid on every message sent and received. `synchronous = FULL` still fsyncs each commit, so the residual exposure is a power cut with data in a volatile drive cache, costing at most the last operation.
+
+The wrapper zeroizes its own copies of stored values and of the hex-encoded key; the 32-byte key you pass in from Dart still lives in Dart's heap (see [Known Limitations](#known-limitations) #1).
+
+**One engine per database file.** The database is locked exclusively: a second `MlsEngine` on the same file — another instance, isolate, or process — is refused with *"Database is already open by another connection or process"* instead of silently overwriting the first one's group state. `close()` releases the lock, and a second opener waits out a 5-second timeout before failing, which covers a brief overlap while the previous engine tears down. Do not share one database file between an app and an extension or background process. (An app-group shared container is doubly unsuitable on iOS: the system terminates a suspended app that still holds a lock on a file there — exception code `0xdead10cc`.)
+
+Two mechanisms hold that lock, because on Unix neither is sufficient alone:
+
+| mechanism | what it covers |
+|---|---|
+| `locking_mode = EXCLUSIVE` + a write transaction at open | SQLite's own locks, taken immediately so a second opener fails at `create()` rather than colliding on a later write |
+| `<db_path>.lock`, held with `flock` for the engine's lifetime | keeps other engines out **across processes**, for as long as this one lives — which SQLite's locks alone do not |
+
+The lock file exists because SQLite's locks are POSIX advisory (`fcntl`) locks, and POSIX releases *every* advisory lock a process holds on a file the moment that process closes *any* descriptor for it. SQLite compensates for descriptors it opened itself, but it cannot know about anyone else's. So a single ordinary read of the database file from elsewhere in your app — a backup copy, an integrity check, a crash reporter attaching the file — silently drops the exclusive lock while the engine is still running, with no error anywhere, and another process can then open the same database. A lock on a separate file is immune to that: `flock` binds the lock to one open file description rather than to the process, and nothing else ever opens that file.
+
+What the lock file restores is precisely that **no second `MlsEngine` can open the database**. It does not put SQLite's own lock back: after such a read the engine keeps writing with no lock held on the database file itself, so a *non-engine* SQLite writer that has the key — a migration script, a `sqlite3` shell, a SQLite-based backup tool — is not excluded either before or after this change. Do not point one at a database an engine currently holds.
+
+Consequences worth knowing:
+
+- **An empty `<db_path>.lock` appears beside every database** on Unix (`0600`). The engine creates it and never deletes it — unlinking it would let the next opener create a fresh inode and lock that instead, which guards nothing. It holds no data, so it needs no special handling in backups; it is safe to delete only when no engine is running. Deleting it while one is running lets a second engine open the same database.
+- **`":memory:"` databases take no lock file.** Each is private to its engine, so several may run at once.
+- **A `file:` URI is rejected**, because the path it resolves to cannot be identified without parsing the URI's query parameters — such a database would silently get neither owner-only permissions nor a lock file. Pass a plain path.
+- **Windows is not affected by the underlying defect** (its locks are mandatory and tied to the handle), and takes no lock file.
+
+**Holding one engine open is fine.** The exclusive lock costs nothing while a single engine owns the file, and releasing it does not require lifecycle handling. Measured on macOS with an engine that is deliberately never closed: a Flutter hot restart drops the previous engine as the isolate tears down, and the next open completes in tens of milliseconds rather than waiting out the busy timeout; a `SIGKILL`ed process leaves behind neither a lock nor a journal, because the operating system releases file locks when a process exits. `close()` earns its keep in three places — handing the file to another engine, releasing the encryption key at screen lock, and switching accounts — not as a routine per-operation step.
+
+**One writer per database on the Web.** Browser tabs make this a different problem. Every tab of an origin runs its own WASM instance with its own `MlsEngine`, and they all address one IndexedDB database — so the engine-wide mutex that serializes overlapping calls, which is per instance, cannot see them. Two tabs could load the same snapshot, operate on it, and write back in turn, the later write-back dropping what the earlier one saved: a merged commit, an advanced ratchet, a stored proposal, and with it the group's synchronization.
+
+A tab is opened and closed by the person using the application rather than by the application, so refusing the second one — what native does to a second process — would break something ordinary. Instead every load → operate → save cycle takes an **exclusive Web Lock** named after the IndexedDB database, and the tabs and workers of an origin queue behind each other. An operation that cannot get in within 5 seconds — the native busy timeout, mirrored — fails with *"Database is busy"* rather than waiting behind a wedged tab forever. The lock is taken before any state is read, so that failure is retryable: the operation has loaded nothing and holds nothing.
+
+- **It needs a secure context.** `navigator.locks` exists on `https`, and on `http` at `localhost`; nowhere else. Served over plain `http` from any other host the API is absent, and operations run without the cross-tab guarantee instead of failing — which is where the Web build stood before the lock existed. Serve the application from a secure origin, or you have no protection against a second tab.
+- **A tab that dies releases the lock.** The browser owns it, so a crashed or closed tab cannot strand the database the way a stale lock file could.
+- **A panic does not.** wasm32 aborts on panic (see [Known Limitations](#known-limitations) #12), so `Drop` never runs and the promise holding the lock stays pending — while the instance itself keeps working. Every later operation on that database then fails with *"Database is busy"* until the page is reloaded. Reloading is the escape; retrying is not. On native the same panic unwinds and releases the lock.
+- **It does not exclude a non-engine writer.** Anything else with the key that opens the same IndexedDB database is outside the lock — the same statement as `sqlite3` on native.
+
+**Anti-rollback storage (deployment requirement).** Encryption at rest does not protect *freshness*. Anyone who can replace the database file with an older copy of itself — a snapshot restore, a backup rollback, a filesystem-level attacker — makes the engine reuse MLS state it has already spent.
+
+- Put the database on rollback-protected storage: a hardware monotonic counter, TPM 2.0 NV storage, or Android StrongBox, and refuse to run when the counter and the database disagree.
+- **Sealing the key in hardware is not a fix.** Secure Enclave / StrongBox / TPM protect confidentiality; the same key still decrypts the stale copy.
+- MLS is not defenceless: every application message carries a fresh random `reuse_guard` (RFC 9420 §6.3.2), so a single rollback produces a rejected message rather than a repeated keystream. But the guard is 32 bits — across a large or repeated rollback the birthday bound (~2¹⁶ messages under one key) makes an actual collision, and with it keystream reuse, plausible.
+- **iOS provides no app-accessible monotonic counter**, so on iOS this cannot be fully closed today; it is an accepted limitation.
+
+### D: Initialization
+
+Always initialize the library before use:
+
+```dart
+void main() async {
+  await Openmls.init();  // Initialize FRB runtime
+  runApp(MyApp());
+}
+```
+
+### E: Group State Integrity
+
+MLS group state must be consistent. Avoid:
+
+- Processing the same message twice (replay)
+- Skipping messages (causes epoch mismatch)
+- Restoring old group state from backup (breaks forward secrecy)
+
+The library returns errors for protocol violations. Handle them appropriately rather than silently ignoring.
+
+**Past epoch secrets are retained material, and retaining them is a choice.** A
+group keeps none by default (`maxPastEpochs: 0`). Above that — and unboundedly
+under `setPastEpochDeletionPolicyKeepAll` — the secrets of past epochs stay in
+the encrypted store, and they decrypt every application message of those
+epochs, including traffic an attacker recorded before the commit that ended
+them. That is what buys tolerance for a delivery service that reorders or
+delays messages across a commit; it is paid for in forward secrecy. Keep the
+number as low as the delivery service allows, and pair `keepAll` with a
+retention schedule of your own (`deletePastEpochSecretsOlderThan`) — nothing
+deletes them for you while it is set.
+
+Secrets recorded by a version of this package built on OpenMLS 0.8.1 or earlier
+carry no timestamp, so time-based deletion skips them in silence.
+`deletePastEpochSecretsWithoutTimestamps` clears those; a deployment that kept
+past epochs across that upgrade should run it once.
+
+Concurrent Dart calls on one `MlsEngine` are safe: each operation loads its snapshot, runs, and writes back under an engine-wide lock, so overlapping calls queue instead of overwriting each other's state. Ordering across the *protocol* is still yours to get right — the lock decides who goes first, not what the correct order is.
+
+## Supply Chain Security
+
+- **SHA256 Checksums (fail-closed)**: pre-built native libraries are verified against a checksums file published in the same GitHub Release. Verification is **fail-closed** — if the checksums cannot be fetched or lack an entry for the archive, the build hook (`hook/build.dart`) **aborts** rather than loading an unverified binary. The escape hatch `OPENMLS_ALLOW_UNVERIFIED_DOWNLOAD=1` exists only for older releases with no checksums file.
+- **Dependency Auditing**: `cargo audit` (`make rust-audit`) and `cargo deny` (`make rust-deny`) run in CI. `cargo-deny` enforces RustSec advisories, an allowed-license list, and a source allow-list restricted to crates.io and explicitly-listed git repositories (see `rust/deny.toml`).
+
+- **Build Provenance (authenticity)**: SHA256 verifies *integrity* but not *authenticity* — the checksums file ships in the same release as the archive. To break that self-trust, every release archive is attested with [GitHub Artifact Attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations) (Sigstore, SLSA Build L2): CI signs a provenance statement proving each archive was built by this repository's tag-triggered `build-openmls.yml` workflow from a specific commit. Verify a downloaded archive with `gh attestation verify openmls_frb-<version>-<platform>.tar.gz --repo djx-y-z/openmls_dart`; for fully offline verification use the attached `openmls_frb-<version>.sigstore.jsonl` bundle with `--bundle` and a pre-fetched `gh attestation trusted-root`.
+
+> **Known limitation:** attestation verification is manual — the build hook verifies SHA256 only (there is no Sigstore/DSSE implementation for Dart). Automatic (opt-in) verification via an installed `gh` CLI is a possible future hardening step.
+
+### Release & build-trigger protection
+
+The native binaries above are published by `build-openmls.yml`, triggered by a `openmls_frb-*` tag push or by manual dispatch. Two controls restrict who can cause a publish, mirroring the `pub.dev` environment that gates the pub.dev publish:
+
+- **Tag protection** — a repository ruleset reserves creating, moving, and deleting **all tags** to repository Admins, so a `write` collaborator cannot mint a release tag (`openmls_frb-*` / `v*`) or any other tag. Admins bypass it, its signature rule included; the release scripts sign their tags.
+- **Approval gate** — the publishing job runs in the `native-build` environment, whose required reviewers must approve before any binary is released. Unlike the tag ruleset, this also covers the `workflow_dispatch` path.
+
+Setup, the exact `gh` commands to apply / verify / roll back, and residual risks are in [`.github/rulesets/README.md`](.github/rulesets/README.md).
+
+CI workflows run with a least-privilege `GITHUB_TOKEN` (`contents: read` by default; only the release-publishing jobs get the specific writes they need), third-party actions are pinned to commit SHAs, and pub.dev publishing uses OIDC — no long-lived publishing tokens exist.
+
+## Build Security
+
+- **Reproducible Builds**: CI builds are automated and reproducible
+- **Minimal Dependencies**: We keep dependencies minimal and well-audited
+- **LTO and Stripping**: Release builds use Link-Time Optimization and symbol stripping
+- **Hardened profile**: the wrapper crate is compiled with `overflow-checks` (integer overflow panics instead of wrapping) and `unsafe_code = "deny"` on hand-written code
+- **Static Analysis**: Dart (`dart analyze --fatal-infos`) and Rust (`cargo clippy`, warnings treated as errors) run in CI
+
+## What's Handled by Rust/FRB
+
+These concerns are handled automatically by the architecture:
+
+| Concern | Handled By |
+|---------|------------|
+| FFI pointer management | Rust ownership |
+| Resource cleanup | Rust drop semantics |
+| Double-free prevention | Rust borrow checker |
+| Buffer overflow prevention | Rust bounds checking |
+| Use-after-free | Rust ownership |
+| Cryptographic operations | OpenMLS + RustCrypto |
+| Key zeroization | Rust (zeroize crate) |
+| Encryption at rest (native) | SQLCipher |
+| Encryption at rest (WASM) | Web Crypto API (`crypto.subtle`) |
+| Key protection (WASM) | Non-extractable `CryptoKey` |
+
+## Zeroing Sensitive Data
+
+### SecureBytes wrapper (automatic zeroing)
+
+```dart
+// Wrap takes ownership - no extra copy
+final secureData = SecureBytes.wrap(sensitiveBytes);
+try {
+  // ... use secureData.bytes ...
+} finally {
+  secureData.dispose(); // Immediate zeroing (recommended)
+}
+
+// Copy constructor - original NOT zeroed (caller responsible)
+final secureCopy = SecureBytes(sensitiveBytes);
+sensitiveBytes.zeroize(); // Zero the original yourself
+```
+
+### Manual zeroing extension
+
+```dart
+final sensitiveList = Uint8List.fromList([...]);
+try {
+  // ... use sensitiveList ...
+} finally {
+  sensitiveList.zeroize(); // Zero all bytes
+}
+```
+
+### APIs that Return Sensitive Data
+
+The following APIs return data that should be zeroized after use (via `SecureBytes.wrap()` or `.zeroize()`):
+
+| API | Returns | Sensitivity |
+|-----|---------|-------------|
+| `MlsSignatureKeyPair.privateKey()` | Private signing key | HIGH — long-term key material |
+| `serializeSigner()` | JSON with private key | HIGH — contains private key bytes |
+| `engine.exportSecret()` | MLS exporter secret | HIGH — derived secret |
+| `engine.exportWelcomeSecret()` | MLS exporter secret, before joining | HIGH — bit-for-bit the value `exportSecret` returns for that epoch |
+| `engine.getPastResumptionPsk()` | Resumption PSK | HIGH — pre-shared key |
+
+These return `Uint8List` or `List<int>` due to FRB signature constraints. Callers must zeroize.
+
+### Limitations
+
+- Dart's garbage collector may copy data before zeroing occurs
+- These utilities provide defence-in-depth, not absolute security guarantees
+- For critical secrets, prefer keeping them in Rust (opaque types with `zeroize` crate)
+
+## Web (WASM) Security
+
+### Web Crypto API
+
+On WASM, the database encryption key is imported as a **non-extractable `CryptoKey`** via `crypto.subtle.importKey()`. The raw key bytes are zeroized from WASM memory immediately after import.
+
+**What this protects against:**
+- Key extraction via `WebAssembly.Memory` inspection (key is not in WASM linear memory)
+- Key extraction via JavaScript API (`crypto.subtle.exportKey()` fails for non-extractable keys)
+
+**What this does NOT protect against:**
+- Monkey-patching `crypto.subtle.encrypt/decrypt` to intercept plaintext (requires XSS)
+- Browser extensions with page access
+- Browser-level attacks (compromised browser binary)
+
+### Web Deployment Recommendations
+
+Since `crypto.subtle` protects the key but not the plaintext at the API boundary, preventing XSS is critical:
+
+1. **Content Security Policy (CSP)** - Enable strict CSP headers:
+   ```
+   Content-Security-Policy: script-src 'self'; object-src 'none';
+   ```
+2. **HTTPS** - Required for `crypto.subtle` (also works on `localhost` for development)
+3. **Minimize third-party scripts** - Each script on the page is a potential attack vector
+4. **Subresource Integrity (SRI)** - Pin hashes of loaded scripts
+
+### Secure Context Requirement
+
+`crypto.subtle` requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS or localhost). The library returns a clear error if `crypto.subtle` is unavailable.
+
+## Known Limitations
+
+1. **Dart VM memory:** Dart's garbage collector may copy data before Rust can zero it. This is a platform limitation. OpenMLS uses the `zeroize` crate for sensitive data on the Rust side.
+
+2. **In-memory storage:** `MlsEngine.create(dbPath: ':memory:', ...)` creates an ephemeral in-memory database. All state is lost when the engine is dropped. Use a file path in production.
+
+3. **Minimal `unsafe` code:** `unsafe_code = "deny"` covers the crate, with exactly two opt-outs. The hand-written one is the `Send + Sync` impl for `WasmCryptoKey` (wrapping `web_sys::CryptoKey`), sound because `wasm32-unknown-unknown` is single-threaded. The other is `rust/src/frb_generated.rs`, the flutter_rust_bridge-generated bridge — it ships inside this crate rather than in a dependency, is machine-generated rather than reviewed line by line, and carries its own `#[allow(unsafe_code)]`. Beyond those two, `unsafe` is upstream: OpenMLS, RustCrypto and `web-sys`.
+
+4. **Concurrency:** Operations on one `MlsEngine` are serialized internally — each load → operate → save runs under an engine-wide async lock — and a second connection to the same database file is refused, so concurrent calls cannot lose each other's state. What the library cannot decide for you is *protocol* order: handing `processMessage` messages out of order still breaks the group's epoch sequence.
+
+5. **Storage atomicity:** Each operation's write-back is a single SQL transaction (native) or IDB transaction (WASM) — including `deleteGroup`, which writes the group's final state and purges its rows together — so a crash cannot apply half of one operation. Durability is `synchronous = FULL` without `fullfsync` (see Section C), so a power cut can still lose the last committed operation on Apple hardware. Database **migrations** are transactional — each runs in its own transaction with the version written atomically inside it, and a failed migration is fully rolled back.
+
+6. **`test-utils` feature dependency:** The `openmls_basic_credential` crate — and only that crate — is compiled with its `test-utils` feature. It is required for `SignatureKeyPair::private()`, which powers the `privateKey()` API, and it gates nothing but that accessor. `openmls`'s own feature of the same name is **not** enabled, and must not be: it implies `openmls/backtrace`, under which `LibraryError::custom()` formats a symbolized Rust backtrace — build-machine paths, symbol names, crate layout — into an error that reaches the Dart caller through the ordinary error channel, with no panic involved. So the claim that this feature activates no production code path holds for `openmls_basic_credential` but never held for `openmls`. It was dropped once openmls 0.9.0 made `MlsGroup::public_group()` public, which covers everything the wrapper had used it for.
+
+7. **Commit merging and refusal:** `processMessage` and `processMessageWithInspect` automatically merge staged commits after processing. To judge a commit first, call `inspectMessage`, which reports what the commit would do — each proposal with its authenticated sender (members, external senders, new members), the credential and keys an Update or Add introduces, the members it removes, the group context it leads to with every extension (`ExternalSenders` decoded) — and changes nothing; then process the same bytes only if the commit is acceptable. Limits an application must design for:
+   - **A refusal is local.** It keeps the refusing member in its current epoch; it binds no one else. If any other member accepts the commit, the refuser is the one left behind and cannot read what follows. Which commit becomes the next epoch is decided by the delivery service. A policy is only enforced if every member applies it, or the delivery service does.
+   - **A delivery service can fork a group** by delivering different commits for the same epoch to different members. MLS does not prevent this; it makes it detectable. Compare `groupEpochAuthenticator` between members (in-band or out of band) to detect it.
+   - **Reported credentials are claims.** MLS authenticates who *signed* a message, not that a credential belongs to the identity it names. OpenMLS does not check that an Update keeps the proposer's identity, which is why `StagedProposalInfo` reports the new leaf next to the member it replaces. Verify every credential against the application's own trust source.
+   - **Inspection consumes nothing.** An application message inspected is decrypted but its key stays in storage until it is processed; an inspection is not a delivery record, a replay check or a forward-secrecy step.
+   - **Own messages cannot be inspected.** Under the default ciphertext wire format, a member cannot decrypt its own messages, its own pending commit included; apply an own commit the delivery service accepted with `mergePendingCommit`.
+   - **Send a Welcome only after the delivery service accepted the commit** that creates it. A Welcome sent first can admit its recipients into an epoch that never happens.
+
+8. **Unconditional proposal acceptance:** `flexibleCommit` and `joinGroupExternalCommitV2` accept all pending proposals unconditionally (the internal proposal filter callback returns `true` for all proposals). Applications should validate proposals at the application layer before calling commit operations — `inspectMessage` on a proposal message reports what it proposes before it is stored — or use `removePendingProposal` to reject unwanted proposals first. `flexibleCommit` refuses to run while a commit of this member is pending (`FlexibleCommitOptions.keepPending`): replacing a commit other members may already have applied would fork the group.
+
+9. **X.509 certificate chain validation:** The `MlsCredential.x509()` function does not validate certificate chains (expiration, signatures, revocation, trust anchors). The application layer must validate X.509 chains before use.
+
+10. **serde_json intermediate buffers:** During signer serialization/deserialization, `serde_json` creates temporary `Vec<u8>` buffers containing sensitive data. These are dropped without zeroization. This is a platform limitation — Rust's allocator does not guarantee memory is not copied, so zeroizing every intermediate buffer provides limited benefit.
+
+11. **Web Crypto plaintext visibility:** On WASM, while the encryption key is protected as a non-extractable `CryptoKey`, plaintext is briefly visible during `crypto.subtle.encrypt/decrypt` calls. An attacker with XSS could monkey-patch these methods. Mitigate with strict CSP headers (see [Web Deployment Recommendations](#web-deployment-recommendations)).
+
+12. **Panics skip zeroization on the web:** `wasm32-unknown-unknown` compiles with `panic = "abort"` by target default, and the release profile does not override it. A Rust panic there traps the WebAssembly instance instead of unwinding, so destructors never run and the zeroize-on-Drop a native build still performs — the snapshot's plaintext `HashMap`s and the database key material — is skipped, leaving that plaintext in the module's linear memory until the page drops it (typically a reload). Native targets unwind: `[profile.release]` deliberately carries no `panic` key, and a test asserts it stays that way. Ordinary, non-panicking operation zeroizes on both platforms; this gap opens only on the panic path.
+
+13. **The post-quantum ciphersuites are experimental, and they are advertised by default:** ten of the thirteen suites `supportedCiphersuites()` returns sit on provisional code points that are **not registered with IANA** and may be renumbered or withdrawn — nine from [draft-ietf-mls-pq-ciphersuites](https://datatracker.ietf.org/doc/draft-ietf-mls-pq-ciphersuites), X-Wing (0x004D) from an expired individual draft. Groups created on them will need migrating when the official suites land, and several are pure ML-KEM/ML-DSA with no classical component to fall back on if the lattice assumptions break. Their implementations are pre-1.0: RustCrypto for twelve of them, and [libcrux](https://github.com/cryspen/libcrux) for X-Wing alone — formally verified at the source level for ML-KEM, but with no side-channel-resistance verification of compiled binaries, and its maintainers advise consultation before production use.
+
+    Two consequences worth acting on. First, an empty `MlsCapabilities.ciphersuites` means "OpenMLS's defaults", which is all thirteen — so a client that never touches capabilities advertises every experimental suite, and a peer may pick one for a group it invites you to. Pass an explicit list of raw code points (`[0x0001, 0x0002, 0x0003]`) to `createGroupWithBuilder`, `proposeSelfUpdate` and `createKeyPackageWithOptions` to narrow that. Second, exactly one suite reaches libcrux, and every reachability argument `.cargo/audit.toml` records for a libcrux advisory is stated over that bound; three tests in `rust/src/hybrid_crypto.rs` enforce it, and a change to crypto routing that leaves them green has not been reviewed. See [Post-Quantum Support](README.md#post-quantum-support-experimental) for the full suite table.
+
+    **Up to `openmls_frb` 2.3.1 (package 3.2.1), X-Wing has a peer-triggerable denial of service** ([RUSTSEC-2026-0331](https://rustsec.org/advisories/RUSTSEC-2026-0331)). The `libcrux-kem` in those native libraries (0.0.7 in `openmls_frb` 1.5.0 to 2.0.1, 0.0.9 from 2.1.0) panics when it decodes an X-Wing public key shorter than 1184 bytes, and it decodes the recipient's key every time it encrypts to one. So a peer that supplies a malformed key — as the init key of a key package you add, as a member's leaf key that one of your commits encrypts to, or in the `GroupInfo` you join by external commit — makes that operation of yours panic. The peer learns nothing and forges nothing. Native builds surface the panic as a `PanicException` and save nothing; on the web it aborts (#12) with the engine's locks still held, so that database stays unusable until the page is reloaded (*A panic does not.*, Section C). Only clients working on 0x004D are affected — no other suite touches libcrux. Later releases check the key's length before libcrux sees it, so the same input fails with an ordinary error; `libcrux-kem` itself stays at 0.0.9 until an OpenMLS release moves it (neither 0.9.1 nor 0.9.2 does). If you cannot upgrade, keep 0x004D away from peers you do not trust: create key packages and groups on other suites, and remember that an external join takes its suite from the `GroupInfo`.
+
+14. **Up to `openmls_frb` 2.3.1 (package 3.2.1), any peer can crash the application with nested extensions** ([GHSA-gc79-23g3-8g52](https://github.com/openmls/openmls/security/advisories/GHSA-gc79-23g3-8g52)). The OpenMLS in those native libraries (0.8.0 to 0.9.0) decodes an extension's body before checking that its type is allowed where it appears, so input that nests extensions inside one another is decoded to whatever depth it specifies, until the stack runs out. Anyone who can send you messages can send it — the delivery service or any other user — whatever the ciphersuite: an incoming message (`processMessage`, `processMessageWithInspect` and the synchronous `mlsMessageExtractGroupId`, `mlsMessageExtractEpoch` and `mlsMessageContentType`), a `Welcome` you join or only inspect (`inspectWelcome`, `exportWelcomeSecret`), the `GroupInfo` and ratchet tree of a join, and key packages (`addMembers`, `proposeAdd`, `keyPackageLifetime` and the rest). Running out of stack is not a panic, so no `PanicException` stands in for it. In most environments the process ends; through a C FFI, as here, or in WebAssembly, the advisory says the outcome depends on the environment and linker configuration, at worst memory corruption. Neither was measured here. Later releases carry OpenMLS 0.9.1 or later, which checks the type first, so the same input fails with an ordinary error. If you cannot upgrade, the advisory suggests bounding the size of the messages you decode: that bounds the nesting depth too and may reduce exposure, though a cap also turns away the legitimately large ratchet trees and `GroupInfo`s of big groups.
+
+15. **The P-256 and P-384 suites rest on code that is meant to be constant-time and is not known to be** ([RUSTSEC-2026-0387](https://rustsec.org/advisories/RUSTSEC-2026-0387)). Every native library and WebAssembly module of this package carries the RustCrypto `crypto-bigint` 0.5.5, whose operations meant to run in constant time could, depending on the compiler and target CPU, compile to branches on secret values. The fix exists only in 0.7.6, which needs an OpenMLS release on `p256`/`p384` 0.14; until then the advisory is accepted in `.cargo/audit.toml` and `rust/deny.toml`. Three of the thirteen suites `supportedCiphersuites()` returns are affected. On `mls128DhkemP256Aes128GcmSha256P256` (0x0002) and `mls128Mlkem768Aes256GcmSha384P256`, every signature computes with the private key and the signing nonce through crypto-bigint's modular addition and subtraction, which turn a borrow into a mask with no optimization barrier — the construct the fixed release guards. On `mls192Mlkem1024Aes256GcmSha384P384` the arithmetic is fiat-crypto, and crypto-bigint only range-checks, zero-checks and encodes the secrets. Whether this package's compiled code actually branches there was not measured, and the advisory leaves practical exploitability to the compiler, the CPU and an attacker who can observe a timing or microarchitectural side channel on the device. The other ten suites, 0x0001 and 0x0003 among them, do not run it on secret data: if timing side channels are in your threat model, use those until a release lifts this item. Separately, `openmls_frb` 2.1.0 to 2.3.1 carry `ctutils` 0.4.2 ([RUSTSEC-2026-0385](https://rustsec.org/advisories/RUSTSEC-2026-0385)), whose constant-time masks could compile to branches on common platforms, and its `u128` comparisons on 32-bit targets; RustCrypto's ML-KEM decapsulation and ML-DSA signing, which every post-quantum suite but X-Wing (0x004D) runs on secret data, select and compare with it. Later releases carry 0.4.5, which fixes it.
+
+16. **Up to `openmls_frb` 2.3.1 (package 3.2.1), a member an external commit removes can stay in the group** ([GHSA-94v4-rg25-x625](https://github.com/openmls/openmls/security/advisories/GHSA-94v4-rg25-x625)). When an external commit removes a member, the removal truncates the ratchet tree and the joiner's own leaf extends it again, the OpenMLS in those native libraries (0.8.0 to 0.9.0) restores the removed leaf, and some parent nodes, from the tree as it was before the commit. A resync does that — `joinGroupExternalCommit` and `joinGroupExternalCommitV2` remove any member that has the joiner's signature key — and so does another client's external commit that includes a SelfRemove proposal (`leaveGroupViaSelfRemove`) by reference. The committer and every member that processes the commit compute the same tree, so nothing diverges, but the restored leaf keeps its encryption key and later commits keep encrypting path secrets to it: a party that holds the removed client's state and keeps processing the group's handshake messages can derive the secrets of every later epoch, so a resync no longer shuts out a client whose state was lost or is no longer trusted, and a member who left with SelfRemove keeps access. While two leaves share a signature key, no new member can join, by Welcome or by external commit — yet the commit that adds one still goes through for the members already in the group, leaving a leaf whose owner never joined. Only groups that accept external commits are affected. Later releases carry OpenMLS 0.9.2, which leaves the regrown part of the tree blank, but upgrading does not repair a tree that was already written, and every epoch until the repair stays exposed to the holder of the removed client's state. To repair — once after upgrading, and after every external commit while you cannot — compare `groupMembers` with your own record of who belongs in the group and remove the leaves that do not with `removeMembers`, an ordinary commit that every version accepts. A member added while two leaves shared a key belongs in the group but never joined it: remove that leaf too, and add the member again once the duplicate is gone. A `signatureKey` listed twice marks the resync case, the restored copy usually at the higher `index`; its absence proves nothing, after a SelfRemove for one.
+
+## Code Review Security Checklist
+
+When reviewing code changes, verify:
+
+- [ ] No `':memory:'` databases in production code
+- [ ] No key material in logs or error messages
+- [ ] `Openmls.init()` called before any operations
+- [ ] `engine.close()` called on screen lock / app background
+- [ ] One `MlsEngine` per database file — no second engine, isolate, or process on the same path
+- [ ] Database stored on rollback-protected storage (see Section C)
+- [ ] Encryption key stored in platform secure storage (not hardcoded)
+- [ ] Error handling doesn't leak sensitive information
+- [ ] MLS protocol messages processed in order
+- [ ] Sensitive data in Dart uses `SecureBytes` or `.zeroize()` extension
+- [ ] No hardcoded keys or secrets
+- [ ] Web deployments use strict CSP headers
+
+## Fuzzing
+
+A `cargo-fuzz` harness lives under `rust/fuzz/`. Add one target per byte-parsing
+entry point that handles untrusted input (deserializers, message parsers,
+decryptors). A `Fuzz` workflow builds and runs every target on `rust/**` pull
+requests and on a weekly schedule.
+
+Seed the corpus with valid inputs so fuzzing starts from structurally-correct
+data instead of discovering your formats blind: extend
+`rust/fuzz/examples/gen_corpus.rs` whenever you add a target. CI regenerates
+the corpus (`make fuzz-seed`) before every run.
+
+```bash
+make setup-fuzz                          # one-time: nightly toolchain + cargo-fuzz
+make fuzz-list                           # list targets
+make fuzz-seed                           # generate seed corpus under rust/fuzz/corpus/
+make fuzz ARGS="mls_message -- -max_total_time=60"
+```
+
+## Upstream Security
+
+This package wraps OpenMLS. For security issues in the underlying library:
+
+- Check the upstream repository: [openmls/openmls](https://github.com/openmls/openmls)
+- Security advisories may be published there first
+
+## Reporting a Vulnerability
+
+If you discover a security vulnerability, please report it responsibly:
+
+1. **Do NOT** open a public GitHub issue for security vulnerabilities
+2. Use [GitHub's private vulnerability reporting](https://github.com/djx-y-z/openmls_dart/security/advisories/new)
+   — it opens a draft advisory only the maintainers can see, and it is the one
+   channel that needs no contact details published anywhere. It has to be
+   enabled once per repository (Settings → Security → Private vulnerability
+   reporting) before that link works for outside reporters.
+3. Include as much detail as possible:
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact
+   - Suggested fix (if any)
+
+## Response Timeline
+
+- **Acknowledgment**: Within 48 hours
+- **Initial Assessment**: Within 1 week
+- **Fix Development**: Depends on severity and complexity
+- **Public Disclosure**: Coordinated with reporter after fix is available
+
+## Security Updates
+
+Subscribe to releases on this repository to receive notifications about security updates.

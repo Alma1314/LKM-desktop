@@ -1,0 +1,10 @@
+{
+  "name": "file_picker",
+  "version": "13.1.0-ohos.1",
+  "description": "file_picker 的 OpenHarmony 兼容层。",
+  "main": "index.ets",
+  "license": "MIT",
+  "dependencies": {
+    "@ohos/flutter_ohos": "file:./har/flutter.har"
+  }
+}
