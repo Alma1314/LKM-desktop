@@ -62,3 +62,12 @@ packages/solsynth_express/build/
 # WebF build tooling
 webf/node_modules/
 webf/coverage/
+
+# Generated HarmonyOS files in vendored cross-platform plugins.
+/packages/*/ohos/build/
+/packages/*/ohos/oh_modules/
+/packages/*/ohos/.hvigor/
+/packages/*/ohos/.cxx/
+/packages/*/ohos/har/
+/packages/*/ohos/local.properties
+/packages/*/ohos/oh-package-lock.json5

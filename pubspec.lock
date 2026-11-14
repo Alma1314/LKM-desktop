@@ -3359,13 +3359,11 @@ packages:
     source: git
     version: "0.9.1"
   super_native_extensions:
-    dependency: "direct overridden"
+    dependency: "direct dev"
     description:
-      path: super_native_extensions
-      ref: "6f3d0caa84cb26e0d8c39d2868af1998ee80cc99"
-      resolved-ref: "6f3d0caa84cb26e0d8c39d2868af1998ee80cc99"
-      url: "https://gitcode.com/CPF-Flutter/fluttertpc_super_native_extensions.git"
-    source: git
+      path: "packages/super_native_extensions"
+      relative: true
+    source: path
     version: "0.9.1"
   super_sliver_list:
     dependency: "direct main"

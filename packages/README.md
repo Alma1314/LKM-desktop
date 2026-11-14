@@ -20,6 +20,10 @@ so the tree must stay together.
 | `protocol_handler_windows` | Vendored fork of `leanflutter/protocol_handler` |
 | `material_ui` / `cupertino_ui` | Current published UI versions with OH-Flutter platform cases |
 | `pinput` / `flutter_quill` | Current published input/editor versions with OH-Flutter platform cases |
+| `code_assets` / `native_toolchain_c` | Current native-assets versions with real OHOS targets / NDK compilation |
+| `cnativeapi` / `openmls` | Existing versions with explicit OHOS hook handling |
+| `audio_session` / `connectivity_plus` / `file_picker` | Current API versions with OHOS native backends |
+| `super_native_extensions` | Pinned cross-platform fork with a reproducible OHOS Rust build |
 
 The UI/input packages retain their current APIs and original platforms. All app
 targets use the same source, with OHOS following their Android UI behavior.

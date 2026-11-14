@@ -74,7 +74,7 @@ export default class FilePickerPlugin
       case 'clearTemporaryFiles': {
         if (this.context !== null) {
           const root = `${this.context.cacheDir}/file_picker`;
-          if (fs.accessSync(root)) await fs.rmdir(root, true);
+          if (fs.accessSync(root)) await fs.rmdir(root);
         }
         result.success(null);
         return;

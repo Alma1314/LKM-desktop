@@ -61,7 +61,7 @@ flutter doctor -v
 
 ### 最小原生 Flutter HAP
 
-验证工程：`/tmp/lkm-linux-ohos/smoke`，由当前 SDK 的 `flutter create --platforms=ohos` 生成，保持 Flutter 原生界面。
+当时的验证工程：`/tmp/lkm-linux-ohos/smoke`，由当前 SDK 的 `flutter create --platforms=ohos` 生成，保持 Flutter 原生界面。
 
 ```bash
 flutter build hap --debug --no-codesign --target-platform ohos-arm64
@@ -81,7 +81,7 @@ profile / release 使用对应的 `--profile` / `--release` 参数。签名已�
 
 release 检查发现原缓存的 `const_finder` 使用另一 Dart SDK hash，已用同一套 Dart / Kernel 源码重建，图标裁剪默认开启的 release 构建随后成功。日志为 `/tmp/lkm-linux-ohos/build-smoke-{hap,profile,release}.log`。
 
-业务应用未据此宣称迁移完成：此前的 `flutter pub get` 超时，详细日志显示 WebF 等官方 Git clone 返回 HTTP 418。现已应用下述传输修复，业务项目 `flutter pub get` 成功并更新唯一锁文件；应用侧集中静态检查、OHOS UI 回归和业务 OHOS Dart 编译已通过；全量测试结果为 868 通过、22 失败、3 跳过，业务 HAP 与真机验证尚未完成。
+业务应用未据此宣称迁移完成：此前的 `flutter pub get` 超时，详细日志显示 WebF 等官方 Git clone 返回 HTTP 418。现已应用下述传输修复，业务项目 `flutter pub get` 成功并更新唯一锁文件；应用侧集中静态检查、OHOS UI 回归和业务 OHOS Dart 编译已通过；此前全量测试结果为 868 通过、22 失败、3 跳过。随后首个业务 debug HAP 已在 Linux 本机构建成功；当前继续补齐插件和运行时原生库，尚未真机验证。
 
 ### Linux 测试引擎配套
 
@@ -106,7 +106,7 @@ PATH="/usr/bin:$PATH" "$HOME/flutter/bin/flutter" build hap \
   --debug --no-pub --no-codesign --target-platform ohos-arm64
 ```
 
-当前实际结果：Pub 解析成功，37 个 override 与锁文件的 Git SHA 逐项一致；应用静态检查修复了图片预览遗漏 OHOS 的平台分支，余下 7 个 warning / 58 个 info，0 个 error。本次应用改动的集中静态检查与 OHOS UI 测试均已通过；全量测试结果为 868 通过、22 失败、3 跳过，尚无成功的业务 HAP 产物。
+此前实际结果：Pub 解析成功，初始 37 个 override 与锁文件的 Git SHA 逐项一致；应用静态检查修复了图片预览遗漏 OHOS 的平台分支，余下 7 个 warning / 58 个 info，0 个 error。本次应用改动的集中静态检查与 OHOS UI 测试均已通过；该阶段全量测试结果为 868 通过、22 失败、3 跳过。原生资产修复后已有成功的业务 debug HAP，见下文。
 
 业务应用 OHOS Dart 编译已单独通过（不包含原生资产和 HAP 打包）：
 
@@ -117,39 +117,70 @@ flutter assemble --no-version-check \
   -dBuildMode=debug -dOhosArchs=arm64-v8a kernel_snapshot_program
 ```
 
-本次输出为 `.dart_tool/flutter_build/b8d37cb656102bf157dd2f4a27bd5d88/app.dill`，259660064 字节；日志为 `/tmp/lkm-linux-ohos/app-ohos-kernel.log`，命令退出码 0。完整 HAP 还需要下面的原生资产修复。
+本次输出为 `.dart_tool/flutter_build/b8d37cb656102bf157dd2f4a27bd5d88/app.dill`，259660064 字节；日志为 `/tmp/lkm-linux-ohos/app-ohos-kernel.log`，命令退出码 0。随后的原生资产修复和 HAP 进度见下文。
 
-### 全量检查结果
+### 最新应用检查结果
 
-- `flutter analyze --no-pub`：0 error、7 warning、58 info，退出码 1；本次应用修改和新增回归测试的集中 analyze 为 0 issue。
-- `flutter test --no-pub --reporter expanded`：868 通过、22 失败、3 跳过，退出码 1。新增 OHOS UI 回归独立运行和全量运行均通过；没有将全量测试标记为成功。
-- 22 项失败仍待定位，涉及下面 9 个文件；主题/消息截图存在像素差异，另有链接解析、页面断言、聊天布局/状态与音频探测超时。测试日志还出现远程字体获取失败，尚未完成替换前基线对照。
+- `flutter analyze --no-pub`：0 error、7 warning、59 info，退出码 1；集中检查本轮适配与新增测试为 0 issue。
+- 新增音频、文件选择、Flutter 菜单回归及原有 OHOS UI 回归均通过（4 项）。原生网络/文件选择逻辑检查和 NDK ARM64 编译探针通过。
+- `flutter test --no-pub --reporter expanded`：871 通过、22 失败、3 跳过，退出码 1。相比上一记录 868 通过，本轮新增 3 个用例通过；失败仍涉及下列 9 个文件。尚未用替换前工具链做基线对照，不将其直接归因为已有问题。
+- 失败涉及主题/消息截图、链接解析、页面断言、聊天布局/状态与音频探测超时；日志也有远程字体获取失败。没有将全量测试标为成功。
 
 | 测试文件 | 失败用例数 |
 | --- | ---: |
-| `test/misc/settings_explore_category_test.dart` | 1 |
-| `test/theme_preview_test.dart` | 3 |
-| `test/drive/s3_direct_upload_test.dart` | 1 |
-| `test/posts/post_link_embed_test.dart` | 9 |
-| `test/chat/messages_notifier_test.dart` | 1 |
-| `test/chat/message_post_link_test.dart` | 1 |
-| `test/chat/message_bubble_shape_test.dart` | 1 |
 | `test/chat/message_avatar_alignment_test.dart` | 4 |
+| `test/chat/message_bubble_shape_test.dart` | 1 |
+| `test/chat/message_post_link_test.dart` | 1 |
+| `test/chat/messages_notifier_test.dart` | 1 |
+| `test/drive/s3_direct_upload_test.dart` | 1 |
+| `test/misc/settings_explore_category_test.dart` | 1 |
+| `test/posts/post_link_embed_test.dart` | 9 |
 | `test/shared/widgets/markdown_selection_test.dart` | 1 |
+| `test/theme_preview_test.dart` | 3 |
 
-完整日志与机器可读结果保存在 `/home/alma/harmonyos/validation/`，文件名为 `lkm-desktop-*.log` 和 `lkm-desktop-validation.json`。
+完整日志与机器可读结果持久保存在 `/home/alma/harmonyos/validation/`，本轮文件名以 `lkm-desktop-phase3-` 开头；先前验证记录仍保留。
 
-### 业务 HAP 当前阻塞：原生资产目标
+### 业务原生资产与 HAP
 
-本次实际构建输入 `.dart_tool/hooks_runner/cnativeapi/28ebdb10e6/input.json` 显示：请求的架构是 `arm64`，但传给应用 hook 的 OS 是 `linux`。固定 SDK 的 `packages/flutter_tools/lib/src/isolated/native_assets/targets.dart` 中，`OhosAssetTarget.extensions` 明确将 `targetOS` 回退为 `OS.linux`，以兼容尚不认识 OHOS 的 hosted `code_assets`。
+SDK 原先将 `OhosAssetTarget` 的 hook OS 映射成 `linux`，导致 OHOS ARM64 构建错误选择 GTK 或 Linux 预编译库。已提供 [SDK 补丁](../buildtools/patches/flutter-ohos-native-assets.patch) 和可重复运行的 [安装脚本](../buildtools/patch-ohos-sdk.sh)，保留真实 `OS.ohos`。`setup-dev.sh` 会应用该补丁并触发 Flutter tool 重新编译；本机 SDK 因而有这一项受记录的源码修改。
 
-这会使 `cnativeapi` 选择 Linux GTK 源码和宿主头文件，甚至使用 NDK clang 的默认 x64 目标，不能当作合法的 OHOS 库继续验收。已停止这次业务 HAP 构建，没有将这类产物宣称为鸿蒙构建成功。
+```bash
+bash buildtools/patch-ohos-sdk.sh "$HOME/flutter"
+source buildtools/env-ohos.sh
+PATH="/usr/bin:$PATH" dart run buildtools/verify-ohos-native-assets.dart
+```
 
-应用当前解析的是 `code_assets 2.2.0`、`native_toolchain_c 0.19.6`；SDK 的鸿蒙移植源对应 `code_assets 1.2.1`、`native_toolchain_c 0.17.6`。不能直接覆盖为旧版掩盖接口差异。后续需要把 OHOS 协议/目标编译支持移植到当前版本，并撤销 SDK 的 Linux 回退；随后分别验证 cnativeapi、OpenMLS、sqlite3 等原生库的 OHOS 实现、ELF 架构与依赖。旧版审计中列出的 RTC、播放器、Firebase 等功能缺口也仍然存在。
+应用统一使用同版本本地 `code_assets 2.2.0`、`native_toolchain_c 0.19.6`，补齐 OHOS ABI、NDK target/sysroot 和链接规则。上述探针实际生成 ARM64 C++ 动态库，检查 ELF 及依赖，并拒绝错误架构。
+
+- `cnativeapi 0.5.10` 只服务于桌面托盘；OHOS hook 不构建桌面库，托盘入口使用 Windows/macOS/Linux 白名单。
+- `sqlite3 3.9.0` 使用官方 SQLite 3.54.0 amalgamation，在 OHOS 从源码构建；其他平台仍走原默认路径。源码及校验记录位于 `buildtools/native/sqlite3/`。
+- `openmls 3.3.0` 保持现有 Dart/FRB API，在 OHOS 用包内锁定 Rust 源码和 NDK 编译 ARM64 库。实际产物仅依赖 OHOS `libc.so`。
+- `super_native_extensions 0.9.1` 上游鸿蒙 CMake 没有生成 ArkTS/Dart 所加载的库。现已补接锁定 Rust 源码及 C++ 拖放辅助代码构建；菜单复用既有 Flutter renderer。N-API 与 FFI 导出已检查，设备上的加载、拖放仍待验证。
+
+首个业务 debug HAP 已在 Linux 构建成功：`build/ohos/hap/entry-default-unsigned.hap`，390819539 字节，SHA-256 `f9f6023cfd65a34c901125ac5f962277b9590ae01f3b4ef7a88ab69c5e4c5a5e`。持久备份为 `/home/alma/harmonyos/validation/lkm-desktop-initial-debug-unsigned.hap`；ZIP CRC 检查通过，7 个动态库均为 ARM64，包括 WebF、QuickJS、SQLite、OpenMLS。该初始包尚未包含后续音频/网络/文件选择适配及菜单 Rust 库，不能据此认定所有插件可运行。
+
+随后包含音频、网络状态、文件选择和菜单原生库的业务 debug HAP 再次构建成功，392173764 字节，SHA-256 `f6e82a8eb98bc5ef73a1e27ef86c4fd48e1c884338eef7e4191125360ba8d691`。持久产物为 `/home/alma/harmonyos/validation/lkm-desktop-debug-unsigned.hap`。8 个动态库均为 ARM64，CRC、DT_NEEDED 依赖存在性及菜单 N-API / FFI 导出检查通过；生成的 Dart registrant 包含 `FilePickerOhos.registerWith()`，ArkTS registrant 包含音频、网络和文件选择插件。
+
+```bash
+source buildtools/env-ohos.sh
+python3 buildtools/verify-ohos-hap.py build/ohos/hap/entry-default-unsigned.hap
+```
+
+检查脚本验证当前业务需要的 8 个库，拒绝 GNU/Linux 依赖和错误 ELF 架构；输出 JSON 的 SHA-256 与库依赖用于复查。这项检查不证明未适配插件已能运行。HDC 设备查询返回 `[Empty]`。
+
+业务 **release HAP** 也已在 Linux 本机构建成功，使用默认图标裁剪与 ARM64 AOT，96100366 字节（96.1 MB），SHA-256 `7aa2e498d1e70e447f37952b9d872dadd80cfa6687c05b5a5a38db6d7e9cd96b`。持久产物为 `/home/alma/harmonyos/validation/lkm-desktop-release-unsigned.hap`。9 个动态库包含 AOT `libapp.so` 和上述 8 个运行库，CRC、架构、动态依赖及 N-API / FFI 导出检查通过。
+
+```bash
+PATH="/usr/bin:$PATH" flutter build hap \
+  --release --no-pub --no-codesign --target-platform ohos-arm64
+python3 buildtools/verify-ohos-hap.py --require-aot
+```
+
+RTC、播放器、Firebase 等功能缺口仍见 [插件替换进度](HARMONYOS_PLUGIN_REPLACEMENTS.md)。所有业务构建均未签名，尚未在设备运行。
 
 ### 本地构建依赖和修复
 
-源码构建现场：`/tmp/lkm-linux-ohos/dart-build/sdk`。Clang 固定为官方 CIPD 的 `deb6854eec93529b2bd30178d400ad2ee7665cd4`；DevTools 固定为 `12d595649f189f1896722623f72599077f476848`。源码构建依赖的 196 个包已解析。
+源码构建时的现场：`/tmp/lkm-linux-ohos/dart-build/sdk`。Clang 固定为官方 CIPD 的 `deb6854eec93529b2bd30178d400ad2ee7665cd4`；DevTools 固定为 `12d595649f189f1896722623f72599077f476848`。源码构建依赖的 196 个包已解析。
 
 ### GitCode HTTP 418 修复
 

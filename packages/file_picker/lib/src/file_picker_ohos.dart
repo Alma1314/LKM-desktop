@@ -26,21 +26,20 @@ class FilePickerOhos extends FilePickerPlatform {
   }) async {
     onFileLoading?.call(FilePickerStatus.picking);
     try {
-    final List<Object?> uris = await _channel.invokeListMethod<String>(
-          'pickFiles',
-          <String, dynamic>{
-            'dialogTitle': dialogTitle,
-            'initialDirectory': initialDirectory,
-            'type': type.index,
-            'allowedExtensions': allowedExtensions,
-            'multiple': multiple,
-          },
-        ) ??
-        <Object?>[];
-    return uris
-        .whereType<String>()
-        .map((String uri) => OhosPlatformFile(Uri.parse(uri)))
-        .toList();
+      final List<Object?> uris =
+          await _channel
+              .invokeListMethod<String>('pickFiles', <String, dynamic>{
+                'dialogTitle': dialogTitle,
+                'initialDirectory': initialDirectory,
+                'type': type.index,
+                'allowedExtensions': allowedExtensions,
+                'multiple': multiple,
+              }) ??
+          <Object?>[];
+      return uris
+          .whereType<String>()
+          .map((String uri) => OhosPlatformFile(Uri.parse(uri)))
+          .toList();
     } finally {
       onFileLoading?.call(FilePickerStatus.done);
     }
@@ -99,7 +98,9 @@ class FilePickerOhos extends FilePickerPlatform {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
   }) async {
-    throw UnsupportedError('OHOS document providers do not expose absolute directory paths. Use pickFiles or saveFile.');
+    throw UnsupportedError(
+      'OHOS document providers do not expose absolute directory paths. Use pickFiles or saveFile.',
+    );
   }
 
   @override
@@ -111,7 +112,9 @@ class FilePickerOhos extends FilePickerPlatform {
     LinuxOptions linuxOptions = const LinuxOptions(),
     WebOptions webOptions = const WebOptions(),
   }) async {
-    throw UnsupportedError('OHOS document providers do not expose absolute directory paths. Use saveFile to export a file.');
+    throw UnsupportedError(
+      'OHOS document providers do not expose absolute directory paths. Use saveFile to export a file.',
+    );
   }
 
   @override
@@ -130,23 +133,25 @@ class FilePickerOhos extends FilePickerPlatform {
   }) async {
     onFileSaving?.call(FilePickerStatus.picking);
     try {
-    final String? uri = await _channel.invokeMethod<String>('saveFile', <String, dynamic>{
-      'fileName': fileName,
-      'bytes': bytes,
-      'mimeType': mimeType,
-      'dialogTitle': dialogTitle,
-      'initialDirectory': initialDirectory,
-      'type': type.index,
-      'allowedExtensions': allowedExtensions,
-    });
-    return uri == null ? null : Uri.parse(uri);
+      final String? uri = await _channel
+          .invokeMethod<String>('saveFile', <String, dynamic>{
+            'fileName': fileName,
+            'bytes': bytes,
+            'mimeType': mimeType,
+            'dialogTitle': dialogTitle,
+            'initialDirectory': initialDirectory,
+            'type': type.index,
+            'allowedExtensions': allowedExtensions,
+          });
+      return uri == null ? null : Uri.parse(uri);
     } finally {
       onFileSaving?.call(FilePickerStatus.done);
     }
   }
 
   @override
-  Future<void> clearTemporaryFiles() => _channel.invokeMethod<void>('clearTemporaryFiles');
+  Future<void> clearTemporaryFiles() =>
+      _channel.invokeMethod<void>('clearTemporaryFiles');
 }
 
 base class OhosPlatformFile extends PlatformFile {
@@ -158,28 +163,31 @@ base class OhosPlatformFile extends PlatformFile {
 
   @override
   String get name {
-    final String last = uri.pathSegments.isEmpty ? uri.toString() : uri.pathSegments.last;
+    final String last = uri.pathSegments.isEmpty
+        ? uri.toString()
+        : uri.pathSegments.last;
     return last.isEmpty ? uri.toString() : last;
   }
 
-  String? get path => uri.scheme == 'file' && uri.authority.isEmpty ? uri.toFilePath() : null;
+  @override
+  String? get path =>
+      uri.scheme == 'file' && uri.authority.isEmpty ? uri.toFilePath() : null;
 
   @override
   XFile get xFile => XFile(path ?? uri.toString());
 
   @override
-  int? lengthSync() => _size ?? (path == null ? null : File(path!).lengthSync());
+  int? lengthSync() =>
+      _size ?? (path == null ? null : File(path!).lengthSync());
 
   @override
   Future<int?> length() async => _size ?? File(path ?? uri.toString()).length();
 
   @override
-  Future<Uint8List> readAsBytes() =>
-      File(path ?? uri.toString()).readAsBytes();
+  Future<Uint8List> readAsBytes() => File(path ?? uri.toString()).readAsBytes();
 
   @override
-  Stream<Uint8List> readAsByteStream() =>
-      File(path ?? uri.toString())
-          .openRead()
-          .map((List<int> chunk) => Uint8List.fromList(chunk));
+  Stream<Uint8List> readAsByteStream() => File(
+    path ?? uri.toString(),
+  ).openRead().map((List<int> chunk) => Uint8List.fromList(chunk));
 }

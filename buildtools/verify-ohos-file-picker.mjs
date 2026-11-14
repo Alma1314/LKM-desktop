@@ -24,7 +24,7 @@ const nativeFs = {
   async write(fd, data) { return fs.writeSync(fd, Buffer.from(data), 0, Math.min(2, data.byteLength)); },
   mkdirSync(directory, recursive) { fs.mkdirSync(directory, { recursive }); },
   accessSync: fs.existsSync,
-  async rmdir(directory, recursive) { fs.rmSync(directory, { recursive }); },
+  async rmdir(directory) { fs.rmSync(directory, { recursive: true }); },
 };
 const picker = {
   DocumentSelectOptions: class {},

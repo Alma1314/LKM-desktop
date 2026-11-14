@@ -1,0 +1,23 @@
+cmake_minimum_required( VERSION 2.6.3 )
+set(CMAKE_SYSTEM_NAME Linux )
+ 
+SET (CMAKE_C_COMPILER             "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin/aarch64-unknown-linux-ohos-clang")
+SET (CMAKE_C_FLAGS                "-Wall -std=c99")
+SET (CMAKE_C_FLAGS_DEBUG          "-g")
+SET (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+SET (CMAKE_C_FLAGS_RELEASE        "-O4 -DNDEBUG")
+SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
+ 
+SET (CMAKE_CXX_COMPILER             "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin/aarch64-unknown-linux-ohos-clang++")
+SET (CMAKE_CXX_FLAGS                "-Wall -std=c++17")
+SET (CMAKE_CXX_FLAGS_DEBUG          "-g")
+SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
+SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+ 
+SET (CMAKE_AR      "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin/llvm-ar")
+SET (CMAKE_LINKER  "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin/llvm-ld")
+SET (CMAKE_NM      "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin//llvm-nm")
+SET (CMAKE_OBJDUMP "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin//llvm-objdump")
+SET (CMAKE_RANLIB  "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/bin//llvm-ranlib")
+# SET (CMAKE_PREFIX_PATH      "$ENV{DEVECO_SDK_HOME}/default/openharmony/native/llvm/lib/cmake/llvm")
