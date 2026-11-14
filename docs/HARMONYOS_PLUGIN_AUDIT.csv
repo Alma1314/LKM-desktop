@@ -1,0 +1,468 @@
+package,locked_version,dependency,runtime_dependency,platforms,installed_ohos,native_evidence,classification,candidate_version,candidate_ref,candidate_commit,candidate_path,candidate_ohos,source,notes
+_fe_analyzer_shared,103.0.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+_flutterfire_internals,1.3.79,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：firebase_core, firebase_core_web"
+analyzer,13.3.0,transitive,no,,no,lib/src/diagnostic/diagnostic.g.dart;lib/src/generated/error_verifier.dart;lib/src/generated/ffi_verifier.dart;lib/src/test_utilities/mock_packages.dart;lib/src/test_utilities/mock_sdk.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+analyzer_buffer,0.3.4,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+android_file_picker,2.1.3,transitive,yes,android,no,lib/src/file_picker_android.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+animations,3.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui"
+ansicolor,2.0.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+archive,4.6.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+args,2.7.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+asn1lib,1.6.8,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+async,2.13.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+audio_session,0.2.4,direct main,yes,"android,ios,macos,web",no,lib/audio_session_web.dart;lib/src/android.dart;lib/src/core.dart;lib/src/darwin.dart,异版适配源：需迁移验证,0.2.2,br_v0.2.2_ohos,62af3718564bca39e8eba77c9cf8a75aeebfd43e,pubspec.yaml,"{""package"": ""com.ryanheise.audio_session"", ""pluginClass"": ""AudioSessionPlugin""}",https://gitcode.com/CPF-Flutter/flutter_audio_session/blob/br_v0.2.2_ohos/pubspec.yaml,适配源 0.2.2 低于根依赖 ^0.2.4；与 just_audio 的 Git 来源需统一。
+auto_route,11.2.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui"
+auto_route_generator,10.6.0,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui"
+boolean_selector,2.1.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+build,4.0.11,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+build_cli_annotations,2.1.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+build_config,1.3.3,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+build_daemon,4.1.7,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+build_runner,2.16.1,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+built_collection,5.1.2,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+built_value,8.13.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+cached_network_image,4.0.6,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, jni, jni_flutter, material_ui, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, sqflite, sqflite_android, sqflite_darwin"
+cached_network_image_platform_interface,5.0.3,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,"依赖需适配链：cupertino_ui, jni, jni_flutter, material_ui, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, sqflite, sqflite_android, sqflite_darwin"
+cached_network_image_web,2.0.4,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, jni, jni_flutter, material_ui, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, sqflite, sqflite_android, sqflite_darwin"
+characters,1.4.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+charcode,1.4.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+checked_yaml,2.0.4,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+cli_util,0.4.2,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+clock,1.1.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+cnativeapi,0.5.10,transitive,yes,,no,hook/;lib/src/bindings_generated.dart;lib/src/event_loop.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,构建 hook 的 OS switch 显式拒绝 OHOS；仅运行时禁用托盘仍可能过不了构建。
+code_assets,2.2.0,transitive,yes,,no,lib/src/code_assets/architecture.dart;lib/src/code_assets/code_asset.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+code_builder,4.13.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+collection,1.19.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+connectivity_plus,7.3.1,direct main,yes,"android,ios,linux,macos,web,windows",no,,异版适配源：需迁移验证,7.0.0,br_connectivity_plus-v7.0.0_ohos,9514235dda402b432b860a31c69d4dc5153891f5,packages/connectivity_plus/connectivity_plus/pubspec.yaml,"{""package"": ""dev.fluttercommunity.plus.connectivity"", ""pluginClass"": ""ConnectivityPlugin""}",https://gitcode.com/CPF-Flutter/flutter_plus_plugins/blob/br_connectivity_plus-v7.0.0_ohos/packages/connectivity_plus/connectivity_plus/pubspec.yaml,有 7.0.0 适配分支，当前 7.3.1；需核对列表返回值、事件与接口版本。
+connectivity_plus_platform_interface,2.1.0,transitive,yes,,no,lib/method_channel_connectivity.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+console,4.1.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+convert,3.1.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+crop_image,1.0.17,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+cross_file,0.3.5+5,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+crypto,3.0.8,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+csslib,1.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+cupertino_http,2.4.0,transitive,yes,"ios,macos",no,lib/src/native_cupertino_bindings.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+cupertino_ui,1.1.6,transitive,yes,,no,,需处理：未确认兼容版/需隔离或移植,,,,,,,包含六平台 switch，需核对 OHOS 分支及交互回退。
+dart_earcut,1.2.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dart_jsonwebtoken,3.4.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dart_polylabel2,1.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dart_quill_delta,10.8.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dart_style,3.1.14,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dart_webrtc,1.8.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+data_assets,0.20.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dbus,0.7.15,transitive,yes,,no,lib/src/getsid_windows.dart;lib/src/getuid_linux.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+desktop_drop,0.8.4,direct main,yes,"macos,linux,windows,android,web",no,lib/desktop_drop_web.dart;lib/src/channel.dart,需处理：源码候选未确认平台或版本,0.7.0,main,5fc644121264d839388426cfe8c706298caaee17,packages/desktop_drop/pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_desktop_drop/blob/main/packages/desktop_drop/pubspec.yaml,找到仓库，但读到的 0.7.0 pubspec 未声明 OHOS；手机端拖放按产品需求处理。
+desktop_multi_window,0.3.1,direct main,yes,"macos,windows,linux",no,lib/src/window_channel.dart;lib/src/window_controller.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,当前仅 macOS/Windows/Linux；鸿蒙手机不应初始化桌面多窗口实现。
+device_info_plus,13.3.0,direct main,yes,"android,ios,linux,web,macos,windows",no,lib/src/device_info_plus_windows.dart,同版适配源：待集成验证,13.3.0,main,,packages/device_info_plus/device_info_plus/pubspec.yaml,"{""pluginClass"": ""DeviceInfoPlusPlugin"", ""dartPluginClass"": ""DeviceInfoPlusOhosPlugin""}",https://gitcode.com/oh-flutter/device_info_plus/blob/main/packages/device_info_plus/device_info_plus/pubspec.yaml,同版 OHOS 实现；需验证设备标识、字段和权限。
+device_info_plus_platform_interface,8.1.0,transitive,yes,,no,lib/method_channel/method_channel_device_info.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+diff_match_patch,0.4.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dio,5.11.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dio_cache_interceptor,3.5.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dio_smart_retry,7.0.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+dio_web_adapter,2.2.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+disk_space_2,1.0.13,direct main,yes,"android,ios,linux,windows",no,lib/disk_space_2.dart;lib/disk_space_2_method_channel.dart,同版适配源：待集成验证,1.0.13,feat/ohos_disk_space_2_1.0.13,,pubspec.yaml,"{""pluginClass"": ""DiskSpace2Plugin""}",https://gitcode.com/oh-flutter/disk_space_2/blob/feat%2Fohos_disk_space_2_1.0.13/pubspec.yaml,同版 OHOS 实现；需验证沙箱磁盘容量单位。
+dismissible_page,2.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+drift,2.35.3,direct main,yes,,no,lib/native.dart;lib/src/sqlite3/database.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,自身为 Dart 层；sqlite3 3.9.0 原生资产/构建 hook 未确认支持 OHOS。
+drift_flutter,0.3.1,direct main,yes,,no,lib/src/unsupported.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,依赖 path_provider 与 sqlite3；不能用 sqflite 的兼容版证明 Drift 可用。
+dropdown_button2,3.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+easy_localization,3.0.8,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：jni, path_provider_linux, path_provider_windows, shared_preferences, shared_preferences_android, shared_preferences_foundation, shared_preferences_linux, shared_preferences_platform_interface, shared_preferences_web, shared_preferences_windows"
+easy_logger,0.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+email_validator,3.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+equatable,2.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+event_bus,2.0.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+fake_async,1.3.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+ffi,2.2.0,transitive,yes,,no,lib/src/allocation.dart;lib/src/arena.dart;lib/src/utf16.dart;lib/src/utf8.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+ffi_leak_tracker,0.1.2,transitive,yes,,no,lib/src/bindings.dart;lib/src/leak_tracker.dart;lib/src/utils.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+file,7.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+file_picker,13.3.2,direct main,yes,"android,ios,linux,macos,web,windows",no,,异版适配源：需迁移验证,13.1.0-ohos.2,main,a845c22b0c444d1724f1d6be9600b5795358c327,pubspec.yaml,"{""pluginClass"": ""FilePickerPlugin"", ""dartPluginClass"": ""FilePickerOhos""}",https://gitcode.com/oh-flutter/file_picker/blob/main/pubspec.yaml,适配版 13.1.0-ohos.2 低于 13.3.2；需迁移或合并 OHOS 改动。
+file_picker_darwin,2.4.2,transitive,yes,"ios,macos",no,lib/src/file_picker_darwin.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+file_picker_linux,2.0.3,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+file_picker_platform_interface,4.2.0,transitive,yes,,no,lib/src/method_channel_file_picker.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+file_picker_web,4.2.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+file_saver,0.7.0,direct main,yes,"android,ios,linux,macos,windows,web",no,,同版适配源：待集成验证,0.7.0,feat/ohos_file_saver_0.7.0,,pubspec.yaml,"{""pluginClass"": ""FileSaverPlugin""}",https://gitcode.com/oh-flutter/file_saver/blob/feat%2Fohos_file_saver_0.7.0/pubspec.yaml,同版 OHOS 实现；文件 URI、用户选择与沙箱权限需真机验证。
+file_selector_linux,0.9.4+1,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+file_selector_macos,0.9.5+2,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+file_selector_platform_interface,2.7.0,transitive,yes,,no,lib/src/method_channel/method_channel_file_selector.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+file_selector_windows,0.9.3+6,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+firebase_analytics,13.0.1,direct main,yes,"android,ios,macos,web",no,,需处理：未确认兼容版/需隔离或移植,,,,,,,未找到与当前版本对应的、已核实的 OHOS 实现；需鸿蒙统计方案或明确降级。
+firebase_analytics_platform_interface,6.0.9,transitive,yes,,no,lib/src/method_channel/method_channel_firebase_analytics.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+firebase_analytics_web,0.6.3+15,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+firebase_core,5.1.0,direct main,yes,"android,ios,macos,web,windows",no,,异版适配源：需迁移验证,3.15.2,HEAD,,pubspec.yaml,"{""pluginClass"": ""FirebaseCorePlugin""}",https://atomgit.com/Wangzhipeng520/firebase_core/blob/HEAD/pubspec.yaml,仅找到第三方 3.15.2 源码声明 OHOS；与当前 5.1.0 不同，不能证明 Messaging/Analytics 可用。
+firebase_core_platform_interface,8.1.1,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+firebase_core_web,4.1.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+firebase_messaging,17.0.1,direct main,yes,"android,ios,macos,web",no,,需处理：未确认兼容版/需隔离或移植,,,,,,,未找到与当前版本对应的、已核实的 OHOS 实现；鸿蒙推送还涉及服务端设备令牌和通道。
+firebase_messaging_platform_interface,4.11.1,transitive,yes,,no,lib/src/method_channel/method_channel_messaging.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+firebase_messaging_web,4.3.1,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+fixnum,1.1.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+fl_chart,1.3.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flat_buffers,25.9.23,direct overridden,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter,SDK,direct main,yes,,no,lib/src/rendering/binding.dart;lib/src/services/message_codec.dart;lib/src/services/platform_channel.dart;lib/src/services/system_channels.dart;lib/src/widgets/_window_linux.dart;lib/src/widgets/_window_macos.dart;lib/src/widgets/_window_win32.dart,SDK：随 OH-Flutter 验证,,,,,,,
+flutter_app_update,3.2.4,transitive,yes,"android,ios",no,lib/azhon_app_update.dart,异版适配源：需迁移验证,3.2.2,HEAD,,pubspec.yaml,"{""package"": ""com.azhon.flutter_app_update"", ""pluginClass"": ""FlutterAppUpdatePlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_flutter_app_update/blob/HEAD/pubspec.yaml,项目使用本地 Android/iOS 更新插件；社区 fork 不能直接替换本地补丁，HAP 更新也不同于 APK。
+flutter_blurhash,0.9.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_cache_manager,3.5.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：jni, jni_flutter, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, sqflite, sqflite_android, sqflite_darwin"
+flutter_callkit_incoming,3.1.6,direct main,yes,"android,ios",no,lib/flutter_callkit_incoming.dart,同版适配源：待集成验证,3.1.6,feat/ohos_flutter_callkit_incoming_3.1.6,,pubspec.yaml,"{""pluginClass"": ""FlutterCallkitIncomingPlugin""}",https://gitcode.com/oh-flutter/flutter_callkit_incoming/blob/feat%2Fohos_flutter_callkit_incoming_3.1.6/pubspec.yaml,同版 OHOS 实现；系统来电、后台与权限能力需单独验证。
+flutter_colorpicker,1.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_gpu,SDK,transitive,yes,,no,lib/gpu.dart,SDK：随 OH-Flutter 验证,,,,,,,
+flutter_gpu_shaders,0.5.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_hooks,0.21.4,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_image_compress,2.5.1,direct main,yes,"android,ios,macos,web,ohos",yes,,当前依赖已有 OHOS 声明：未运行验证,,,,,,,当前已引入 flutter_image_compress_ohos 0.0.3+1，并有 OHOS 注册声明；尚未实机构建。
+flutter_image_compress_common,1.1.1,transitive,yes,"android,ios",no,lib/flutter_image_compress_common.dart,原生插件：未确认当前版本的 OHOS 实现,,,,,,,
+flutter_image_compress_macos,1.1.0,direct dev,yes,macos,no,lib/flutter_image_compress_macos.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_image_compress_ohos,0.0.3+1,transitive,yes,ohos,yes,lib/flutter_image_compress_ohos.dart,当前依赖已有 OHOS 声明：未运行验证,,,,,,,
+flutter_image_compress_platform_interface,1.1.0,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+flutter_image_compress_web,0.1.5+1,transitive,yes,web,no,lib/flutter_image_compress_web.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_inappwebview,6.1.5,direct main,yes,"android,ios,macos,web,windows",no,lib/src/in_app_webview/_static_channel.dart,同版适配源：待集成验证,6.1.5,br_v6.1.5_ohos,389cf40dbb647f1df7272de5ea6b3401efe27a75,flutter_inappwebview/pubspec.yaml,"{""default_package"": ""flutter_inappwebview_ohos""}",https://gitcode.com/CPF-Flutter/flutter_inappwebview/blob/br_v6.1.5_ohos/flutter_inappwebview/pubspec.yaml,6.1.5 同版 fork；必须一起处理 OHOS 实现、platform_interface 及同仓库 path 依赖，不能只加一个 Git URL。
+flutter_inappwebview_android,1.1.3,transitive,yes,android,no,lib/src/chrome_safari_browser/chrome_safari_browser.dart;lib/src/cookie_manager.dart;lib/src/find_interaction/find_interaction_controller.dart;lib/src/http_auth_credentials_database.dart;lib/src/in_app_browser/in_app_browser.dart;lib/src/in_app_webview/_static_channel.dart;lib/src/in_app_webview/headless_in_app_webview.dart;lib/src/in_app_webview/in_app_webview_controller.dart;lib/src/platform_util.dart;lib/src/print_job/print_job_controller.dart;lib/src/process_global_config.dart;lib/src/proxy_controller.dart;lib/src/pull_to_refresh/pull_to_refresh_controller.dart;lib/src/service_worker_controller.dart;lib/src/tracing_controller.dart;lib/src/web_message/web_message_channel.dart;lib/src/web_message/web_message_listener.dart;lib/src/web_storage/web_storage_manager.dart;lib/src/webview_asset_loader.dart;lib/src/webview_feature.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_inappwebview_internal_annotations,1.3.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_inappwebview_ios,1.1.2,transitive,yes,ios,no,lib/src/chrome_safari_browser/chrome_safari_browser.dart;lib/src/cookie_manager.dart;lib/src/find_interaction/find_interaction_controller.dart;lib/src/http_auth_credentials_database.dart;lib/src/in_app_browser/in_app_browser.dart;lib/src/in_app_webview/_static_channel.dart;lib/src/in_app_webview/headless_in_app_webview.dart;lib/src/in_app_webview/in_app_webview_controller.dart;lib/src/platform_util.dart;lib/src/print_job/print_job_controller.dart;lib/src/pull_to_refresh/pull_to_refresh_controller.dart;lib/src/web_authentication_session/web_authenticate_session.dart;lib/src/web_message/web_message_channel.dart;lib/src/web_message/web_message_listener.dart;lib/src/web_storage/web_storage_manager.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_inappwebview_macos,1.1.2,transitive,yes,macos,no,lib/src/cookie_manager.dart;lib/src/find_interaction/find_interaction_controller.dart;lib/src/http_auth_credentials_database.dart;lib/src/in_app_browser/in_app_browser.dart;lib/src/in_app_webview/_static_channel.dart;lib/src/in_app_webview/headless_in_app_webview.dart;lib/src/in_app_webview/in_app_webview_controller.dart;lib/src/platform_util.dart;lib/src/print_job/print_job_controller.dart;lib/src/web_authentication_session/web_authenticate_session.dart;lib/src/web_message/web_message_channel.dart;lib/src/web_message/web_message_listener.dart;lib/src/web_storage/web_storage_manager.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_inappwebview_platform_interface,1.3.0+1,transitive,yes,,no,,接口包：依赖对应平台实现,1.3.0+1,br_v6.1.5_ohos,389cf40dbb647f1df7272de5ea6b3401efe27a75,flutter_inappwebview_platform_interface/pubspec.yaml,,https://gitcode.com/CPF-Flutter/flutter_inappwebview/blob/br_v6.1.5_ohos/flutter_inappwebview_platform_interface/pubspec.yaml,
+flutter_inappwebview_web,1.1.2,transitive,yes,web,no,lib/src/cookie_manager.dart;lib/src/in_app_webview/_static_channel.dart;lib/src/in_app_webview/headless_in_app_webview.dart;lib/src/in_app_webview/in_app_webview_controller.dart;lib/src/platform_util.dart;lib/web/headless_in_app_web_view_web_element.dart;lib/web/headless_inappwebview_manager.dart;lib/web/in_app_web_view_web_element.dart;lib/web/platform_util.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_inappwebview_windows,0.6.0,transitive,yes,windows,no,lib/src/cookie_manager.dart;lib/src/find_interaction/find_interaction_controller.dart;lib/src/http_auth_credentials_database.dart;lib/src/in_app_browser/in_app_browser.dart;lib/src/in_app_webview/_static_channel.dart;lib/src/in_app_webview/custom_platform_view.dart;lib/src/in_app_webview/headless_in_app_webview.dart;lib/src/in_app_webview/in_app_webview_controller.dart;lib/src/platform_util.dart;lib/src/print_job/print_job_controller.dart;lib/src/web_message/web_message_channel.dart;lib/src/web_message/web_message_listener.dart;lib/src/web_storage/web_storage_manager.dart;lib/src/webview_environment/webview_environment.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_keyboard_visibility_linux,1.0.0,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_keyboard_visibility_macos,1.0.0,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_keyboard_visibility_platform_interface,2.0.0,transitive,yes,,no,lib/src/method_channel_flutter_keyboard_visibility.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+flutter_keyboard_visibility_temp_fork,0.1.6,transitive,yes,"android,ios,web,macos,linux,windows",no,,异版适配源：需迁移验证,0.1.5,master,4db7511a2377405d3a0068b91cc45d805b33b214,flutter_keyboard_visibility_temp_fork/pubspec.yaml,"{""pluginClass"": ""FlutterKeyboardVisibilityTempForkPlugin""}",https://gitcode.com/guanxia/flutter_keyboard_visibility_temp_fork/blob/master/flutter_keyboard_visibility_temp_fork/pubspec.yaml,找到 0.1.5 OHOS 源；当前 0.1.6，需要核对差异与注册。
+flutter_keyboard_visibility_windows,1.0.0,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_launcher_icons,0.14.4,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_lints,6.0.0,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_local_notifications,23.0.0,direct main,yes,"android,ios,macos,linux,windows,web",no,lib/src/callback_dispatcher.dart;lib/src/platform_flutter_local_notifications.dart,异版适配源：需迁移验证,22.3.2,main,60d3aaef273b7cddd89312007a06419ea3c203e4,flutter_local_notifications/pubspec.yaml,"{""pluginClass"": ""FlutterLocalNotificationsPlugin"", ""dartPluginClass"": ""OhosFlutterLocalNotificationsPlugin""}",https://gitcode.com/oh-flutter/flutter_local_notifications/blob/main/flutter_local_notifications/pubspec.yaml,找到 22.3.2；当前为 23.0.0，需核对通知调度、动作和权限接口。
+flutter_local_notifications_linux,9.0.0,transitive,yes,linux,no,lib/src/posix.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_local_notifications_platform_interface,13.0.0,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+flutter_local_notifications_web,2.0.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_local_notifications_windows,4.0.0,transitive,yes,windows,no,lib/src/ffi/bindings.dart;lib/src/ffi/utils.dart;lib/src/msix/ffi.dart;lib/src/plugin/ffi.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_localizations,SDK,direct main,yes,,no,,SDK：随 OH-Flutter 验证,,,,,,,
+flutter_map,8.3.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：jni, jni_flutter, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows"
+flutter_markdown_plus,1.0.12,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_math_fork,0.7.4,direct main,yes,,no,,需处理：源码候选未确认平台或版本,0.7.4,HEAD,,pubspec.yaml,,https://gitcode.com/CPF-Flutter/flutter_math_fork/blob/HEAD/pubspec.yaml,本地 vendored 包的 switch 仅覆盖六平台；OHOS 下可能出现未初始化变量等编译问题，不能直接换旧 fork 丢掉字体补丁。
+flutter_native_splash,2.4.8,direct main,yes,web,no,lib/flutter_native_splash.dart;lib/flutter_native_splash_web.dart,需处理：源码候选未确认平台或版本,2.3.1,HEAD,,pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_flutter_native_splash/blob/HEAD/pubspec.yaml,属于生成工具及启动页支持；需 OHOS 工程资源配置，不能把旧 fork 的存在算作当前运行时兼容。
+flutter_nfc_kit,3.7.0,direct main,yes,"android,ios,web",no,lib/flutter_nfc_kit.dart;lib/flutter_nfc_kit_web.dart,异版适配源：需迁移验证,3.6.2,br_3.41_dev,2d0251fc83e27ef22e414c70677257a8dc5882a0,pubspec.yaml,"{""package"": ""im.nfc.flutter_nfc_kit"", ""pluginClass"": ""FlutterNfcKitPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_flutter_nfc_kit/blob/br_3.41_dev/pubspec.yaml,开发分支读到 3.6.2，当前为 3.7.0；需核对 NFC tag/API 与权限。
+flutter_plugin_android_lifecycle,2.0.35,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_popup_card,0.1.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_quill,11.6.0,direct main,yes,,no,,需处理：源码候选未确认平台或版本,11.4.1,master,d73dd7818bf0871fa02ad07d3bf683bbf411e16c,pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_flutter_quill/blob/master/pubspec.yaml,现有 11.6.0 依赖 quill_native_bridge 和 keyboard visibility fork；社区编辑器 fork 为 11.4.1，需避免直接降级编辑器。
+flutter_quill_delta_from_html,1.5.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_riverpod,3.5.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui"
+flutter_rust_bridge,2.13.0,transitive,yes,,no,lib/src/dart_c_object_into_dart/_io.dart;lib/src/droppable/_io.dart;lib/src/ffigen_generated/multi_package.dart;lib/src/generalized_frb_rust_binding/_io.dart;lib/src/generalized_isolate/_io.dart;lib/src/generalized_uint8list/_io.dart;lib/src/generalized_uint8list/rust_vec_u8.dart;lib/src/manual_impl/_io.dart;lib/src/platform_types/_io.dart,需处理：源码候选未确认平台或版本,2.14.0-beta.1,master,,frb_dart/pubspec.yaml,,https://gitcode.com/oh-flutter/flutter_rust_bridge/blob/master/frb_dart/pubspec.yaml,OH 社区 master 读到 2.14.0-beta.1；openmls 精确要求 >=2.13.0 <2.13.1，不能直接覆盖 runtime。
+flutter_secure_storage,11.2.0,direct main,yes,"android,ios,macos,linux,web,windows",no,,同版适配源：待集成验证,11.2.0,main,d3667ff4f3c8f259093a20dee88b50fff247626d,flutter_secure_storage/pubspec.yaml,"{""default_package"": ""flutter_secure_storage_ohos""}",https://gitcode.com/oh-flutter/flutter_secure_storage/blob/main/flutter_secure_storage/pubspec.yaml,11.2.0 wrapper + tag 11.2.0-ohos.1 的 OHOS 实现 1.2.2；需验证加密、持久性与密钥生命周期。
+flutter_secure_storage_darwin,0.4.3,transitive,yes,"ios,macos",no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_secure_storage_linux,3.0.3,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_secure_storage_platform_interface,2.1.1,transitive,yes,,no,lib/src/method_channel_flutter_secure_storage.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+flutter_secure_storage_web,2.1.1,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_secure_storage_windows,4.2.2,transitive,yes,windows,no,lib/src/flutter_secure_storage_windows_ffi.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+flutter_shaders,0.1.5,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_sharing_intent,2.0.4,direct main,yes,"android,ios",no,lib/flutter_sharing_intent.dart;lib/flutter_sharing_intent_method_channel.dart,同版适配源：待集成验证,2.0.4,main,,pubspec.yaml,"{""package"": ""com.techind.flutter_sharing_intent"", ""pluginClass"": ""FlutterSharingIntentPlugin""}",https://gitcode.com/oh-flutter/flutter_sharing_intent/blob/main/pubspec.yaml,同版 OHOS 实现；需要在原生 Ability 配置接收分享的入口。
+flutter_staggered_grid_view,0.7.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_svg,2.3.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_test,SDK,direct dev,yes,,no,lib/src/test_default_binary_messenger.dart,SDK：随 OH-Flutter 验证,,,,,,,
+flutter_timezone,5.1.1,direct main,yes,"android,ios,linux,macos,windows,web",no,lib/flutter_timezone.dart;lib/flutter_timezone_web.dart,异版适配源：需迁移验证,4.1.0,main,7f9d44b6dc3ca7558b3a1fd1389756b39583f000,pubspec.yaml,"{""package"": ""net.wolverinebeach.flutter_timezone"", ""pluginClass"": ""FlutterTimezonePlugin""}",https://gitcode.com/oh-flutter/flutter_timezone/blob/main/pubspec.yaml,OHOS 源为 4.1.0，当前为 5.1.1；项目使用 TimezoneInfo.identifier，需核对返回类型。
+flutter_typeahead,6.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+flutter_web_plugins,SDK,direct main,yes,,no,lib/src/plugin_event_channel.dart;lib/src/plugin_registry.dart,SDK：随 OH-Flutter 验证,,,,,,,
+flutter_webrtc,1.6.3,direct main,yes,"android,ios,macos,windows,linux,elinux",no,lib/src/native/event_channel.dart;lib/src/native/frame_cryptor_impl.dart;lib/src/native/rtc_data_channel_impl.dart;lib/src/native/rtc_peerconnection_impl.dart;lib/src/native/rtc_video_platform_view_controller.dart;lib/src/native/rtc_video_renderer_impl.dart;lib/src/native/utils.dart,异版适配源：需迁移验证,0.9.48+hotfix.1,br_v1.2.1_ohos,787755350c382364abc61bb2b74b6575776bffe3,pubspec.yaml,"{""pluginClass"": ""FlutterWebRTCPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_flutter_webrtc/blob/br_v1.2.1_ohos/pubspec.yaml,br_v1.2.1_ohos 的 pubspec 仍为 0.9.48+hotfix.1；不能仅凭分支名认定兼容当前 1.6.3。
+freezed,4.0.1,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+freezed_annotation,3.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+frontend_server_client,4.2.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+gal,2.3.3,direct main,yes,"android,ios,macos,windows",no,lib/src/gal_method_channel.dart,同版适配源：待集成验证,2.3.3,feat/ohos_gal_2.3.3,,pubspec.yaml,"{""pluginClass"": ""GalPlugin""}",https://gitcode.com/oh-flutter/gal/blob/feat%2Fohos_gal_2.3.3/pubspec.yaml,同版 OHOS 实现；相册保存权限与格式需真机验证。
+gap,3.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+geoclue,0.1.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+geocoding,5.0.1,direct main,yes,"android,ios,macos",no,,异版适配源：需迁移验证,4.0.0,br_v5.0.1_ohos_dev,258b4af80fd58f0ba94d7fc3ffdd22af3097fb99,geocoding/pubspec.yaml,"{""default_package"": ""geocoding_ohos""}",https://gitcode.com/CPF-Flutter/fluttertpc_geocoding/blob/br_v5.0.1_ohos_dev/geocoding/pubspec.yaml,br_v5.0.1_ohos_dev 的 pubspec 仍为 4.0.0；当前为 5.0.1，不能直接按同版替换。
+geocoding_android,5.1.0,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geocoding_darwin,1.0.3,transitive,yes,"ios,macos",no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geocoding_platform_interface,5.0.0,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+geolocator,14.1.2,direct main,yes,"android,ios,macos,web,windows,linux",no,,同版适配源：待集成验证,14.1.2,main,,geolocator/pubspec.yaml,"{""pluginClass"": ""GeolocatorOhosPlugin"", ""dartPluginClass"": ""GeolocatorOhos""}",https://gitcode.com/oh-flutter/geolocator/blob/main/geolocator/pubspec.yaml,同版 OHOS 实现；定位权限、后台定位与服务状态需验证。
+geolocator_android,5.2.1,transitive,yes,android,no,lib/src/geolocator_android.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geolocator_apple,2.4.3,transitive,yes,"ios,macos",no,lib/src/geolocator_apple.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geolocator_linux,0.2.6,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geolocator_platform_interface,4.4.1,transitive,yes,,no,lib/src/implementations/method_channel_geolocator.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+geolocator_web,4.1.4,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+geolocator_windows,0.2.5,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+get_it,9.3.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+glob,2.2.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+google_fonts,9.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, jni, jni_flutter, material_ui, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows"
+graphs,2.3.2,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+gsettings,0.2.8,transitive,yes,,no,lib/src/getuid_linux.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+hive_ce,2.23.3,transitive,yes,,no,lib/src/isolate/handler/isolate_entry_point.dart;lib/src/isolate/handler/isolated_box_handler.dart;lib/src/isolate/isolated_box_impl/isolated_box_impl_vm.dart;lib/src/isolate/isolated_hive_impl/impl/isolated_hive_impl_vm.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+hooks,2.2.0,direct overridden,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+hooks_riverpod,3.5.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui"
+hotreloader,4.4.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+html,0.15.7,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+html2md,1.3.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+http,1.6.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+http_multi_server,3.2.3,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+http_parser,4.1.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+http_profile,0.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+image,4.12.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+image_picker,1.2.4,direct main,yes,"android,ios,linux,macos,web,windows",no,,异版适配源：需迁移验证,1.2.1,br_image_picker-v1.2.1_ohos,1af98579e1a95d4fca19e422d26f5b6856ac38ba,packages/image_picker/image_picker/pubspec.yaml,"{""default_package"": ""image_picker_ohos""}",https://gitcode.com/CPF-Flutter/flutter_packages/blob/br_image_picker-v1.2.1_ohos/packages/image_picker/image_picker/pubspec.yaml,找到 1.2.1 适配版；当前 1.2.4，需配套 image_picker_ohos 与权限配置。
+image_picker_android,0.8.13+25,direct main,yes,android,no,,需处理：未确认兼容版/需隔离或移植,,,,,,,Android 专用实现，OHOS 不应注册；保留 Android 的调用保护。
+image_picker_for_web,3.1.1,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+image_picker_ios,0.8.13+15,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+image_picker_linux,0.2.2,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+image_picker_macos,0.2.2+1,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+image_picker_platform_interface,2.11.2,direct main,yes,,no,lib/src/method_channel/method_channel_image_picker.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,接口包不是平台实现；配套 OHOS picker 仍需验证接口版本。
+image_picker_windows,0.2.2,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+in_app_purchase,3.3.1,direct main,yes,"android,ios,macos",no,,异版适配源：需迁移验证,3.2.3,br_in_app_purchase-v3.2.3_ohos,84c4dfe006cfcff0748b84fc7792109012651183,packages/in_app_purchase/in_app_purchase/pubspec.yaml,"{""default_package"": ""in_app_purchase_ohos""}",https://gitcode.com/CPF-Flutter/flutter_packages/blob/br_in_app_purchase-v3.2.3_ohos/packages/in_app_purchase/in_app_purchase/pubspec.yaml,找到 3.2.3 OHOS 实现入口；当前 3.3.1，商城商品、支付校验和后端不能照搬 Apple StoreKit。
+in_app_purchase_android,0.5.5,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+in_app_purchase_platform_interface,1.4.1,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+in_app_purchase_storekit,0.4.17,direct main,yes,"ios,macos",no,lib/src/channel.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,Apple 专用实现，不用于 HAP；现有 Apple 购买链应继续做平台隔离。
+in_app_review,2.0.12,direct main,yes,"android,ios,macos",no,,同版适配源：待集成验证,2.0.12,br_2.0.12_ohos_dev,70faf9d1cf592c392334f06adcffea5af85a3fc0,in_app_review/pubspec.yaml,"{""pluginClass"": ""InAppReviewPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_in_app_review/blob/br_2.0.12_ohos_dev/in_app_review/pubspec.yaml,开发分支有 2.0.12 同版声明；需真机验证商店跳转及上架配置。
+in_app_review_platform_interface,2.0.5,transitive,yes,,no,lib/method_channel_in_app_review.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+intl,0.20.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+io,1.1.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+irondash_engine_context,0.5.5,transitive,yes,"android,ios,linux,macos,windows",no,lib/irondash_engine_context.dart,同版适配源：待集成验证,0.5.5,br_v0.5.5_ohos,838edcfaf008b2d9e19b2ad55d14a4ad96252acc,engine_context/dart/pubspec.yaml,"{""pluginClass"": ""IrondashEngineContextPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_irondash/blob/br_v0.5.5_ohos/engine_context/dart/pubspec.yaml,0.5.5 同版 OHOS 源；需与上层 native extensions 一起验证。
+irondash_message_channel,0.7.0,transitive,yes,,no,lib/src/codec.dart;lib/src/event_channel.dart;lib/src/message_channel.dart;lib/src/method_channel.dart;lib/src/mock_message_channel_context.dart;lib/src/native_functions.dart;lib/src/native_list.dart;lib/src/native_message_channel_context.dart;lib/src/write_buffer.dart,同版适配源：待集成验证,0.7.0,br_v0.5.5_ohos,838edcfaf008b2d9e19b2ad55d14a4ad96252acc,message_channel/dart/pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_irondash/blob/br_v0.5.5_ohos/message_channel/dart/pubspec.yaml,0.7.0 同版 Dart 包依赖 Irondash 原生通道；需配套引擎上下文。
+is_ios_simulator,1.0.1,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+island,4.1.0+312,root,no,,no,lib/accounts/widgets/account/stellar_program_tab.dart;lib/chat/pods/native_call_bridge.dart;lib/chat/widgets/call_window.dart;lib/core/services/app_icon_service.dart;lib/core/services/cache_service.dart;lib/core/services/deeplink_service.dart;lib/core/services/ios_share_suggestions.dart;lib/core/services/notify.universal.dart;lib/core/services/widget_sync_service.dart;lib/misc/tray_manager.dart;lib/misc/tray_manager_stub.dart,应用：需要 OHOS 平台分支和原生工程,,,,,,,
+island_desktop_presence,0.0.1,direct main,yes,"linux,macos,windows",no,lib/island_desktop_presence_method_channel.dart;lib/src/activity_rpc_transport/activity_rpc_transport_native.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,自有桌面插件，仅 Linux/macOS/Windows；手机端需禁用桌面 idle/media 监听或另做原生实现。
+island_ui_foundation,1.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：cupertino_ui, material_ui, screen_retriever, screen_retriever_linux, screen_retriever_macos, screen_retriever_windows, window_manager"
+isolate_channel,0.6.2,transitive,yes,,no,lib/src/isolate_event_channel.dart;lib/src/isolate_method_channel.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+jni,1.1.2,transitive,yes,"linux,windows,android",no,lib/_internal.dart;lib/src/accessors.dart;lib/src/jarray.dart;lib/src/jimplementer.dart;lib/src/jni.dart;lib/src/jobject.dart;lib/src/jreference.dart;lib/src/jvalues.dart;lib/src/method_invocation.dart;lib/src/nio/jbyte_buffer.dart;lib/src/third_party/global_env_extensions.dart;lib/src/third_party/jni_bindings_generated.dart;lib/src/types.dart,原生插件：未确认当前版本的 OHOS 实现,,,,,,,
+jni_flutter,1.0.4+1,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+jni_util,1.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+json_annotation,4.12.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+json_serializable,6.15.2,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+just_audio,0.10.6,direct main,yes,"android,ios,macos,web",no,,同版适配源：待集成验证,0.10.6,main,,just_audio/pubspec.yaml,"{""pluginClass"": ""JustAudioOhosPlugin""}",https://gitcode.com/oh-flutter/just_audio/blob/main/just_audio/pubspec.yaml,同版 0.10.6；但 fork 锁了 audio_session Git 0.2.2，当前应用要求 ^0.2.4，整图不能直接解析。
+just_audio_platform_interface,4.6.0,transitive,yes,,no,lib/method_channel_just_audio.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+just_audio_web,0.4.16,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+latlong2,0.10.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+leak_tracker,11.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+leak_tracker_flutter_testing,3.0.10,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+leak_tracker_testing,3.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+lean_builder,1.2.2,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+lint,1.10.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+lints,6.1.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+liquid_glass_renderer,1.0.0-dev.2,direct main,yes,,no,hook/;lib/src/internal/flutter_gpu_geometry_renderer.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,含 Flutter GPU、shader 构建 hook；需验证 OH-Flutter Impeller/impellerc 与原生资产，不算纯 Dart 已兼容。
+listen,1.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+livekit_client,2.13.2,direct main,yes,"ios,android,macos,windows,linux,web",no,lib/livekit_client_web.dart;lib/src/audio/audio_frame_capture_native.dart;lib/src/support/native.dart;lib/src/track/audio_visualizer_native.dart,异版适配源：需迁移验证,2.1.0,br_v2.6.0_ohos,61566610f29298c819caadc0f69ee3686119f95b,pubspec.yaml,"{""pluginClass"": ""LiveKitPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_livekit_client/blob/br_v2.6.0_ohos/pubspec.yaml,br_v2.6.0_ohos 的 pubspec 仍为 2.1.0，并锁旧版 WebRTC/设备/网络 fork；与当前 2.13.2 有明显差距。
+local_auth,3.0.2,direct main,yes,"android,ios,macos,windows",no,,同版适配源：待集成验证,3.0.2,feat/ohos_local_auth_3.0.2,,pubspec.yaml,"{""pluginClass"": ""LocalAuthPlugin""}",https://gitcode.com/oh-flutter/local_auth/blob/feat%2Fohos_local_auth_3.0.2/pubspec.yaml,同版 OHOS 实现；生物识别、错误码和可用性需真机验证。
+local_auth_android,2.3.0,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+local_auth_darwin,2.0.5,transitive,yes,"ios,macos",no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+local_auth_platform_interface,1.1.0,transitive,yes,,no,lib/default_method_channel_platform.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+local_auth_windows,2.0.2,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+logger,2.8.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+logging,1.3.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+lunar,1.7.9,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+map_launcher,7.0.0,direct main,yes,"android,ios,macos,web,windows,linux",no,lib/map_launcher_method_channel.dart,异版适配源：需迁移验证,4.4.2,br_4.4.2_ohos,502bc8354801f9e85222dccec06aa11717873dc8,pubspec.yaml,"{""package"": ""com.alexmiller.map_launcher.map_launcher_ohos"", ""pluginClass"": ""MapLauncherOhosPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_map_launcher/blob/br_4.4.2_ohos/pubspec.yaml,找到 4.4.2，当前 7.0.0；需核对地图应用枚举与 URI 协议。
+markdown,7.3.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+markdown_quill,4.3.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：file_selector_linux, file_selector_windows, flutter_keyboard_visibility_linux, flutter_keyboard_visibility_macos, flutter_keyboard_visibility_temp_fork, flutter_keyboard_visibility_windows, flutter_quill, is_ios_simulator, quill_native_bridge, quill_native_bridge_android, quill_native_bridge_ios, quill_native_bridge_linux, quill_native_bridge_macos, quill_native_bridge_web, quill_native_bridge_windows, url_launcher, url_launcher_android, url_launcher_ios, url_launcher_linux, url_launcher_macos, url_launcher_web, url_launcher_windows"
+matcher,0.12.20,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+material_color_utilities,0.13.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+material_symbols_icons,4.2960.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+material_ui,1.10.0,direct main,yes,,no,,需处理：未确认兼容版/需隔离或移植,,,,,,,1.10.0 中有只覆盖六个平台的 switch 表达式；OH-Flutter 增加 TargetPlatform.ohos 后需修复穷尽分支。
+media_kit,1.2.6,direct main,yes,,no,lib/ffi/src/allocation.dart;lib/ffi/src/arena.dart;lib/ffi/src/utf16.dart;lib/ffi/src/utf8.dart;lib/generated/libmpv/bindings.dart;lib/src/player/native/core/execmem_restriction.dart;lib/src/player/native/core/initializer.dart;lib/src/player/native/core/initializer_isolate.dart;lib/src/player/native/core/initializer_native_callable.dart;lib/src/player/native/core/native_library.dart;lib/src/player/native/player/real.dart;lib/src/player/native/utils/android_asset_loader.dart;lib/src/player/native/utils/android_content_uri_provider.dart;lib/src/player/native/utils/android_helper.dart;lib/src/player/native/utils/native_reference_holder.dart,异版适配源：需迁移验证,1.2.1,main,d424290ea300c140a1f563f44a8f0461628a3aa4,media_kit/pubspec.yaml,"{""pluginClass"": ""MediaKitPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_flutter_media_kit/blob/main/media_kit/pubspec.yaml,找到 1.2.1 OHOS 实现；当前 1.2.6，播放内核/FFI 打包需与 video/libs 同步。
+media_kit_libs_android_video,1.3.8,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+media_kit_libs_ios_video,1.1.4,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+media_kit_libs_linux,1.2.1,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+media_kit_libs_macos_video,1.1.4,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+media_kit_libs_video,1.0.7,direct main,yes,,no,,同版适配源：待集成验证,1.0.7,main,d424290ea300c140a1f563f44a8f0461628a3aa4,libs/universal/media_kit_libs_video/pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_flutter_media_kit/blob/main/libs/universal/media_kit_libs_video/pubspec.yaml,1.0.7 fork 增加 media_kit_libs_ohos_video；仍需对应播放器、arm64 原生库与许可证核验。
+media_kit_libs_windows_video,1.0.11,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+media_kit_video,2.0.1,direct main,yes,"windows,linux,macos,ios,android,web",no,lib/src/utils/query_decoders.dart;lib/src/video/video_texture.dart;lib/src/video_controller/android_video_controller/real.dart;lib/src/video_controller/native_video_controller/real.dart,异版适配源：需迁移验证,1.3.1,main,d424290ea300c140a1f563f44a8f0461628a3aa4,media_kit_video/pubspec.yaml,"{""pluginClass"": ""MediaKitVideoPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_flutter_media_kit/blob/main/media_kit_video/pubspec.yaml,找到 1.3.1，当前 2.0.1；播放器与纹理渲染接口需迁移验证。
+meta,1.19.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+mgrs_dart,3.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+mime,2.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+mime_type,1.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+mobile_scanner,7.5.0,direct main,yes,"android,ios,macos,web",no,lib/src/method_channel/mobile_scanner_method_channel.dart,异版适配源：需迁移验证,7.1.4,br_v7.4.2_ohos_dev,f5a4ff52f003e1645db1d4de743a2db0313665a8,pubspec.yaml,"{""pluginClass"": ""MobileScannerPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_mobile_scanner/blob/br_v7.4.2_ohos_dev/pubspec.yaml,br_v7.4.2_ohos_dev 的 pubspec 仍为 7.1.4，当前 7.5.0；相机和扫码格式需核对。
+motor,1.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+msix,3.18.0,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+native_exif,0.8.0,direct main,yes,"android,ios",no,lib/native_exif.dart,同版适配源：待集成验证,0.8.0,br_3.41_dev,f146d0ac4540f4a02ac264a5abc16d5d46706dd8,pubspec.yaml,"{""pluginClass"": ""NativeExifPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_native_exif/blob/br_3.41_dev/pubspec.yaml,br_3.41_dev 有 0.8.0 同版 OHOS 声明；属于开发分支，需验证图片格式与写入。
+native_glass_navbar,1.2.0,direct main,yes,ios,no,lib/liquid_glass_helper.dart;lib/native_glass_navbar.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,当前仅 iOS；鸿蒙应使用 Flutter 导航栏回退，不应调用 iOS channel。
+native_toolchain_c,0.19.6,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+nativeapi,0.5.10,transitive,yes,,no,lib/nativeapi.dart;lib/src/accessibility_manager.dart;lib/src/app_info.dart;lib/src/application.dart;lib/src/callbacks.dart;lib/src/clipboard.dart;lib/src/device_info.dart;lib/src/dialog.dart;lib/src/display.dart;lib/src/display_manager.dart;lib/src/drag_source.dart;lib/src/drop_target.dart;lib/src/file_dialog.dart;lib/src/foundation/color.dart;lib/src/foundation/event_request.dart;lib/src/foundation/geometry.dart;lib/src/foundation/keyboard.dart;lib/src/image.dart;lib/src/keyboard_monitor.dart;lib/src/launch_at_login.dart;lib/src/menu.dart;lib/src/message_dialog.dart;lib/src/notification_manager.dart;lib/src/placement.dart;lib/src/positioning_strategy.dart;lib/src/preferences.dart;lib/src/run_native_app.dart;lib/src/secure_storage.dart;lib/src/shortcut.dart;lib/src/shortcut_manager.dart;lib/src/tray_icon.dart;lib/src/tray_manager.dart;lib/src/url_opener.dart;lib/src/view.dart;lib/src/window.dart;lib/src/window_drag_session.dart;lib/src/window_manager.dart;lib/src/window_shadow.dart;lib/src/window_shape.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,经 cnativeapi 使用原生资产；OHOS 需隔离依赖或移植完整底层。
+nativeapi_flutter,0.5.10,transitive,yes,,no,lib/src/windowing/flutter_window.dart;lib/src/windowing/flutter_window_web.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,依赖 nativeapi/cnativeapi 原生资产，不能视为纯 Flutter 层。
+ndef,0.4.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+nested,1.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+nm,0.5.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+nominatim_flutter,0.0.8,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+objective_c,9.6.3,transitive,yes,,no,hook/;lib/src/c_bindings_generated.dart;lib/src/internal.dart;lib/src/ns_data.dart;lib/src/ns_input_stream.dart;lib/src/ns_mutable_data.dart;lib/src/objective_c_bindings_generated.dart;lib/src/observer.dart;lib/src/protocol_builder.dart;lib/src/runtime_bindings_generated.dart;lib/src/selector.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+octo_image,2.1.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+open_file,4.0.0,direct main,yes,"android,ios,web,macos,windows,linux",no,,同版适配源：待集成验证,4.0.0,br_v4.0.0_ohos_dev,7095c2a7a8650af5c83e057b42272ef0ef71b200,open_file/pubspec.yaml,"{""default_package"": ""open_file_ohos""}",https://gitcode.com/CPF-Flutter/fluttertpc_open_file/blob/br_v4.0.0_ohos_dev/open_file/pubspec.yaml,br_v4.0.0_ohos_dev 已核实 4.0.0 同版 OHOS 入口；需配套 open_file_ohos，并验证文件 URI 与外部应用唤起。
+open_file_android,1.1.0,transitive,yes,android,no,lib/open_file_android.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+open_file_ios,1.1.0,transitive,yes,ios,no,lib/open_file_ios.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+open_file_linux,1.1.0,transitive,yes,linux,no,lib/open_file_linux.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+open_file_mac,1.1.0,transitive,yes,macos,no,lib/open_file_mac.dart,原生插件：未确认当前版本的 OHOS 实现,,,,,,,
+open_file_platform_interface,1.1.0,transitive,yes,,no,lib/src/method_channel/method_channel_open_file.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+open_file_web,1.1.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+open_file_windows,1.1.0,transitive,yes,windows,no,lib/open_file_windows.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+open_meteo,3.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+openmls,3.3.0,direct main,yes,,no,hook/;lib/src/openmls.dart;lib/src/platform/platform_io.dart;lib/src/rust/frb_generated.io.dart;rust/,需处理：未确认兼容版/需隔离或移植,,,,,,,未找到已核实的 OHOS 适配源；当前 hook 不支持 OHOS，需 Rust/SQLCipher/FRB 与 arm64 编译链一起移植。
+package_config,3.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+package_info_plus,10.2.2,direct main,yes,"android,ios,linux,macos,web,windows",no,lib/src/file_attribute.dart;lib/src/file_version_info.dart,同版适配源：待集成验证,10.2.2,main,,pubspec.yaml,"{""package"": ""dev.fluttercommunity.plus.packageinfo"", ""pluginClass"": ""PackageInfoPlugin""}",https://gitcode.com/oh-flutter/package_info_plus/blob/main/pubspec.yaml,同版 OHOS 实现；仓库带本地 platform_interface 路径，接入需一起处理。
+package_info_plus_platform_interface,4.1.0,transitive,yes,,no,lib/method_channel_package_info.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+passkeys,2.24.1,direct main,yes,"android,ios,macos,web,windows",no,,需处理：未确认兼容版/需隔离或移植,,,,,,,未找到已核实的 OHOS 同版实现；不能依赖 Android/iOS Passkeys 自动覆盖鸿蒙。
+passkeys_android,2.15.0,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+passkeys_darwin,0.4.8,transitive,yes,"ios,macos",no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+passkeys_doctor,1.7.0,transitive,yes,android,no,,原生插件：未确认当前版本的 OHOS 实现,,,,,,,
+passkeys_platform_interface,2.11.0,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+passkeys_web,2.11.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+passkeys_windows,0.1.6,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+pasteboard,0.6.0,direct main,yes,"android,macos,windows,linux,ios,web",no,lib/src/pasteboard_platform_io.dart,同版适配源：待集成验证,0.6.0,feat/ohos_pasteboard_0.5.0,,pubspec.yaml,"{""pluginClass"": ""PasteboardPlugin""}",https://gitcode.com/oh-flutter/pasteboard/blob/feat%2Fohos_pasteboard_0.5.0/pubspec.yaml,同版 0.6.0 OHOS 源；分支名还写 0.5.0，须以实际 pubspec 为准。
+path,1.9.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+path_drawing,1.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+path_parsing,1.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+path_provider,2.1.6,direct main,yes,"android,ios,linux,macos,windows",no,,异版适配源：需迁移验证,2.1.6-ohos.2,main,,pubspec.yaml,"{""pluginClass"": ""PathProviderPlugin""}",https://gitcode.com/oh-flutter/path_provider/blob/main/pubspec.yaml,找到 2.1.6-ohos.2；需明确预发布版本的依赖约束，并验证各沙箱路径。
+path_provider_android,2.3.1,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+path_provider_foundation,2.6.0,transitive,yes,"ios,macos",no,lib/src/ffi_bindings.g.dart;lib/src/path_provider_foundation_real.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+path_provider_linux,2.2.2,transitive,yes,linux,no,lib/src/get_application_id_real.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+path_provider_platform_interface,2.1.3,transitive,yes,,no,lib/src/method_channel_path_provider.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+path_provider_windows,2.3.0,transitive,yes,windows,no,lib/src/guid.dart;lib/src/path_provider_windows_real.dart;lib/src/win32_wrappers.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+pausable_timer,3.1.0+3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+permission_handler,13.0.2,direct main,yes,"android,ios,web,windows",no,,异版适配源：需迁移验证,13.0.2-ohos.1,main,807158357a9343ec7c89e544b334ca518cc59486,pubspec.yaml,"{""pluginClass"": ""PermissionHandlerPlugin""}",https://gitcode.com/oh-flutter/permission_handler/blob/main/pubspec.yaml,找到 13.0.2-ohos.1；需要 OHOS module.json5 权限与运行时请求共同配置。
+permission_handler_android,14.1.1,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+permission_handler_apple,9.6.5,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+permission_handler_html,0.1.4+1,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+permission_handler_platform_interface,4.4.1,transitive,yes,,no,lib/src/method_channel/method_channel_permission_handler.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+permission_handler_windows,0.2.4,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+petitparser,7.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+photo_view,0.15.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+pinput,7.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,5.0.2,HEAD,,pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_pinput/blob/HEAD/pubspec.yaml,"依赖需适配链：cupertino_ui, material_ui"
+pixel_snap,0.1.5,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+platform,3.2.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+plugin_platform_interface,2.1.8,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+pointycastle,4.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+pool,1.5.3,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+posix,6.5.4,transitive,yes,,no,lib/src/bindings/mac.dart;lib/src/grp.dart;lib/src/libc.dart;lib/src/pwd.dart;lib/src/stat/linux.dart;lib/src/stat/mac.dart;lib/src/stat/os.dart;lib/src/string/string.dart;lib/src/sysinfo.dart;lib/src/uname/uname.dart;lib/src/unistd/errno.dart;lib/src/unistd/unistd.dart;lib/src/util/conversions.dart;lib/src/wrapper.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+pretty_diff_text,2.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+process,5.0.6,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+process_run,1.4.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+proj4dart,3.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+protobuf,6.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+protocol_handler,0.2.0,direct main,yes,"android,ios,macos,windows",no,,需处理：未确认兼容版/需隔离或移植,,,,,,,未找到已核实的 OHOS 兼容版；当前主要用于桌面，HAP deeplink 需 Ability 的 Want/回调处理。
+protocol_handler_android,0.2.0,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+protocol_handler_ios,0.2.0,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+protocol_handler_macos,0.2.0,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+protocol_handler_platform_interface,0.2.0,transitive,yes,,no,lib/src/protocol_handler_method_channel.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+protocol_handler_windows,0.2.0,direct overridden,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+provider,6.1.5+1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+pub_semver,2.2.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+pubspec_parse,1.7.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+qr,3.0.3,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+qr_flutter,4.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+quick_actions,1.1.1,direct main,yes,"android,ios",no,,异版适配源：需迁移验证,1.1.0,br_quick_actions-v1.1.0_ohos_dev,8443fcb8a96f707750206cf25d7c9361869b3ac1,packages/quick_actions/quick_actions/pubspec.yaml,"{""default_package"": ""quick_actions_ohos""}",https://gitcode.com/CPF-Flutter/flutter_packages/blob/br_quick_actions-v1.1.0_ohos_dev/packages/quick_actions/quick_actions/pubspec.yaml,找到 1.1.0 开发分支；当前 1.1.1，需验证鸿蒙桌面快捷入口。
+quick_actions_android,1.0.34,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quick_actions_ios,1.2.5,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quick_actions_platform_interface,1.1.0,transitive,yes,,no,lib/method_channel/method_channel_quick_actions.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+quill_native_bridge,11.2.0,transitive,yes,"android,ios,macos,web,windows,linux",no,,异版适配源：需迁移验证,11.0.1,master,7fd6f4fc9ef03fd02e464b028765dbdca2844a37,quill_native_bridge/pubspec.yaml,"{""default_package"": ""quill_native_bridge_ohos""}",https://gitcode.com/CPF-Flutter/fluttertpc_quill_native_bridge/blob/master/quill_native_bridge/pubspec.yaml,找到 11.0.1 的 OHOS 入口，当前 11.2.0；需配套 quill_native_bridge_ohos 及接口。
+quill_native_bridge_android,0.0.2,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quill_native_bridge_ios,0.0.3,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quill_native_bridge_linux,0.0.3,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quill_native_bridge_macos,0.0.1,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quill_native_bridge_platform_interface,0.0.2+1,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+quill_native_bridge_web,0.0.2,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quill_native_bridge_windows,0.1.1,transitive,yes,windows,no,lib/quill_native_bridge_windows.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+quiver,3.2.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+record,7.1.2,direct main,yes,"android,ios,web,windows,macos,linux",no,,异版适配源：需迁移验证,6.1.2,br_v6.1.2_ohos,c719424e0cd869bf57198e71768d11f995cce849,record/pubspec.yaml,"{""default_package"": ""record_ohos""}",https://gitcode.com/CPF-Flutter/fluttertpc_record/blob/br_v6.1.2_ohos/record/pubspec.yaml,找到 6.1.2，当前 7.1.2；其 platform_interface ^1.4.0 与当前 2.1.0 不同，不能只换原生实现。
+record_android,2.2.0,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+record_ios,2.1.1,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+record_linux,2.1.3,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+record_macos,2.1.1,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+record_platform_interface,2.1.0,transitive,yes,,no,lib/src/record_method_channel_mixin.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+record_use,1.1.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+record_web,2.1.3,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+record_windows,2.3.0,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+relative_time,5.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+riverpod,3.5.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+riverpod_analyzer_utils,1.0.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+riverpod_annotation,4.0.8,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+riverpod_generator,4.0.10,direct dev,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+rxdart,0.28.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+safe_local_storage,2.0.7,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+screen_retriever,0.2.2,transitive,yes,"linux,macos,windows",no,,原生插件：未确认当前版本的 OHOS 实现,0.4.0,main,,pubspec.yaml,,https://gitcode.com/oh-flutter/screen_retriever/blob/main/pubspec.yaml,
+screen_retriever_linux,0.2.2,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+screen_retriever_macos,0.2.2,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+screen_retriever_platform_interface,0.2.2,transitive,yes,,no,lib/src/screen_retriever_method_channel.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+screen_retriever_windows,0.2.2,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+screenshot,3.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sdp_transform,0.3.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sensors_plus,6.1.2,transitive,yes,"android,ios,web",no,,异版适配源：需迁移验证,6.1.1,br_sensors_plus-v6.1.1_ohos,2f075e5225a4c447f44bc9a9e6cf4fffd8ce2544,packages/sensors_plus/sensors_plus/pubspec.yaml,"{""package"": ""dev.fluttercommunity.plus.sensors"", ""pluginClass"": ""SensorsPlusOhosPlugin""}",https://gitcode.com/CPF-Flutter/flutter_plus_plugins/blob/br_sensors_plus-v6.1.1_ohos/packages/sensors_plus/sensors_plus/pubspec.yaml,找到 6.1.1，当前 6.1.2；shake 3.0.0 的 OHOS fork 已指定此分支。
+sensors_plus_platform_interface,2.0.2,transitive,yes,,no,lib/src/method_channel_sensors.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+shake,3.0.0,direct main,yes,,no,,需处理：源码候选未确认平台或版本,3.0.0,HEAD,,pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_shake/blob/HEAD/pubspec.yaml,自身 Dart 层，受 sensors_plus 兼容性约束。
+share_plus,13.3.1,direct main,yes,"android,ios,linux,macos,web,windows",no,lib/src/windows_version_helper.dart,异版适配源：需迁移验证,12.0.1,br_share_plus-v12.0.1_ohos,bfd882da6893c4c8bfa1648ac637c2d557e6f4fa,packages/share_plus/share_plus/pubspec.yaml,"{""package"": ""dev.fluttercommunity.plus.share"", ""pluginClass"": ""SharePlusOhosPlugin""}",https://gitcode.com/CPF-Flutter/flutter_plus_plugins/blob/br_share_plus-v12.0.1_ohos/packages/share_plus/share_plus/pubspec.yaml,找到 12.0.1，当前 13.3.1；需核对文件 URI、分享结果及接口版本。
+share_plus_platform_interface,7.2.0,transitive,yes,,no,lib/method_channel/method_channel_share.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+shared_preferences,2.5.6,direct main,yes,"android,ios,linux,macos,web,windows",no,,异版适配源：需迁移验证,2.5.6-ohos.1,main,,pubspec.yaml,"{""pluginClass"": ""SharedPreferencesPlugin"", ""dartPluginClass"": ""SharedPreferencesOhos""}",https://gitcode.com/oh-flutter/shared_preferences/blob/main/pubspec.yaml,找到 2.5.6-ohos.1；预发布后缀需显式选源/约束，需验证重启与多 isolate 存储行为。
+shared_preferences_android,2.5.4,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+shared_preferences_foundation,2.6.1,transitive,yes,"ios,macos",no,lib/src/messages.g.dart;lib/src/messages.g.ffi.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+shared_preferences_linux,2.4.1,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+shared_preferences_platform_interface,2.4.2,direct main,yes,,no,lib/method_channel_shared_preferences.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,接口包，可随 wrapper 复用，但不是 OHOS 实现。
+shared_preferences_web,2.4.3,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+shared_preferences_windows,2.4.1,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+shelf,1.4.3,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+shelf_web_socket,2.0.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sign_in_with_apple,8.2.0,direct main,yes,"android,ios,macos,web",no,,异版适配源：需迁移验证,6.1.3,br_6.1.3_ohos,,packages/sign_in_with_apple/sign_in_with_apple/pubspec.yaml,"{""pluginClass"": ""SignInWithApplePlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_dart_packages/blob/br_6.1.3_ohos/packages/sign_in_with_apple/sign_in_with_apple/pubspec.yaml,找到 6.1.3，当前 8.2.0；HAP 登录回调与 OAuth 配置需要单独处理。
+sign_in_with_apple_platform_interface,2.0.0,transitive,yes,,no,lib/method_channel_sign_in_with_apple.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+sign_in_with_apple_web,3.0.0,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+simple_gesture_detector,0.2.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+simple_sparse_list,0.1.4,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+skeletonizer,3.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sky_engine,SDK,transitive,yes,,no,lib/_internal/vm/bin/common_patch.dart;lib/_internal/vm/lib/concurrent_patch.dart;lib/_internal/vm/lib/core_patch.dart;lib/_internal/vm/lib/ffi_dynamic_library_patch.dart;lib/_internal/vm/lib/internal_patch.dart;lib/core/weak.dart;lib/ffi/abi.dart;lib/ffi/abi_specific.dart;lib/ffi/allocation.dart;lib/ffi/annotations.dart;lib/ffi/c_type.dart;lib/ffi/dynamic_library.dart;lib/ffi/ffi.dart;lib/ffi/native_finalizer.dart;lib/ffi/native_type.dart;lib/ffi/struct.dart;lib/ffi/union.dart;lib/ui/ui.dart,SDK：随 OH-Flutter 验证,,,,,,,
+slide_countdown,2.0.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+snow_fall_animation,0.0.1+3,direct main,yes,some_platform,no,,需处理：未确认兼容版/需隔离或移植,,,,,,,pubspec 留有 some_platform 模板声明，但未发现原生 channel；应清理/核对声明后编译，不能算已适配原生插件。
+solar_network_foundation,0.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：android_file_picker, cupertino_ui, file_picker, file_picker_darwin, file_picker_linux, file_picker_web, file_saver, flutter_image_compress, flutter_image_compress_common, flutter_image_compress_macos, flutter_image_compress_ohos, flutter_image_compress_web, gal, jni, jni_flutter, material_ui, media_kit, native_exif, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, screen_retriever, screen_retriever_linux, screen_retriever_macos, screen_retriever_windows, shared_preferences, shared_preferences_android, shared_preferences_foundation, shared_preferences_linux, shared_preferences_platform_interface, shared_preferences_web, shared_preferences_windows, sqflite, sqflite_android, sqflite_darwin, video_thumbnail, window_manager, windows_file_picker"
+solar_network_sdk,1.0.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+solsynth_express,0.1.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,"依赖需适配链：android_file_picker, cupertino_ui, device_info_plus, file_picker, file_picker_darwin, file_picker_linux, file_picker_web, file_saver, flutter_app_update, flutter_image_compress, flutter_image_compress_common, flutter_image_compress_macos, flutter_image_compress_ohos, flutter_image_compress_web, gal, jni, jni_flutter, material_ui, media_kit, native_exif, package_info_plus, path_provider, path_provider_android, path_provider_foundation, path_provider_linux, path_provider_windows, screen_retriever, screen_retriever_linux, screen_retriever_macos, screen_retriever_windows, shared_preferences, shared_preferences_android, shared_preferences_foundation, shared_preferences_linux, shared_preferences_platform_interface, shared_preferences_web, shared_preferences_windows, sqflite, sqflite_android, sqflite_darwin, url_launcher, url_launcher_android, url_launcher_ios, url_launcher_linux, url_launcher_macos, url_launcher_web, url_launcher_windows, video_thumbnail, window_manager, windows_file_picker"
+source_gen,4.2.4,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+source_helper,1.4.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+source_span,1.10.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sqflite,2.4.5,transitive,yes,"android,ios,macos",no,lib/src/sqflite_impl.dart,同版适配源：待集成验证,2.4.5,main,,sqflite/pubspec.yaml,"{""default_package"": ""sqflite_ohos""}",https://gitcode.com/oh-flutter/sqflite/blob/main/sqflite/pubspec.yaml,同版 2.4.5 wrapper 与 sqflite_ohos；用于缓存等依赖，不能覆盖 Drift 的 sqlite3 FFI 链。
+sqflite_android,2.4.5,transitive,yes,android,no,lib/sqflite_android.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+sqflite_common,2.5.15,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sqflite_common_ffi,2.4.5,direct dev,no,,no,lib/src/sqflite_ffi_io.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+sqflite_darwin,2.4.5,transitive,yes,"ios,macos",no,lib/sqflite_darwin.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+sqflite_platform_interface,2.4.3,transitive,yes,,no,lib/sqflite_platform_interface.dart;lib/src/sqflite_method_channel.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+sqlcipher_flutter_libs,0.7.0+eol,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+sqlite3,3.9.0,transitive,yes,,no,hook/;lib/common.dart;lib/src/ffi/api.dart;lib/src/ffi/bindings.dart;lib/src/ffi/implementation.dart;lib/src/ffi/libsqlite3.g.dart;lib/src/ffi/memory.dart;lib/src/implementation/bindings.dart;lib/src/vfs.dart;lib/src/wasm/sqlite3.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,3.9.0 含 native-assets hook；预编译目标没有 OHOS，需移植编译/装载配置。旧 sqlite3_flutter_libs 不能直接替代 3.x hook。
+sqlite3_flutter_libs,0.6.0+eol,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+stack_trace,1.12.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+state_notifier,1.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+stream_channel,2.1.4,direct dev,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+stream_transform,2.1.2,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+string_scanner,1.4.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+styled_widget,0.4.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+super_context_menu,0.9.1,direct main,yes,,no,,同版适配源：待集成验证,0.9.1,br_v0.9.1_ohos,6f3d0caa84cb26e0d8c39d2868af1998ee80cc99,super_context_menu/pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_super_native_extensions/blob/br_v0.9.1_ohos/super_context_menu/pubspec.yaml,0.9.1 同版 fork 依赖配套 super_native_extensions/Irondash 和旧设备信息 Git 源，需要统一来源。
+super_native_extensions,0.9.1,transitive,yes,"android,ios,linux,macos,windows,web",no,lib/src/native/clipboard_events.dart;lib/src/native/clipboard_reader.dart;lib/src/native/clipboard_writer.dart;lib/src/native/context.dart;lib/src/native/data_provider_manager.dart;lib/src/native/drag.dart;lib/src/native/drop.dart;lib/src/native/hot_key.dart;lib/src/native/keyboard_layout.dart;lib/src/native/menu.dart;lib/src/native/reader_manager.dart;rust/,同版适配源：待集成验证,0.9.1,br_v0.9.1_ohos,6f3d0caa84cb26e0d8c39d2868af1998ee80cc99,super_native_extensions/pubspec.yaml,"{""pluginClass"": ""SuperNativeExtensionsPlugin"", ""fileName"": ""SuperNativeExtensionsPlugin.ets""}",https://gitcode.com/CPF-Flutter/fluttertpc_super_native_extensions/blob/br_v0.9.1_ohos/super_native_extensions/pubspec.yaml,0.9.1 同版 OHOS 源；Rust/Irondash 和二进制打包仍需验证。
+super_sliver_list,0.4.1,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+synchronized,3.6.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+table_calendar,3.3.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+term_glyph,1.2.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+test_api,0.7.12,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+timezone,0.11.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+tray_manager,0.8.3,direct main,yes,,no,,需处理：未确认兼容版/需隔离或移植,,,,,,,0.8.3 不再是简单 channel 插件，传递依赖 cnativeapi 不支持 OHOS 的 hook；需构建时隔离，单做 if 判断不足。
+tuple,2.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+typed_data,1.4.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+unicode,1.1.9,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+universal_io,2.3.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+universal_platform,1.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+uri_parser,3.0.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+url_launcher,6.3.3,direct main,yes,"android,ios,linux,macos,web,windows",no,,同版适配源：待集成验证,6.3.3,feat/ohos_url_launcher_6.3.3,,pubspec.yaml,"{""pluginClass"": ""UrlLauncherPlugin""}",https://gitcode.com/oh-flutter/url_launcher/blob/feat%2Fohos_url_launcher_6.3.3/pubspec.yaml,同版 OHOS 实现；URL 白名单与唤起权限需验证。
+url_launcher_android,6.3.33,transitive,yes,android,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+url_launcher_ios,6.4.2,transitive,yes,ios,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+url_launcher_linux,3.2.3,transitive,yes,linux,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+url_launcher_macos,3.2.6,transitive,yes,macos,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+url_launcher_platform_interface,2.3.2,transitive,yes,,no,lib/method_channel_url_launcher.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+url_launcher_web,2.4.3,transitive,yes,web,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+url_launcher_windows,3.1.6,transitive,yes,windows,no,,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+uuid,4.6.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+vector_graphics,1.2.6,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+vector_graphics_codec,1.1.13,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+vector_graphics_compiler,1.3.4,transitive,yes,,no,lib/src/_initialize_path_ops_io.dart;lib/src/_initialize_tessellator_io.dart;lib/src/engine_artifact.dart;lib/src/svg/_path_ops_ffi.dart;lib/src/svg/_tessellator_ffi.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+vector_math,2.4.4,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+video_thumbnail,0.5.6,direct main,yes,"android,ios",no,lib/video_thumbnail.dart,同版适配源：待集成验证,0.5.6,br_0.5.6_ohos,9c77dc064391320fd5911bacda29fa1fcbfba2d9,pubspec.yaml,"{""pluginClass"": ""VideoThumbnaiOhosPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_video_thumbnail/blob/br_0.5.6_ohos/pubspec.yaml,0.5.6 同版 OHOS 分支；需验证文件路径、格式和大视频内存。
+visibility_detector,0.4.0+2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+vm_service,15.4.0,transitive,yes,,no,lib/src/vm_service.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+wakelock_plus,1.8.0,direct main,yes,"android,ios,tvos,windows,macos,linux,web",no,lib/src/wakelock_plus_macos_plugin.dart,需处理：源码候选未确认平台或版本,1.1.4,HEAD,,wakelock_plus/pubspec.yaml,,https://gitcode.com/CPF-Flutter/fluttertpc_wakelock_plus/blob/HEAD/wakelock_plus/pubspec.yaml,默认分支读到 1.1.4，未声明 OHOS，且限制 package_info_plus <6，与当前 10.2.2 冲突；尚不能确认可直接接入的兼容版。
+wakelock_plus_platform_interface,1.7.0,transitive,yes,,no,,接口包：依赖对应平台实现,,,,,,,
+watcher,1.2.1,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+waveform_flutter,1.2.0,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+web,1.1.2,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+web_socket,1.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+web_socket_channel,3.0.3,direct main,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+webf,0.24.27,direct main,yes,"android,ios,macos,linux,windows",no,lib/src/bridge/binding_bridge.dart;lib/src/bridge/binding_object.dart;lib/src/bridge/bridge.dart;lib/src/bridge/dynamic_library.dart;lib/src/bridge/from_native.dart;lib/src/bridge/native_byte_data.dart;lib/src/bridge/native_gumbo.dart;lib/src/bridge/native_types.dart;lib/src/bridge/native_value.dart;lib/src/bridge/to_native.dart;lib/src/bridge/ui_command.dart;lib/src/bridge/widget_element_shape.dart;lib/src/css/computed_style_declaration.dart;lib/src/css/css_style_sheet_binding.dart;lib/src/devtools/cdp_service/debugging_context.dart;lib/src/devtools/cdp_service/modules/css.dart;lib/src/devtools/cdp_service/modules/dom.dart;lib/src/devtools/cdp_service/modules/overlay.dart;lib/src/devtools/panel/remote_object_service.dart;lib/src/dom/bounding_client_rect.dart;lib/src/dom/document.dart;lib/src/dom/event.dart;lib/src/dom/event_target.dart;lib/src/dom/intersection_observer.dart;lib/src/dom/intersection_observer_entry.dart;lib/src/dom/screen.dart;lib/src/foundation/environment.dart;lib/src/html/canvas/canvas_context.dart;lib/src/html/canvas/canvas_context_2d.dart;lib/src/html/canvas/canvas_text_metrics.dart;lib/src/html/form/checked.dart;lib/src/html/head.dart;lib/src/launcher/controller.dart;lib/src/launcher/view_controller.dart;lib/src/painting/box_fit_image.dart;lib/src/widget/webf.dart,同版适配源：待集成验证,0.24.27,br_3.44_dev,ccdf8a05222a408938e51e2b58413355ff2aab7d,pubspec.yaml,"{""pluginClass"": ""WebfPlugin""}",https://gitcode.com/CPF-Flutter/fluttertpc_webf/blob/br_3.44_dev/pubspec.yaml,br_3.44_dev 已核实 0.24.27 同版 OHOS 声明；属于 3.44 开发线，仍需在 OH-Flutter 3.47 验证原生库、桥接和 Flutter API。
+webf_easy_refresh,3.4.2,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+webrtc_interface,1.5.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+win32,6.4.0,transitive,yes,,no,lib/src/bstr.dart;lib/src/callbacks.dart;lib/src/callbacks.g.dart;lib/src/com/iaccessible.g.dart;lib/src/com/iagileobject.g.dart;lib/src/com/iapplicationactivationmanager.g.dart;lib/src/com/iappxblockmapblock.g.dart;lib/src/com/iappxblockmapblocksenumerator.g.dart;lib/src/com/iappxblockmapfile.g.dart;lib/src/com/iappxblockmapfilesenumerator.g.dart;lib/src/com/iappxblockmapreader.g.dart;lib/src/com/iappxfactory.g.dart;lib/src/com/iappxfile.g.dart;lib/src/com/iappxfilesenumerator.g.dart;lib/src/com/iappxmanifestapplication.g.dart;lib/src/com/iappxmanifestapplicationsenumerator.g.dart;lib/src/com/iappxmanifestcapabilitiesenumerator.g.dart;lib/src/com/iappxmanifestdevicecapabilitiesenumerator.g.dart;lib/src/com/iappxmanifestdriverconstraint.g.dart;lib/src/com/iappxmanifestdriverconstraintsenumerator.g.dart;lib/src/com/iappxmanifestdriverdependenciesenumerator.g.dart;lib/src/com/iappxmanifestdriverdependency.g.dart;lib/src/com/iappxmanifesthostruntimedependenciesenumerator.g.dart;lib/src/com/iappxmanifesthostruntimedependency.g.dart;lib/src/com/iappxmanifesthostruntimedependency2.g.dart;lib/src/com/iappxmanifestmainpackagedependenciesenumerator.g.dart;lib/src/com/iappxmanifestmainpackagedependency.g.dart;lib/src/com/iappxmanifestoptionalpackageinfo.g.dart;lib/src/com/iappxmanifestospackagedependenciesenumerator.g.dart;lib/src/com/iappxmanifestospackagedependency.g.dart;lib/src/com/iappxmanifestpackagedependenciesenumerator.g.dart;lib/src/com/iappxmanifestpackagedependency.g.dart;lib/src/com/iappxmanifestpackageid.g.dart;lib/src/com/iappxmanifestproperties.g.dart;lib/src/com/iappxmanifestqualifiedresource.g.dart;lib/src/com/iappxmanifestqualifiedresourcesenumerator.g.dart;lib/src/com/iappxmanifestreader.g.dart;lib/src/com/iappxmanifestreader2.g.dart;lib/src/com/iappxmanifestreader3.g.dart;lib/src/com/iappxmanifestreader4.g.dart;lib/src/com/iappxmanifestreader5.g.dart;lib/src/com/iappxmanifestreader6.g.dart;lib/src/com/iappxmanifestreader7.g.dart;lib/src/com/iappxmanifestresourcesenumerator.g.dart;lib/src/com/iappxmanifesttargetdevicefamiliesenumerator.g.dart;lib/src/com/iappxmanifesttargetdevicefamily.g.dart;lib/src/com/iappxpackagereader.g.dart;lib/src/com/iappxpackagewriter.g.dart;lib/src/com/iaudiocaptureclient.g.dart;lib/src/com/iaudioclient.g.dart;lib/src/com/iaudioclient2.g.dart;lib/src/com/iaudioclient3.g.dart;lib/src/com/iaudioclientduckingcontrol.g.dart;lib/src/com/iaudioclock.g.dart;lib/src/com/iaudioclock2.g.dart;lib/src/com/iaudioclockadjustment.g.dart;lib/src/com/iaudiorenderclient.g.dart;lib/src/com/iaudiosessioncontrol.g.dart;lib/src/com/iaudiosessioncontrol2.g.dart;lib/src/com/iaudiosessionenumerator.g.dart;lib/src/com/iaudiosessionevents.g.dart;lib/src/com/iaudiosessionmanager.g.dart;lib/src/com/iaudiosessionmanager2.g.dart;lib/src/com/iaudiosessionnotification.g.dart;lib/src/com/iaudiostreamvolume.g.dart;lib/src/com/iaudiovolumeducknotification.g.dart;lib/src/com/ibindctx.g.dart;lib/src/com/ichannelaudiovolume.g.dart;lib/src/com/iclassfactory.g.dart;lib/src/com/iconnectionpoint.g.dart;lib/src/com/iconnectionpointcontainer.g.dart;lib/src/com/idesktopwallpaper.g.dart;lib/src/com/idispatch.g.dart;lib/src/com/ienumconnectionpoints.g.dart;lib/src/com/ienumconnections.g.dart;lib/src/com/ienumidlist.g.dart;lib/src/com/ienummoniker.g.dart;lib/src/com/ienumnetworkconnections.g.dart;lib/src/com/ienumnetworks.g.dart;lib/src/com/ienumresources.g.dart;lib/src/com/ienumshellitems.g.dart;lib/src/com/ienumspellingerror.g.dart;lib/src/com/ienumspobjecttokens.g.dart;lib/src/com/ienumstatstg.g.dart;lib/src/com/ienumstring.g.dart;lib/src/com/ienumvariant.g.dart;lib/src/com/ienumwbemclassobject.g.dart;lib/src/com/ierrorinfo.g.dart;lib/src/com/ifiledialog.g.dart;lib/src/com/ifiledialog2.g.dart;lib/src/com/ifiledialogcustomize.g.dart;lib/src/com/ifiledialogevents.g.dart;lib/src/com/ifileisinuse.g.dart;lib/src/com/ifileopendialog.g.dart;lib/src/com/ifileoperationprogresssink.g.dart;lib/src/com/ifilesavedialog.g.dart;lib/src/com/iinitializewithwindow.g.dart;lib/src/com/iinspectable.g.dart;lib/src/com/iknownfolder.g.dart;lib/src/com/iknownfoldermanager.g.dart;lib/src/com/imalloc.g.dart;lib/src/com/imetadataassemblyimport.g.dart;lib/src/com/imetadatadispenser.g.dart;lib/src/com/imetadatadispenserex.g.dart;lib/src/com/imetadataimport.g.dart;lib/src/com/imetadataimport2.g.dart;lib/src/com/imetadatatables.g.dart;lib/src/com/imetadatatables2.g.dart;lib/src/com/immdevice.g.dart;lib/src/com/immdevicecollection.g.dart;lib/src/com/immdeviceenumerator.g.dart;lib/src/com/immendpoint.g.dart;lib/src/com/immnotificationclient.g.dart;lib/src/com/imodalwindow.g.dart;lib/src/com/imoniker.g.dart;lib/src/com/inetwork.g.dart;lib/src/com/inetworkconnection.g.dart;lib/src/com/inetworklistmanager.g.dart;lib/src/com/inetworklistmanagerevents.g.dart;lib/src/com/ioptiondescription.g.dart;lib/src/com/ipersist.g.dart;lib/src/com/ipersistfile.g.dart;lib/src/com/ipersistmemory.g.dart;lib/src/com/ipersiststream.g.dart;lib/src/com/iportabledevicekeycollection.g.dart;lib/src/com/iportabledevicepropvariantcollection.g.dart;lib/src/com/iportabledevicevalues.g.dart;lib/src/com/iportabledevicevaluescollection.g.dart;lib/src/com/ipropertydescriptionlist.g.dart;lib/src/com/ipropertystore.g.dart;lib/src/com/iprovideclassinfo.g.dart;lib/src/com/irawelementprovidersimple.g.dart;lib/src/com/irecordinfo.g.dart;lib/src/com/irestrictederrorinfo.g.dart;lib/src/com/irunningobjecttable.g.dart;lib/src/com/isensor.g.dart;lib/src/com/isensorcollection.g.dart;lib/src/com/isensordatareport.g.dart;lib/src/com/isensorevents.g.dart;lib/src/com/isensormanager.g.dart;lib/src/com/isensormanagerevents.g.dart;lib/src/com/isequentialstream.g.dart;lib/src/com/ishellfolder.g.dart;lib/src/com/ishellitem.g.dart;lib/src/com/ishellitem2.g.dart;lib/src/com/ishellitemarray.g.dart;lib/src/com/ishellitemfilter.g.dart;lib/src/com/ishellitemimagefactory.g.dart;lib/src/com/ishellitemresources.g.dart;lib/src/com/ishelllink.g.dart;lib/src/com/ishelllinkdatalist.g.dart;lib/src/com/ishelllinkdual.g.dart;lib/src/com/ishellservice.g.dart;lib/src/com/isimpleaudiovolume.g.dart;lib/src/com/ispdatakey.g.dart;lib/src/com/ispeechaudioformat.g.dart;lib/src/com/ispeechbasestream.g.dart;lib/src/com/ispeechdatakey.g.dart;lib/src/com/ispeechobjecttoken.g.dart;lib/src/com/ispeechobjecttokencategory.g.dart;lib/src/com/ispeechobjecttokens.g.dart;lib/src/com/ispeechvoice.g.dart;lib/src/com/ispeechvoicestatus.g.dart;lib/src/com/ispeechwaveformatex.g.dart;lib/src/com/ispellchecker.g.dart;lib/src/com/ispellchecker2.g.dart;lib/src/com/ispellcheckerchangedeventhandler.g.dart;lib/src/com/ispellcheckerfactory.g.dart;lib/src/com/ispellingerror.g.dart;lib/src/com/ispeventsource.g.dart;lib/src/com/ispnotifycallback.g.dart;lib/src/com/ispnotifysink.g.dart;lib/src/com/ispnotifysource.g.dart;lib/src/com/ispobjecttoken.g.dart;lib/src/com/ispobjecttokencategory.g.dart;lib/src/com/ispstreamformat.g.dart;lib/src/com/ispvoice.g.dart;lib/src/com/istorage.g.dart;lib/src/com/istream.g.dart;lib/src/com/isupporterrorinfo.g.dart;lib/src/com/itypecomp.g.dart;lib/src/com/itypeinfo.g.dart;lib/src/com/itypelib.g.dart;lib/src/com/iuiautomation.g.dart;lib/src/com/iuiautomation2.g.dart;lib/src/com/iuiautomation3.g.dart;lib/src/com/iuiautomation4.g.dart;lib/src/com/iuiautomation5.g.dart;lib/src/com/iuiautomation6.g.dart;lib/src/com/iuiautomationactivetextpositionchangedeventhandler.g.dart;lib/src/com/iuiautomationandcondition.g.dart;lib/src/com/iuiautomationannotationpattern.g.dart;lib/src/com/iuiautomationboolcondition.g.dart;lib/src/com/iuiautomationcacherequest.g.dart;lib/src/com/iuiautomationchangeseventhandler.g.dart;lib/src/com/iuiautomationcondition.g.dart;lib/src/com/iuiautomationcustomnavigationpattern.g.dart;lib/src/com/iuiautomationdockpattern.g.dart;lib/src/com/iuiautomationdragpattern.g.dart;lib/src/com/iuiautomationdroptargetpattern.g.dart;lib/src/com/iuiautomationelement.g.dart;lib/src/com/iuiautomationelement2.g.dart;lib/src/com/iuiautomationelement3.g.dart;lib/src/com/iuiautomationelement4.g.dart;lib/src/com/iuiautomationelement5.g.dart;lib/src/com/iuiautomationelement6.g.dart;lib/src/com/iuiautomationelement7.g.dart;lib/src/com/iuiautomationelement8.g.dart;lib/src/com/iuiautomationelement9.g.dart;lib/src/com/iuiautomationelementarray.g.dart;lib/src/com/iuiautomationeventhandler.g.dart;lib/src/com/iuiautomationeventhandlergroup.g.dart;lib/src/com/iuiautomationexpandcollapsepattern.g.dart;lib/src/com/iuiautomationfocuschangedeventhandler.g.dart;lib/src/com/iuiautomationgriditempattern.g.dart;lib/src/com/iuiautomationgridpattern.g.dart;lib/src/com/iuiautomationinvokepattern.g.dart;lib/src/com/iuiautomationitemcontainerpattern.g.dart;lib/src/com/iuiautomationlegacyiaccessiblepattern.g.dart;lib/src/com/iuiautomationmultipleviewpattern.g.dart;lib/src/com/iuiautomationnotcondition.g.dart;lib/src/com/iuiautomationnotificationeventhandler.g.dart;lib/src/com/iuiautomationobjectmodelpattern.g.dart;lib/src/com/iuiautomationorcondition.g.dart;lib/src/com/iuiautomationpropertychangedeventhandler.g.dart;lib/src/com/iuiautomationpropertycondition.g.dart;lib/src/com/iuiautomationproxyfactory.g.dart;lib/src/com/iuiautomationproxyfactoryentry.g.dart;lib/src/com/iuiautomationproxyfactorymapping.g.dart;lib/src/com/iuiautomationrangevaluepattern.g.dart;lib/src/com/iuiautomationscrollitempattern.g.dart;lib/src/com/iuiautomationscrollpattern.g.dart;lib/src/com/iuiautomationselectionitempattern.g.dart;lib/src/com/iuiautomationselectionpattern.g.dart;lib/src/com/iuiautomationselectionpattern2.g.dart;lib/src/com/iuiautomationspreadsheetitempattern.g.dart;lib/src/com/iuiautomationspreadsheetpattern.g.dart;lib/src/com/iuiautomationstructurechangedeventhandler.g.dart;lib/src/com/iuiautomationstylespattern.g.dart;lib/src/com/iuiautomationsynchronizedinputpattern.g.dart;lib/src/com/iuiautomationtableitempattern.g.dart;lib/src/com/iuiautomationtablepattern.g.dart;lib/src/com/iuiautomationtextchildpattern.g.dart;lib/src/com/iuiautomationtexteditpattern.g.dart;lib/src/com/iuiautomationtextedittextchangedeventhandler.g.dart;lib/src/com/iuiautomationtextpattern.g.dart;lib/src/com/iuiautomationtextpattern2.g.dart;lib/src/com/iuiautomationtextrange.g.dart;lib/src/com/iuiautomationtextrange2.g.dart;lib/src/com/iuiautomationtextrange3.g.dart;lib/src/com/iuiautomationtextrangearray.g.dart;lib/src/com/iuiautomationtogglepattern.g.dart;lib/src/com/iuiautomationtransformpattern.g.dart;lib/src/com/iuiautomationtransformpattern2.g.dart;lib/src/com/iuiautomationtreewalker.g.dart;lib/src/com/iuiautomationvaluepattern.g.dart;lib/src/com/iuiautomationvirtualizeditempattern.g.dart;lib/src/com/iuiautomationwindowpattern.g.dart;lib/src/com/iunknown.g.dart;lib/src/com/iuri.g.dart;lib/src/com/ivirtualdesktopmanager.g.dart;lib/src/com/iwbemcallresult.g.dart;lib/src/com/iwbemclassobject.g.dart;lib/src/com/iwbemconfigurerefresher.g.dart;lib/src/com/iwbemcontext.g.dart;lib/src/com/iwbemhiperfenum.g.dart;lib/src/com/iwbemlocator.g.dart;lib/src/com/iwbemobjectaccess.g.dart;lib/src/com/iwbemobjectsink.g.dart;lib/src/com/iwbemqualifierset.g.dart;lib/src/com/iwbemrefresher.g.dart;lib/src/com/iwbemservices.g.dart;lib/src/com/iwebauthenticationcoremanagerinterop.g.dart;lib/src/com/iwinhttprequest.g.dart;lib/src/constants.g.dart;lib/src/dispatcher.dart;lib/src/extensions/_internal.dart;lib/src/extensions/dialog.dart;lib/src/extensions/filetime.dart;lib/src/extensions/guid.dart;lib/src/extensions/pointer.dart;lib/src/extensions/string.dart;lib/src/extensions/systemtime.dart;lib/src/extensions/uint8list.dart;lib/src/functions.dart;lib/src/guid.dart;lib/src/hresult.dart;lib/src/hstring.dart;lib/src/inline.dart;lib/src/macros.dart;lib/src/pcstr.dart;lib/src/pcwstr.dart;lib/src/propvariant.dart;lib/src/pstr.dart;lib/src/pwstr.dart;lib/src/structs.dart;lib/src/structs.g.dart;lib/src/types.dart;lib/src/utils.dart;lib/src/variant.dart;lib/src/version.dart;lib/src/win32/advapi32.g.dart;lib/src/win32/api_ms_win_core_apiquery_l2_1_0.g.dart;lib/src/win32/api_ms_win_core_comm_l1_1_1.g.dart;lib/src/win32/api_ms_win_core_comm_l1_1_2.g.dart;lib/src/win32/api_ms_win_core_handle_l1_1_0.g.dart;lib/src/win32/api_ms_win_core_path_l1_1_0.g.dart;lib/src/win32/api_ms_win_core_sysinfo_l1_2_3.g.dart;lib/src/win32/api_ms_win_core_winrt_error_l1_1_0.g.dart;lib/src/win32/api_ms_win_core_winrt_l1_1_0.g.dart;lib/src/win32/api_ms_win_core_winrt_string_l1_1_0.g.dart;lib/src/win32/api_ms_win_ro_typeresolution_l1_1_0.g.dart;lib/src/win32/api_ms_win_ro_typeresolution_l1_1_1.g.dart;lib/src/win32/api_ms_win_service_core_l1_1_3.g.dart;lib/src/win32/api_ms_win_service_core_l1_1_4.g.dart;lib/src/win32/api_ms_win_service_core_l1_1_5.g.dart;lib/src/win32/api_ms_win_shcore_scaling_l1_1_1.g.dart;lib/src/win32/api_ms_win_wsl_api_l1_1_0.g.dart;lib/src/win32/bluetoothapis.g.dart;lib/src/win32/bthprops.g.dart;lib/src/win32/comctl32.g.dart;lib/src/win32/comdlg32.g.dart;lib/src/win32/crypt32.g.dart;lib/src/win32/dbghelp.g.dart;lib/src/win32/dnsapi.g.dart;lib/src/win32/dwmapi.g.dart;lib/src/win32/dxva2.g.dart;lib/src/win32/gdi32.g.dart;lib/src/win32/iphlpapi.g.dart;lib/src/win32/kernel32.g.dart;lib/src/win32/ktmw32.g.dart;lib/src/win32/magnification.g.dart;lib/src/win32/netapi32.g.dart;lib/src/win32/ntdll.g.dart;lib/src/win32/ole32.g.dart;lib/src/win32/oleaut32.g.dart;lib/src/win32/powrprof.g.dart;lib/src/win32/propsys.g.dart;lib/src/win32/psapi.g.dart;lib/src/win32/rometadata.g.dart;lib/src/win32/scarddlg.g.dart;lib/src/win32/setupapi.g.dart;lib/src/win32/shell32.g.dart;lib/src/win32/shlwapi.g.dart;lib/src/win32/user32.g.dart;lib/src/win32/uxtheme.g.dart;lib/src/win32/version.g.dart;lib/src/win32/wevtapi.g.dart;lib/src/win32/winmm.g.dart;lib/src/win32/winscard.g.dart;lib/src/win32/winspool.g.dart;lib/src/win32/wlanapi.g.dart;lib/src/win32/ws2_32.g.dart;lib/src/win32/wtsapi32.g.dart;lib/src/win32/xinput1_4.g.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+win32_registry,3.0.3,transitive,yes,,no,lib/src/key.dart;lib/src/monitor.dart;lib/src/utils.dart,原生/通道/构建信号：需按路径核查,,,,,,,
+window_manager,0.5.1,direct main,yes,"linux,macos,windows",no,lib/src/window_manager.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,项目固定自有 Git fork；候选仓库有线索但包未核实，桌面窗口管理不应在 HAP 手机路径初始化。
+windows_file_picker,2.0.1,transitive,yes,windows,no,lib/src/file_picker_windows.dart;lib/src/file_picker_windows_ffi_types.dart,其他平台实现：不应在 OHOS 注册,,,,,,,依赖图存在不表示运行路径使用；还需核对编译及原生资产 hook。
+windows_notification,1.3.0,direct main,yes,windows,no,lib/windows_notification_method_channel.dart,需处理：未确认兼容版/需隔离或移植,,,,,,,仅 Windows；鸿蒙不能复用 Windows 通知实现。
+wkt_parser,2.0.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+xdg_directories,1.1.0,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+xml,7.0.1,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+xxh3,1.2.0,transitive,no,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,
+yaml,3.1.4,transitive,yes,,no,,Dart 层：未发现原生入口，仍待 OH-Flutter 编译,,,,,,,

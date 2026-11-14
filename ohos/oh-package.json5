@@ -1,0 +1,10 @@
+{
+  "modelVersion": "5.1.0",
+  "name": "island",
+  "version": "1.0.0",
+  "description": "理科迷 Flutter 原生鸿蒙宿主",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {}
+}

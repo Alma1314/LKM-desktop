@@ -1,0 +1,12 @@
+diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -450,7 +450,7 @@ config("compiler") {
+     toolchain_cipd_version = read_file(toolchain_stamp_file, "json")
+     defines = [ "TOOLCHAIN_VERSION=${toolchain_cipd_version.instance_id}" ]
+ 
+-    if (is_linux) {
++    if (is_linux && dart_sysroot != "") {
+       if (current_cpu == "riscv64") {
+         sysroot_stamp_file =
+             "//buildtools/sysroot/focal/.versions/sysroot.cipd_version"

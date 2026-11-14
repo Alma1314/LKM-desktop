@@ -1,0 +1,66 @@
+--- a/runtime/runtime_args.gni
++++ b/runtime/runtime_args.gni
+@@ -30,6 +30,9 @@
+   # Explicitly set the target architecture to use a simulator.
+   # Available options are: arm, arm64, x64, ia32, riscv32, riscv64.
+   dart_target_arch = target_cpu
++
++  # Snapshot target OS can differ from the Linux build host.
++  dart_target_os = target_os
+ 
+   # Force use of the simulator even when the Dart target arch matches the
+   # current cpu.
+--- a/runtime/BUILD.gn
++++ b/runtime/BUILD.gn
+@@ -109,15 +109,15 @@
+ 
+ config("dart_os_config") {
+   defines = []
+-  print("DART  TARGET OS: "+target_os )
+-  if (target_os == "android") {
++  print("DART  TARGET OS: "+dart_target_os )
++  if (dart_target_os == "android") {
+     defines += [ "DART_TARGET_OS_ANDROID" ]
+-  } else if (target_os == "fuchsia") {
++  } else if (dart_target_os == "fuchsia") {
+     defines += [ "DART_TARGET_OS_FUCHSIA" ]
+-  } else if (target_os == "ios") {
++  } else if (dart_target_os == "ios") {
+     defines += [ "DART_TARGET_OS_MACOS" ]
+     defines += [ "DART_TARGET_OS_MACOS_IOS" ]
+-  } else if (target_os == "watchos") {
++  } else if (dart_target_os == "watchos") {
+     defines += [ "DART_TARGET_OS_MACOS" ]
+ 
+     # This doesn't look entirely correct, but so far it looks
+@@ -125,24 +125,24 @@
+     # If we need to differentiate iOS and watchOS targets later, we'll
+     # change this.
+     defines += [ "DART_TARGET_OS_MACOS_IOS" ]
+-  } else if (target_os == "linux") {
++  } else if (dart_target_os == "linux") {
+     defines += [ "DART_TARGET_OS_LINUX" ]
+-  } else if (target_os == "ohos") {
++  } else if (dart_target_os == "ohos") {
+     defines += [ "DART_TARGET_OS_OHOS" ]
+     if (is_ohos) {
+       defines += [ "DART_RUNTIME_OS_OHOS" ]
+     }
+-  } else if (target_os == "mac") {
++  } else if (dart_target_os == "mac") {
+     defines += [ "DART_TARGET_OS_MACOS" ]
+-  } else if (target_os == "win") {
++  } else if (dart_target_os == "win") {
+     defines += [ "DART_TARGET_OS_WINDOWS" ]
+-  } else if (target_os == "winuwp") {
++  } else if (dart_target_os == "winuwp") {
+     defines += [
+       "DART_TARGET_OS_WINDOWS",
+       "DART_TARGET_OS_WINDOWS_UWP",
+     ]
+   } else {
+-    print("Unknown target_os: $target_os")
++    print("Unknown dart_target_os: $dart_target_os")
+     assert(false)
+   }
+ }

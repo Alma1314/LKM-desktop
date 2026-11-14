@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "理科迷 Flutter 客户端"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "理科迷 Flutter 客户端"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "理科迷"
+    }
+  ]
+}

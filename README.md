@@ -1,29 +1,4 @@
-# Solian (Solar Network)
-
-<p align="center">
-  <img src="assets/icons/icon.webp" width="120" alt="Solian Logo">
-</p>
-
-<p align="center">
-  <b>一个宁静的社交网络</b>
-</p>
-
-<p align="center">
-  <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/Solsynth/HyperNet.Surface" alt="License"></a>
-  <a href="https://github.com/Solsynth/HyperNet.Surface/releases"><img src="https://img.shields.io/github/v/release/Solsynth/HyperNet.Surface?include_prereleases" alt="Latest Release"></a>
-</p>
-
----
-
-Solian（又名 Solar Network）是一个社交平台，旨在帮助你自由表达自我并与他人建立联系。我们并不打算取代任何主流平台——只是为你提供另一个宁静和谐的社区选择。
-
-注意：联邦宇宙（Fediverse）支持目前处于实验阶段，功能有限。
-
-提示：中文版本的 README 信息可能更新不及时，请以英文版本的为准。
-
-> 中文文档：[Suki - Solar Network](https://kb.solsynth.dev/zh/solar-network) | [English README](./README.md)
-
----
+# 理科迷社区桌面端
 
 ## 目录
 
@@ -74,19 +49,16 @@ Solian（又名 Solar Network）是一个社交平台，旨在帮助你自由表
 ### 普通用户
 
 1. **下载应用**
-   - 访问 [Solar Network 产品页](https://solsynth.dev/products/solar-network) 下载适合你平台的最新版本
-   - **滚动更新：** Solian 采用滚动发布模式——我们不做 API 版本控制，破坏性更新随时可能出现。请保持应用更新以获得最佳体验。
+   - 还未开发完成，暂时不提供打包应用
 
-2. **创建账号**
-   - 在 Solar Network 上注册账号
-   - 验证你的邮箱地址
-   - 开始探索吧！
+2. 敬请期待
 
 ### 开发者
 
 #### 前置要求
 
-- 安装 [Flutter SDK](https://flutter.dev)
+- 使用 [OH-Flutter SDK](https://atomgit.com/oh-flutter/flutter_flutter)，目标版本固定在 [.flutter-version](.flutter-version)。SDK 初始化与当前主机限制见[跨平台插件替换进度](docs/HARMONYOS_PLUGIN_REPLACEMENTS.md#sdk-切换状态)。
+- 鸿蒙 HAP 要求在 Linux 本机构建。已安装工具的终端可执行 `source buildtools/env-ohos.sh`；安装、三种模式的最小 HAP 验证及业务应用状态见 [Linux 本机构建记录](docs/HARMONYOS_LINUX_BUILD.md)。
 - Windows 开发需要安装 [NASM](https://www.nasm.us)（`webcrypto` 原生资源需要）：
   ```powershell
   winget install NASM.NASM
@@ -123,6 +95,8 @@ flutter build <platform>
 ```
 
 更多构建选项请查看 [Flutter 官方文档](https://docs.flutter.dev)。
+
+鸿蒙 NEXT 原生 HAP 的准备工作见 [OH-Flutter 插件兼容性审计](docs/HARMONYOS_PLUGIN_AUDIT.md)和[跨平台插件替换进度](docs/HARMONYOS_PLUGIN_REPLACEMENTS.md)。各平台使用同一份依赖配置；替换进度记录了固定源码提交、配套依赖和待验证项。
 
 ---
 

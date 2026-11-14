@@ -242,7 +242,8 @@ class SelectableMath extends StatelessWidget {
         MathOptions(
           style: mathStyle,
           fontSize: effectiveTextStyle.fontSize! * textScaleFactor,
-          mathFontOptions: effectiveTextStyle.fontWeight != FontWeight.normal && effectiveTextStyle.fontWeight != null
+          mathFontOptions: effectiveTextStyle.fontWeight != FontWeight.normal &&
+                  effectiveTextStyle.fontWeight != null
               ? FontOptions(fontWeight: effectiveTextStyle.fontWeight!)
               : null,
           logicalPpi: logicalPpi,
@@ -291,6 +292,7 @@ class SelectableMath extends StatelessWidget {
         break;
 
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.windows:
@@ -478,6 +480,7 @@ class InternalSelectableMathState extends State<InternalSelectableMath>
         }
         return;
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.windows:

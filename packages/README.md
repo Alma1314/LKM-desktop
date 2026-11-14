@@ -18,6 +18,13 @@ so the tree must stay together.
 | `flutter_app_update` | Vendored fork of `azhon/flutter_app_update` |
 | `flutter_math_fork` | Vendored fork of `simpleclub/flutter_math` (KaTeX fonts loaded lazily) |
 | `protocol_handler_windows` | Vendored fork of `leanflutter/protocol_handler` |
+| `material_ui` / `cupertino_ui` | Current published UI versions with OH-Flutter platform cases |
+| `pinput` / `flutter_quill` | Current published input/editor versions with OH-Flutter platform cases |
+
+The UI/input packages retain their current APIs and original platforms. All app
+targets use the same source, with OHOS following their Android UI behavior.
+Each new package's `UPSTREAM.md` records its original archive hash and local
+change; runtime source and licenses are retained, upstream examples/tests omitted.
 
 ## Why vendored
 

@@ -25,18 +25,10 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:solar_network_sdk/solar_network_sdk.dart';
 
 /// Desktop mouse platforms where pinch/gesture zoom is awkward.
-bool _isDesktopImageControlsPlatform() {
-  switch (defaultTargetPlatform) {
-    case TargetPlatform.macOS:
-    case TargetPlatform.windows:
-    case TargetPlatform.linux:
-      return true;
-    case TargetPlatform.android:
-    case TargetPlatform.iOS:
-    case TargetPlatform.fuchsia:
-      return false;
-  }
-}
+bool _isDesktopImageControlsPlatform() =>
+    defaultTargetPlatform == TargetPlatform.macOS ||
+    defaultTargetPlatform == TargetPlatform.windows ||
+    defaultTargetPlatform == TargetPlatform.linux;
 
 /// Images and videos that can be opened in [CloudFileLightbox].
 bool isLightboxMedia(IDisplayableCloudFile file) {
@@ -954,7 +946,8 @@ class _LightboxBottomBar extends StatelessWidget {
         padding: EdgeInsets.zero,
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: iconWidget ??
+        icon:
+            iconWidget ??
             Icon(
               icon,
               color: onPressed == null
@@ -1064,11 +1057,7 @@ const double _kLightboxControlHeight = 44.0;
 
 /// The soft drop shadow iOS gives floating glass.
 const _kLightboxGlassShadows = [
-  BoxShadow(
-    color: Color(0x33000000),
-    blurRadius: 16,
-    offset: Offset(0, 4),
-  ),
+  BoxShadow(color: Color(0x33000000), blurRadius: 16, offset: Offset(0, 4)),
 ];
 
 /// A circular button that renders liquid glass over the lightbox backdrop,
@@ -1099,11 +1088,7 @@ class _LightboxIconButton extends StatelessWidget {
       width: size,
       height: size,
       child: Center(
-        child: Icon(
-          icon,
-          color: iconColor,
-          size: iconSize,
-        ),
+        child: Icon(icon, color: iconColor, size: iconSize),
       ),
     );
 
@@ -1168,10 +1153,7 @@ class _LightboxPill extends StatelessWidget {
 
     final content = SizedBox(
       height: height,
-      child: Padding(
-        padding: padding,
-        child: child,
-      ),
+      child: Padding(padding: padding, child: child),
     );
 
     if (glassEnabled) {
@@ -1180,9 +1162,7 @@ class _LightboxPill extends StatelessWidget {
         shadows: _kLightboxGlassShadows,
         settings: LiquidGlassSettings.ios27RegularDark(),
         appearance: const LiquidGlassAppearance.ios27RegularDark(),
-        child: GlassGlowLayer(
-          child: content,
-        ),
+        child: GlassGlowLayer(child: content),
       );
     }
 

@@ -10,7 +10,6 @@
 #
 set -euo pipefail
 
-REQUIRED_FLUTTER="${REQUIRED_FLUTTER:-3.47.9}"
 MIN_DART="${MIN_DART:-3.13.0}"
 
 # Linux desktop build dependencies from the README. Runtime libs are checked
@@ -32,6 +31,7 @@ LINUX_APT_PACKAGES=(
 )
 
 cd "$(dirname "$0")/.."
+REQUIRED_FLUTTER="${REQUIRED_FLUTTER:-$(tr -d '\r\n' < .flutter-version)}"
 
 log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!!\033[0m %s\n' "$*"; }
@@ -42,14 +42,14 @@ if ! command -v flutter >/dev/null 2>&1; then
         export PATH="$HOME/flutter/bin:$PATH"
     else
         warn "flutter not found. Install it first, for example:"
-        warn "  git clone -b stable https://github.com/flutter/flutter.git \"\$HOME/flutter\""
+        warn "  git clone --depth 1 -b ${REQUIRED_FLUTTER} https://atomgit.com/oh-flutter/flutter_flutter.git \"\$HOME/flutter\""
         warn "  export PATH=\"\$HOME/flutter/bin:\$PATH\""
         exit 1
     fi
 fi
 
 log "Flutter $(flutter --version 2>/dev/null | head -n 1)"
-log "Expected Flutter ${REQUIRED_FLUTTER} or newer (pubspec.lock pins Dart >= ${MIN_DART})"
+log "Expected OH-Flutter ${REQUIRED_FLUTTER} (pubspec.lock pins Dart >= ${MIN_DART})"
 
 # --- Dart/Flutter packages ---------------------------------------------------
 log "Resolving packages (flutter pub get)"

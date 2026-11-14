@@ -1,0 +1,30 @@
+name: material_ui
+publish_to: none
+description: The official Flutter Material UI Library, implementing Google's Material Design design system.
+version: 1.10.0
+repository: https://github.com/flutter/packages/tree/main/packages/material_ui
+issue_tracker: https://github.com/flutter/flutter/issues?q=is%3Aissue+is%3Aopen+label%3A%22p%3A%20material_ui%22
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  collection: ^1.19.1
+  cupertino_ui: ^1.0.0
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  material_color_utilities: ^0.13.0
+  vector_math: ^2.2.0
+
+flutter:
+  shaders:
+    - packages/material_ui/shaders/ink_sparkle.frag
+
+topics:
+  - ui
+  - widgets
+  - material

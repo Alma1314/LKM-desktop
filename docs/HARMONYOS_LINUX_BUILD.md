@@ -1,0 +1,219 @@
+# OH-Flutter Linux 本机构建记录
+
+更新日期：2026-11-14。构建宿主必须是本机 Linux x64；应用继续使用同一套 Flutter 业务代码与依赖配置。
+
+## 版本依据
+
+Flutter 固定为 `.flutter-version` 中的 `3.47.9-ohos-1.0.0`，源码提交 `e5f752df3e25ec897da3c98a74bcced7c21b0bd3`。该发布的鸿蒙工件沿用 3.47.5 批次，实际对应 **Dart 3.13.4**，不是当前 Flutter 根 `DEPS` 中的 Dart 3.13.7。
+
+`engine.ohos.version` 指向旧的 3.44.9 工件批次，其 Dart 为 3.12.2，也不能作为这次宿主工具的源码版本。引擎下载覆盖地址和发布说明才说明了当前 HAR 的实际来源。
+
+本次本地源码组合：
+
+| 部分 | 固定版本 |
+| --- | --- |
+| Dart 上游 | `b530c21f7de367b94fb04787bfed9d8e989d75e8`，tag `3.13.4` |
+| 完整鸿蒙移植 | `oh-flutter/fluttertpc_dart_sdk` 的 `a1d8fe1963e5e4aa280a1d82f55db83df54f8c7c`，127 个文件 |
+| 独立 SDK 的 GN 修复 | 同仓库 `e8c31beb6a54c8fb9de451d318d1e39e74cf6d48`，2 个文件，其中一个与前项重合 |
+| VM flag 修复 | Flutter 源码中 `engine/src/flutter/attachment/patches/dart_ohos_removed_vm_flag.patch` |
+
+移植源的 128 个最终文件均按官方提交提供的 Git blob SHA 校验后应用。Dart 3.13.3 → 3.13.4 的 8 个上游变更文件与这组移植文件没有交集；没有覆盖 3.13.4 的版本更新。
+
+FFI 的运行时、SDK 和前端必须保持 `ohosArm=22`、`ohosArm64=23`、`ohosX64=24`，ARM64 指针为 64 位。当前移植已经包含前端 OHOS ABI 声明，不能盲目重复应用只匹配另一种源码排版的补丁；仍需用上游 `verify_ohos_ffi_abi.dart` 检查编译后的两个 platform kernel。
+
+## 本机安装与验证
+
+安装目录：`/home/alma/harmonyos/command-line-tools`。下载包已通过完整 ZIP CRC 检查，SHA-256 为 `e5fda7d37eef11263588203d724d1b72380273d3c07535bb7d361a1d0e95cf34`；这里记录的是本地计算值。
+
+| 工具 | 已安装版本 / 状态 |
+| --- | --- |
+| Command Line Tools | Linux x64 26.0.0.865 |
+| HarmonyOS SDK / NDK | 26.0.0.105，API 26 Release |
+| JDK | Temurin 21.0.12.1 |
+| 内置 Node.js | 24.14.1 |
+| OHPM | 26.0.0.630 |
+| Hvigor | 6.26.9 |
+| HDC | 3.2.0f |
+| NDK Clang / CMake | 15.0.4 / 3.28.2 |
+| Rust | 已添加 `aarch64-unknown-linux-ohos` 标准库和 NDK linker 配置 |
+| OH-Flutter | 3.47.9-ohos-1.0.0，默认命令已启动成功 |
+| 定制 Dart | Linux 本地编译的 3.13.4，已安装进 Flutter 缓存 |
+
+Bash 启动配置已引用唯一的 [环境脚本](../buildtools/env-ohos.sh)。当前终端可执行：
+
+```bash
+source buildtools/env-ohos.sh
+flutter --version
+flutter doctor -v
+```
+
+环境脚本可重复加载，配置内置 Node、JDK 21、SDK、NDK、OHPM、Hvigor、HDC，以及 Rust ARM64 OHOS 的 linker / C / C++ / ar。没有另建应用依赖配置。
+
+已验证：
+
+- `flutter doctor -v` 的 Flutter、HarmonyOS toolchain、Linux toolchain 项通过。此结果不代表其他目标的 SDK 均已安装，也不等于真机验证。
+- NDK C 和 Rust 均实际交叉编译出 ARM64 ELF 动态库。
+- 默认 `dart` 可执行 `Platform.isOhos`、`Abi.ohosArm64` 探针；Linux 宿主返回 `false` 和 `ohos_arm64`，符合预期。
+- 两个缓存的 Flutter platform kernel 都通过上游 FFI 检查：25 个 ABI 的 IntPtr / UintPtr / Size 宽度一致，OHOS ARM64 为索引 23、64 位。
+- Dart SDK、前端 AOT snapshot 和 runtime 已换为 Linux 产物，旧标准 Dart 与 Mach-O 文件已保留为备份。
+- 本地 VM 源码、Linux 生成器、官方 ARM64 release 引擎的 snapshot hash 均为 `4459fbb50b22bed94948a609d66f261e`。
+- Linux → OHOS ARM64 release 生成器已生成探针 AOT ELF，记录的目标特征为 `arm64 ohos compressed-pointers`，已安装到 Flutter 的 release 缓存。profile 生成器也已完成编译并安装；两者均通过实际 HAP 构建验证。旧的 Dart 3.12.2 生成器已保留为备份。
+
+### 最小原生 Flutter HAP
+
+验证工程：`/tmp/lkm-linux-ohos/smoke`，由当前 SDK 的 `flutter create --platforms=ohos` 生成，保持 Flutter 原生界面。
+
+```bash
+flutter build hap --debug --no-codesign --target-platform ohos-arm64
+```
+
+debug、profile、release 三种模式均已在 Linux 本机成功编译，HAP 的完整 ZIP CRC 检查通过。debug 包含 Flutter kernel 与 ARM64 引擎，profile / release 包含 ARM64 AOT `libapp.so`。未使用 `--no-tree-shake-icons`。
+
+产物已持久保存在 `/home/alma/harmonyos/validation/`：
+
+| 文件 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| `lkm-ohos-smoke-debug-unsigned.hap` | 102466502 | `f675cd6c342e42a80c105b2dddc559c3666b7f4fe38deb4c776d57565c28e1a4` |
+| `lkm-ohos-smoke-profile-unsigned.hap` | 27214402 | `1e7b8b0eb98bcfd0258ac345c57a53093af525fe74b5b50044ce8fee8c0ab890` |
+| `lkm-ohos-smoke-release-unsigned.hap` | 21279691 | `c3908d2a6ca3aeef87cf540be0197c598f9cfb47f0acb3fd9e321be3c81de922` |
+
+profile / release 使用对应的 `--profile` / `--release` 参数。签名已关闭，不需要为工具链检查登录 AGC；这些包尚未签名或安装到设备。
+
+release 检查发现原缓存的 `const_finder` 使用另一 Dart SDK hash，已用同一套 Dart / Kernel 源码重建，图标裁剪默认开启的 release 构建随后成功。日志为 `/tmp/lkm-linux-ohos/build-smoke-{hap,profile,release}.log`。
+
+业务应用未据此宣称迁移完成：此前的 `flutter pub get` 超时，详细日志显示 WebF 等官方 Git clone 返回 HTTP 418。现已应用下述传输修复，业务项目 `flutter pub get` 成功并更新唯一锁文件；应用侧集中静态检查、OHOS UI 回归和业务 OHOS Dart 编译已通过；全量测试结果为 868 通过、22 失败、3 跳过，业务 HAP 与真机验证尚未完成。
+
+### Linux 测试引擎配套
+
+业务 UI 修复后，`flutter test` 暴露出 `Invalid SDK hash`：当前标准 Linux `flutter_tester` 是 Dart 3.13.7，而本机定制 SDK / platform kernel 与 OHOS 目标仍为 3.13.4。已将 Linux `flutter_tester` 和 ICU 数据换为官方 Flutter 3.47.5 的 Linux x64 工件，匹配 Dart 3.13.4；随后 OHOS UI 集中回归已实际运行通过。
+
+- 官方 [3.47.5 引擎 revision](https://raw.githubusercontent.com/flutter/flutter/3.47.5/bin/internal/engine.version)：`af7e796e161ae0bb1ff0758c71a7105418bd9ded`。
+- 官方 [Linux x64 工件 ZIP](https://storage.googleapis.com/flutter_infra_release/flutter/af7e796e161ae0bb1ff0758c71a7105418bd9ded/linux-x64/artifacts.zip)：完整 CRC 通过，本地 SHA-256 `b2e6e1e6b95866297b77580d04dbebcd45863585ad9f484108101c7c2f427a4a`。
+- 原文件在 `bin/cache/artifacts/engine/linux-x64/` 下以 `.dart-3.13.7-backup` 后缀保留；其他宿主目标的构建尚未据此验证。
+- 如果清除 Flutter SDK 缓存或强制重新 precache，需要重新校准这些配套文件；不要只替换 Dart 后沿用不同版本的测试引擎。
+
+### 业务应用验证
+
+业务应用使用仓库中的 `ohos/` 原生宿主，来自固定 SDK 模板。它通过 FlutterAbility / FlutterPage 加载现有 Flutter 引擎与 `lib/main.dart`，不是 WebView 应用；没有另一份业务实现。bundleName 为 `ltd.lkmahz.desktop`，兼容/目标 API 为 26。
+
+```bash
+source buildtools/env-ohos.sh
+flutter pub get
+# 本机 Lean 的 clang 位于 PATH 前部；测试时优先使用完整的系统 Clang。
+PATH="/usr/bin:$PATH" "$HOME/flutter/bin/flutter" test --no-pub
+flutter analyze --no-pub
+PATH="/usr/bin:$PATH" "$HOME/flutter/bin/flutter" build hap \
+  --debug --no-pub --no-codesign --target-platform ohos-arm64
+```
+
+当前实际结果：Pub 解析成功，37 个 override 与锁文件的 Git SHA 逐项一致；应用静态检查修复了图片预览遗漏 OHOS 的平台分支，余下 7 个 warning / 58 个 info，0 个 error。本次应用改动的集中静态检查与 OHOS UI 测试均已通过；全量测试结果为 868 通过、22 失败、3 跳过，尚无成功的业务 HAP 产物。
+
+业务应用 OHOS Dart 编译已单独通过（不包含原生资产和 HAP 打包）：
+
+```bash
+flutter assemble --no-version-check \
+  --output /tmp/lkm-linux-ohos/app-kernel-validated \
+  -dTargetFile=lib/main.dart -dTargetPlatform=ohos \
+  -dBuildMode=debug -dOhosArchs=arm64-v8a kernel_snapshot_program
+```
+
+本次输出为 `.dart_tool/flutter_build/b8d37cb656102bf157dd2f4a27bd5d88/app.dill`，259660064 字节；日志为 `/tmp/lkm-linux-ohos/app-ohos-kernel.log`，命令退出码 0。完整 HAP 还需要下面的原生资产修复。
+
+### 全量检查结果
+
+- `flutter analyze --no-pub`：0 error、7 warning、58 info，退出码 1；本次应用修改和新增回归测试的集中 analyze 为 0 issue。
+- `flutter test --no-pub --reporter expanded`：868 通过、22 失败、3 跳过，退出码 1。新增 OHOS UI 回归独立运行和全量运行均通过；没有将全量测试标记为成功。
+- 22 项失败仍待定位，涉及下面 9 个文件；主题/消息截图存在像素差异，另有链接解析、页面断言、聊天布局/状态与音频探测超时。测试日志还出现远程字体获取失败，尚未完成替换前基线对照。
+
+| 测试文件 | 失败用例数 |
+| --- | ---: |
+| `test/misc/settings_explore_category_test.dart` | 1 |
+| `test/theme_preview_test.dart` | 3 |
+| `test/drive/s3_direct_upload_test.dart` | 1 |
+| `test/posts/post_link_embed_test.dart` | 9 |
+| `test/chat/messages_notifier_test.dart` | 1 |
+| `test/chat/message_post_link_test.dart` | 1 |
+| `test/chat/message_bubble_shape_test.dart` | 1 |
+| `test/chat/message_avatar_alignment_test.dart` | 4 |
+| `test/shared/widgets/markdown_selection_test.dart` | 1 |
+
+完整日志与机器可读结果保存在 `/home/alma/harmonyos/validation/`，文件名为 `lkm-desktop-*.log` 和 `lkm-desktop-validation.json`。
+
+### 业务 HAP 当前阻塞：原生资产目标
+
+本次实际构建输入 `.dart_tool/hooks_runner/cnativeapi/28ebdb10e6/input.json` 显示：请求的架构是 `arm64`，但传给应用 hook 的 OS 是 `linux`。固定 SDK 的 `packages/flutter_tools/lib/src/isolated/native_assets/targets.dart` 中，`OhosAssetTarget.extensions` 明确将 `targetOS` 回退为 `OS.linux`，以兼容尚不认识 OHOS 的 hosted `code_assets`。
+
+这会使 `cnativeapi` 选择 Linux GTK 源码和宿主头文件，甚至使用 NDK clang 的默认 x64 目标，不能当作合法的 OHOS 库继续验收。已停止这次业务 HAP 构建，没有将这类产物宣称为鸿蒙构建成功。
+
+应用当前解析的是 `code_assets 2.2.0`、`native_toolchain_c 0.19.6`；SDK 的鸿蒙移植源对应 `code_assets 1.2.1`、`native_toolchain_c 0.17.6`。不能直接覆盖为旧版掩盖接口差异。后续需要把 OHOS 协议/目标编译支持移植到当前版本，并撤销 SDK 的 Linux 回退；随后分别验证 cnativeapi、OpenMLS、sqlite3 等原生库的 OHOS 实现、ELF 架构与依赖。旧版审计中列出的 RTC、播放器、Firebase 等功能缺口也仍然存在。
+
+### 本地构建依赖和修复
+
+源码构建现场：`/tmp/lkm-linux-ohos/dart-build/sdk`。Clang 固定为官方 CIPD 的 `deb6854eec93529b2bd30178d400ad2ee7665cd4`；DevTools 固定为 `12d595649f189f1896722623f72599077f476848`。源码构建依赖的 196 个包已解析。
+
+### GitCode HTTP 418 修复
+
+本机实测普通 Git User-Agent 返回 418，单独改用 `Mozilla/5.0` 后，`ls-remote` 与实际镜像克隆均成功；无需修改协议版本。已持久设置：
+
+```bash
+git config --global http.https://gitcode.com/.userAgent Mozilla/5.0
+git config --global http.https://atomgit.com/.userAgent Mozilla/5.0
+```
+
+设置只匹配这两个官方域名。原 Git 配置保存在 `/home/alma/.gitconfig.lkm-before-gitcode-user-agent`。这是一项经本机验证的客户端兼容配置，不保证服务端策略以后保持不变。
+
+修复后 SDK 已恢复原始 Git 依赖并完成 `pub get`，默认 `flutter --version` 正常。先前的 SDK 本地 override 已撤销，备份为 `/home/alma/harmonyos/validation/flutter-tools-pubspec-overrides-418-backup.yaml`；受校验的旧本地依赖作为回退保留，不再是 SDK 当前依赖来源。主项目的依赖地址、固定提交和统一 `pubspec.yaml` 保持原样，实际 `flutter pub get` 已成功。
+
+### WebF 大仓库断流
+
+418 修复后，WebF 全量镜像克隆仍遇到 `curl 18` / `early EOF`。本机按 `pubspec.yaml` 中的固定提交 `ccdf8a05222a408938e51e2b58413355ff2aab7d` 做真实 Git 浅获取，约 7.8 MB，`git fsck --full --strict` 通过后放入 Pub 的标准 bare 缓存。没有改依赖 URL、提交或手工编造锁文件。
+
+可在该缓存缺失或无效时重新准备（有效缓存无需重复执行；先移开失效目录保留备份）：
+
+```bash
+webf_url=https://gitcode.com/CPF-Flutter/fluttertpc_webf.git
+webf_commit=ccdf8a05222a408938e51e2b58413355ff2aab7d
+webf_cache="$HOME/.pub-cache/git/cache/fluttertpc_webf-d20964bca5b6fee17fe1e9363e818d5199752aa3"
+git init --bare "$webf_cache"
+git -C "$webf_cache" remote add origin "$webf_url"
+git -C "$webf_cache" -c http.version=HTTP/1.1 fetch --depth=1 origin "$webf_commit"
+git -C "$webf_cache" update-ref refs/heads/lkm-pinned "$webf_commit"
+git -C "$webf_cache" symbolic-ref HEAD refs/heads/lkm-pinned
+git -C "$webf_cache" config remote.origin.fetch "+$webf_commit:refs/heads/lkm-pinned"
+git -C "$webf_cache" fsck --full --strict
+flutter pub get
+```
+
+该缓存只获取这个固定提交；以后升级 WebF 的 pin 时，应同步更改缓存 fetch refspec 并获取新提交，或移开此缓存让 Pub 重新克隆。其他依赖使用正常的 Git 缓存。
+
+[GitCode 官方状态码说明](https://docs.gitcode.com/docs/apis/)将 418 归为请求被拒绝、疑似不安全。该说明没有公开本次请求具体触发了哪条规则；上述根因定位来自本机对照测试。
+
+
+使用本机系统头文件和 glibc：
+
+- [sysroot 修复](../buildtools/patches/dart-linux-no-sysroot.patch) 使未启用 CIPD sysroot 时不再读取其元数据，不伪造版本文件。
+- [快照目标修复](../buildtools/patches/dart-linux-ohos-snapshot.patch) 允许 Linux 宿主生成 OHOS 目标快照，保持同一份 Dart 源码。
+
+宿主 SDK 使用 `create_most_sdk` 构建，未构建额外的 sanitizer runtime 和 `wasm-opt` 优化器：
+
+```bash
+python3 tools/gn.py --mode release --arch x64 --no-rbe \
+  --gn-args='dart_sysroot="" dart_include_wasm_opt=false'
+ninja -C out/ReleaseX64 -j4 create_most_sdk
+```
+
+引导阶段使用标准 Dart 3.13.7 运行构建脚本和 Pub，实际安装产物来自固定的 Dart 3.13.4 加完整鸿蒙移植。使用本机 glibc 构建，不代表二进制已验证可分发到其他 Linux 发行版。`/tmp` 清理会丢失源码构建现场，已安装的工具不依赖该目录运行。
+
+## 完成条件
+
+1. `file` 确认宿主 `dart`、`dartaotruntime`、`gen_snapshot` 为可执行的 Linux x86-64 ELF；实际运行平台接口探针。
+2. 检查编译后 platform kernel 的 FFI 映射，检查 AOT 生成器与目标引擎的 VM snapshot hash、架构、运行模式和指针压缩配置；不配套时重建目标引擎。
+3. 配置官方 Linux API 26 SDK，在本机生成并编译最小 Flutter HAP，再处理应用插件和原生资产的实际构建错误。
+4. 成功运行本项目 `flutter pub get`、`flutter analyze`、`flutter test` 及 HAP 构建，记录产物路径；签名和真机测试另按实际设备条件记录，不能与编译成功混同。
+
+## 官方来源
+
+- [3.47.9 发布清单](https://api.gitcode.com/api/v5/repos/oh-flutter/flutter_flutter/releases/tags/3.47.9-ohos-1.0.0)
+- [3.47.5 重建工件的版本依据](https://atomgit.com/oh-flutter/flutter_flutter/blob/3.47.9-ohos-1.0.0/release-notes/Flutter%203.47.5-ohos%201.0.0%20ReleaseNote.md)
+- [鸿蒙 Dart 移植源码](https://gitcode.com/oh-flutter/fluttertpc_dart_sdk/tree/flutter_3.47.4_deps)
+- [华为 Linux 命令行构建指导](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-command-line-building-app/)
